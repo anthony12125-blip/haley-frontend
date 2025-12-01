@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haley Chat</title>
+    <style>
+        :root {
+            --primary-bg: #FFFFFF;
+            --accent-lavender: #E6E6FA; /* A light lavender */
+            --user-bubble: #DCF8C6; /* Light green */
+            --haley-bubble: #F0F0F0; /* Light gray */
+            --border-radius: 18px;
+            --input-border: #E0E0E0;
+            --send-button: #4CAF50; /* A friendly green for send */
+            --text-color: #333;
+            --icon-color: #666;
+            --link-color: #007bff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--primary-bg); /* White background */
+            color: var(--text-color);
+            overflow: hidden; /* Prevent body scroll, container will scroll */
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px; /* Adjust as needed */
+            height: 100vh; /* Full viewport height */
+            display: flex;
+            flex-direction: column;
+            border-left: 5px solid var(--accent-lavender); /* Lavender edge accent */
+            border-right: 5px solid var(--accent-lavender); /* Lavender edge accent */
+            box-sizing: border-box;
+            background-color: var(--primary-bg);
+            border-radius: var(--border-radius); /* Apply to container, though edges will show */
+            overflow: hidden; /* Ensures child elements respect border-radius */
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--primary-bg);
+            border-bottom: 1px solid var(--input-border);
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        .share-button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--icon-color);
+            transition: color 0.2s ease;
+        }
+
+        .share-button:hover {
+            color: var(--link-color);
+        }
+
+        .messages-container {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            position: relative;
+            word-wrap: break-word;
+            display: flex; /* For alignment of text and copy button */
+            align-items: flex-end; /* Align text and button to bottom */
+        }
+
+        .message-bubble.user {
+            background-color: var(--user-bubble);
+            align-self: flex-end;
+            margin-left: auto; /* Push to the right */
+        }
+
+        .message-bubble.haley {
+            background-color: var(--haley-bubble);
+            align-self: flex-start;
+            margin-right: auto; /* Push to the left */
+        }
+
+        .message-text {
+            flex-grow: 1; /* Allows text to take available space */
+            padding-right: 30px; /* Space for copy button */
+        }
+
+        .copy-button {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: none;
+            border: none;
+            font-size: 0.9em;
+            cursor: pointer;
+            color: rgba(0,0,0,0.4);
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.2s ease, color 0.2s ease;
+            padding: 5px;
+            line-height: 1; /* Ensures icon is not too large */
+        }
+
+        .message-bubble:hover .copy-button {
+            opacity: 1; /* Show on hover */
+        }
+
+        .copy-button:hover {
+            color: var(--link-color);
+        }
+
+        .loading-indicator {
+            align-self: flex-start;
+            background-color: var(--haley-bubble);
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            font-style: italic;
+            color: var(--icon-color);
+        }
+
+        .input-bar {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: var(--primary-bg);
+            border-top: 1px solid var(--input-border);
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.03);
+            z-index: 10;
+        }
+
+        .input-bar input[type="text"] {
+            flex-grow: 1;
+            border: 1px solid var(--input-border);
+            border-radius: var(--border-radius);
+            padding: 12px 15px;
+            font-size: 1em;
+            outline: none;
+            margin-right: 10px;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-bar input[type="text"]:focus {
+            border-color: var(--accent-lavender);
+        }
+
+        .input-bar button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--icon-color);
+            margin-left: 8px;
+            padding: 5px;
+            transition: color 0.2s ease;
+        }
+
+        .input-bar button:hover {
+            color: var(--link-color);
+        }
+
+        .input-bar .send-button {
+            background-color: var(--send-button);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 8px 15px;
+            font-size: 1em;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .input-bar .send-button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+
+        .input-bar .send-button span {
+             margin-left: 5px;
+        }
+
+        .file-upload-label {
+            position: relative;
+            cursor: pointer;
+            color: var(--icon-color);
+            margin-left: 8px;
+            font-size: 1.5em;
+            padding: 5px;
+            transition: color 0.2s ease;
+        }
+
+        .file-upload-label:hover {
+            color: var(--link-color);
+        }
+
+        .file-upload-label input[type="file"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="header">
+            <h1>Haley Chat</h1>
+            <button class="share-button" title="Share conversation link">🔗</button>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <!-- Messages will be injected here -->
+            <div class="message-bubble haley">
+                <div class="message-text">Hello! How can I assist you with your construction projects today?</div>
+                <button class="copy-button" aria-label="Copy message">📄</button>
+            </div>
+        </div>
+
+        <div class="input-bar">
+            <input type="text" id="messageInput" placeholder="Message Haley…">
+            <button class="icon-button" title="New Chat">💬</button>
+            <button class="icon-button" title="Record Voice">🎤</button>
+            <label class="file-upload-label" title="Attach File">📎
+                <input type="file" id="fileInput" accept=".png, .jpg, .jpeg, .pdf, .txt, .json" multiple>
+            </label>
+            <button class="send-button" id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const shareButton = document.querySelector('.share-button');
+        const fileInput = document.getElementById('fileInput');
+
+        const API_ENDPOINT = 'https://logic-engine-core-409495160162.us-central1.run.app/talk';
+
+        // Function to create a message bubble
+        function createMessageBubble(text, type) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('message-bubble', type);
+            bubble.innerHTML = `<div class="message-text">${text}</div><button class="copy-button" aria-label="Copy message">📄</button>`;
+
+            const copyButton = bubble.querySelector('.copy-button');
+            copyButton.addEventListener('click', () => {
+                navigator.clipboard.writeText(text).then(() => {
+                    copyButton.textContent = 'Copied!';
+                    setTimeout(() => copyButton.textContent = '📄', 1500);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+            });
+
+            return bubble;
+        }
+
+        // Function to add a message to the conversation
+        function addMessage(text, type, scroll = true) {
+            const bubble = createMessageBubble(text, type);
+            messagesContainer.appendChild(bubble);
+            if (scroll) {
+                scrollToBottom();
+            }
+        }
+
+        // Auto-scroll to the newest message
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Show loading state
+        let loadingIndicator = null;
+        function showLoading() {
+            if (!loadingIndicator) {
+                loadingIndicator = document.createElement('div');
+                loadingIndicator.classList.add('loading-indicator');
+                loadingIndicator.textContent = 'Haley is thinking...';
+                messagesContainer.appendChild(loadingIndicator);
+                scrollToBottom();
+            }
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            if (loadingIndicator) {
+                messagesContainer.removeChild(loadingIndicator);
+                loadingIndicator = null;
+            }
+        }
+
+        // Send message functionality
+        async function sendMessage() {
+            const messageText = messageInput.value.trim();
+            if (messageText === '') return;
+
+            addMessage(messageText, 'user');
+            messageInput.value = ''; // Clear input
+            showLoading();
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: messageText }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                hideLoading();
+                addMessage(data.response || "Sorry, I couldn't get a response.", 'haley');
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                hideLoading();
+                addMessage("Oops! Something went wrong. Please try again.", 'haley');
+            }
+        }
+
+        // Event Listeners
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Share button functionality (UI only for now)
+        shareButton.addEventListener('click', () => {
+            // In a real application, you'd generate a unique URL for the current conversation
+            // For now, let's just copy the current page URL with a mock 'conversation_id'
+            const mockConversationId = 'convo123'; // Replace with actual ID
+            const shareableUrl = `${window.location.origin}${window.location.pathname}?conversation=${mockConversationId}`;
+
+            navigator.clipboard.writeText(shareableUrl).then(() => {
+                alert('Shareable link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy share link: ', err);
+                alert('Failed to copy link.');
+            });
+        });
+
+        // File input change listener (UI only for now, backend integration later)
+        fileInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files.length > 0) {
+                let fileNames = Array.from(files).map(file => file.name).join(', ');
+                alert(`Selected files for upload (UI only): ${fileNames}`);
+                // Here you would typically initiate an AJAX upload
+            }
+        });
+
+        // Initial scroll to bottom in case of pre-existing messages
+        window.addEventListener('load', scrollToBottom);
+
+    </script>
+</body>
+</html>
