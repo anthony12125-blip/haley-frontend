@@ -30,6 +30,46 @@ export async function sendMessageToHaley(
   idToken: string,
   attachments?: File[]
 ): Promise<HaleyResponse> {
+  // Check if user is asking for diagnostics
+  const diagnosticsKeywords = [
+    'diagnostics',
+    'seven justices',
+    'justice panel',
+    'self-diagnostic',
+    'check yourself',
+    'status check',
+    'system status'
+  ];
+  
+  const isAskingForDiagnostics = diagnosticsKeywords.some(keyword => 
+    message.toLowerCase().includes(keyword)
+  );
+
+  if (isAskingForDiagnostics) {
+    try {
+      const diagResponse = await fetch(`${HALEY_URL}/api/v1/diagnostics/justices/quick`);
+      if (diagResponse.ok) {
+        const diagData = await diagResponse.json();
+        
+        // Format the diagnostics into a readable response
+        const justiceStatus = Object.entries(diagData.justices)
+          .map(([name, status]: [string, any]) => {
+            const icon = status.configured ? '✅' : '❌';
+            return `${icon} ${name}: ${status.configured ? 'Ready' : 'Not configured'}`;
+          })
+          .join('\n');
+        
+        return {
+          reply: `**Seven Justices Panel Status**\n\nOverall: ${diagData.status}\n\n${justiceStatus}\n\nLast checked: ${new Date(diagData.timestamp).toLocaleString()}`
+        };
+      }
+    } catch (error) {
+      console.error('Diagnostics check failed:', error);
+      // Fall through to normal chat if diagnostics fail
+    }
+  }
+
+  // Normal chat flow
   const formData = new FormData();
   
   const payload: HaleyMessage = {
