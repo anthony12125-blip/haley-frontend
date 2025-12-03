@@ -1,105 +1,85 @@
-import { User } from 'firebase/auth';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://logic-engine-core-409495160162.us-central1.run.app';
 
-const HALEY_URL = process.env.NEXT_PUBLIC_HALEY_URL || '';
-
-export interface HaleyMessage {
+export interface ChatMessage {
   message: string;
-  attachments?: File[];
-  firebaseUser: {
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-  };
 }
 
-export interface HaleyResponse {
+export interface ChatResponse {
   reply: string;
-  meta?: {
-    timestamp?: string;
-    tokens_used?: number;
-  };
-  magic_window?: {
-    animation?: string;
-    content?: any;
-  };
+  tool_results?: any[];
 }
 
-export async function sendMessageToHaley(
-  message: string,
-  user: User,
-  idToken: string,
-  attachments?: File[]
-): Promise<HaleyResponse> {
-  // Check if user is asking for diagnostics
-  const diagnosticsKeywords = [
-    'diagnostics',
-    'seven justices',
-    'justice panel',
-    'self-diagnostic',
-    'check yourself',
-    'status check',
-    'system status'
-  ];
-  
-  const isAskingForDiagnostics = diagnosticsKeywords.some(keyword => 
-    message.toLowerCase().includes(keyword)
-  );
+export interface DiagnosticResult {
+  justice: string;
+  status: 'success' | 'error';
+  response_time_ms?: number;
+  error?: string;
+}
 
-  if (isAskingForDiagnostics) {
-    try {
-      const diagResponse = await fetch(`${HALEY_URL}/api/v1/diagnostics/justices/quick`);
-      if (diagResponse.ok) {
-        const diagData = await diagResponse.json();
-        
-        // Format the diagnostics into a readable response
-        const justiceStatus = Object.entries(diagData.justices)
-          .map(([name, status]: [string, any]) => {
-            const icon = status.configured ? '✅' : '❌';
-            return `${icon} ${name}: ${status.configured ? 'Ready' : 'Not configured'}`;
-          })
-          .join('\n');
-        
-        return {
-          reply: `**Seven Justices Panel Status**\n\nOverall: ${diagData.status}\n\n${justiceStatus}\n\nLast checked: ${new Date(diagData.timestamp).toLocaleString()}`
-        };
-      }
-    } catch (error) {
-      console.error('Diagnostics check failed:', error);
-      // Fall through to normal chat if diagnostics fail
-    }
-  }
+export interface DiagnosticsResponse {
+  timestamp: string;
+  config_valid: boolean;
+  api_tests_passed: number;
+  api_tests_failed: number;
+  results: DiagnosticResult[];
+}
 
-  // Normal chat flow
-  const formData = new FormData();
-  
-  const payload: HaleyMessage = {
-    message,
-    firebaseUser: {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-    },
-  };
+export interface QuickDiagnosticsResponse {
+  timestamp: string;
+  all_configured: boolean;
+  missing_keys: string[];
+  invalid_models: string[];
+  invalid_endpoints: string[];
+}
 
-  formData.append('data', JSON.stringify(payload));
-
-  if (attachments && attachments.length > 0) {
-    attachments.forEach((file, index) => {
-      formData.append(`file_${index}`, file);
-    });
-  }
-
-  const response = await fetch(`${HALEY_URL}/talk`, {
+// Main chat function
+export async function sendMessage(message: string): Promise<ChatResponse> {
+  const response = await fetch(`${BACKEND_URL}/talk`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${idToken}`,
+      'Content-Type': 'application/json',
     },
-    body: formData,
+    body: JSON.stringify({ message }),
   });
 
   if (!response.ok) {
-    throw new Error(`Haley API error: ${response.statusText}`);
+    throw new Error(`Chat request failed: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
 }
+
+// Quick diagnostics (config check only, ~100ms)
+export async function checkDiagnosticsQuick(): Promise<QuickDiagnosticsResponse> {
+  const response = await fetch(`${BACKEND_URL}/api/v1/diagnostics/justices/quick`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Diagnostics request failed: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// Full diagnostics (actually calls all 7 Justice APIs, ~10 seconds)
+export async function checkDiagnosticsFull(): Promise<DiagnosticsResponse> {
+  const response = await fetch(`${BACKEND_URL}/api/v1/diagnostics/justices`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Diagnostics request failed: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// Export backend URL for direct access if needed
+export { BACKEND_URL };
