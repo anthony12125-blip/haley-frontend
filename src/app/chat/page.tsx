@@ -202,7 +202,11 @@ export default function HaleyChatInterface(): JSX.Element {
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+        <div className="text-white text-xl">Redirecting to login...</div>
+      </div>
+    );
   }
 
   return (
