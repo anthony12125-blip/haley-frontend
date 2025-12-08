@@ -110,7 +110,3 @@ export async function wakeMama(userId: string = 'web-user'): Promise<any> {
 
 // Export backend URL for direct access if needed
 export { BACKEND_URL };
-
-
-// Export backend URL for direct access if needed
-export { BACKEND_URL };
