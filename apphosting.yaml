@@ -1,0 +1,20 @@
+runConfig:
+  minInstances: 0
+  maxInstances: 4
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+  
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyAOnz3gs5iUYfVZrGjGNC-QfsBujvMYBQ4
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: haley-front-end.firebaseapp.com
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: haley-front-end
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: haley-front-end.firebasestorage.app
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "415166601162"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:415166601162:web:2964033f8f8567b0e92133
