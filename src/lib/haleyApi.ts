@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://logic-engine-core-409495160162.us-central1.run.app';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://logic-engine-core2-409495160162.us-central1.run.app';
 
 export interface ChatMessage {
   message: string;
@@ -10,6 +10,7 @@ export interface ChatResponse {
   request_id?: string;
   timestamp?: string;
   mama_invoked?: boolean;
+  model_id?: string;
 }
 
 export interface LogicEngineResponse {
@@ -29,7 +30,6 @@ export interface SystemHealthResponse {
   state_size: number;
 }
 
-// Main chat function - now uses proper logic engine endpoint
 export async function sendMessage(message: string, userId: string = 'web-user'): Promise<ChatResponse> {
   const response = await fetch(`${BACKEND_URL}/logic/process`, {
     method: 'POST',
@@ -50,17 +50,16 @@ export async function sendMessage(message: string, userId: string = 'web-user'):
 
   const logicResponse: LogicEngineResponse = await response.json();
   
-  // Transform logic engine response to expected chat format
   return {
     reply: logicResponse.result?.response || logicResponse.result?.message || 'No response',
     tool_results: logicResponse.result?.tool_results || [],
     request_id: logicResponse.request_id,
     timestamp: logicResponse.timestamp,
-    mama_invoked: logicResponse.mama_invoked
+    mama_invoked: logicResponse.mama_invoked,
+    model_id: logicResponse.result?.model_id
   };
 }
 
-// System health check (replaces old diagnostics)
 export async function checkSystemHealth(): Promise<SystemHealthResponse> {
   const response = await fetch(`${BACKEND_URL}/logic/system/health`, {
     method: 'GET',
@@ -76,7 +75,6 @@ export async function checkSystemHealth(): Promise<SystemHealthResponse> {
   return response.json();
 }
 
-// List available modules
 export async function listModules(): Promise<any> {
   const response = await fetch(`${BACKEND_URL}/logic/modules`, {
     method: 'GET',
@@ -92,7 +90,6 @@ export async function listModules(): Promise<any> {
   return response.json();
 }
 
-// Wake Mama Haley explicitly
 export async function wakeMama(userId: string = 'web-user'): Promise<any> {
   const response = await fetch(`${BACKEND_URL}/logic/mama/wake?user_id=${userId}`, {
     method: 'POST',
@@ -108,5 +105,4 @@ export async function wakeMama(userId: string = 'web-user'): Promise<any> {
   return response.json();
 }
 
-// Export backend URL for direct access if needed
 export { BACKEND_URL };
