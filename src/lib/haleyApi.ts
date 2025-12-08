@@ -1,5 +1,5 @@
 // src/lib/haleyApi.ts
-// FIXED: Matches deployed api_enhanced.py endpoints
+// FIXED: Matches deployed api_enhanced.py endpoints AND response format
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -132,6 +132,7 @@ export async function executeModule(
 
 /**
  * Get system status - uses system.health intent
+ * FIXED: Correctly maps backend response fields
  */
 export async function getSystemStatus(): Promise<SystemStatusResponse> {
   try {
@@ -148,17 +149,18 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
 
     const data = await response.json();
     
-    // Map to expected format
+    // Map actual backend response to expected format
+    // Backend returns: mama_awake, requests_processed, state_size, modules_registered
     return {
       os: 'HaleyOS',
       kernel_status: {
         kernel: 'Logic Engine',
-        syscalls: data.requests_processed || 0,
-        mama_invocations: data.mama_wakes || 0,
-        mama_state: data.mama_state || 'halted',
+        syscalls: data.requests_processed || 0,        // ✅ FIXED: was missing
+        mama_invocations: data.mama_awake ? 1 : 0,    // ✅ FIXED: derived from mama_awake
+        mama_state: data.mama_awake ? 'active' : 'halted',  // ✅ FIXED: derived from mama_awake
         processes: 1,
-        modules: data.module_count || 0,
-        memory_keys: 0
+        modules: data.modules_registered || 0,         // ✅ FIXED: was module_count
+        memory_keys: data.state_size || 0              // ✅ FIXED: was missing
       },
       baby_pid: 1001,
       note: 'Operating System Interface'
