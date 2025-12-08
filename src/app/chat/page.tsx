@@ -1,29 +1,24 @@
+// src/app/chat/page.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessage, checkSystemHealth, listModules } from '@/lib/haleyApi';
+import { sendMessage } from '@/lib/haleyApi';
 
 interface Message {
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
 
-export default function ChatPage() {
+export default function HaleyChatInterface() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: "Hey! I'm HaleyOS, your AI assistant for construction and contracting. What can I help you with today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showMagicWindow, setShowMagicWindow] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -62,86 +57,7 @@ export default function ChatPage() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      const errorMessage: Message = {
-        role: 'system',
-        content: `Error: ${error instanceof Error ? error.message : 'Failed to send message'}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleQuickDiagnostics = async () => {
-    setIsLoading(true);
-    try {
-      const result = await checkSystemHealth();
-      const diagnosticMessage: Message = {
-        role: 'system',
-        content: `🔍 System Health Check:\n\n` +
-          `✅ Status: ${result.status}\n` +
-          `🧠 Mama Awake: ${result.mama_awake ? 'YES' : 'NO'}\n` +
-          `📊 Requests Processed: ${result.requests_processed}\n` +
-          `💾 State Size: ${result.state_size}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, diagnosticMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        role: 'system',
-        content: `Error running health check: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFullDiagnostics = async () => {
-    setIsLoading(true);
-    const loadingMessage: Message = {
-      role: 'system',
-      content: '🔄 Checking modules and system state...',
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, loadingMessage]);
-
-    try {
-      const [healthResult, modulesResult] = await Promise.all([
-        checkSystemHealth(),
-        listModules()
-      ]);
-      
-      let content = `🎯 Full System Diagnostics Complete!\n\n`;
-      content += `📡 System Status: ${healthResult.status}\n`;
-      content += `🧠 Mama Haley: ${healthResult.mama_awake ? 'Awake' : 'Sleeping'}\n`;
-      content += `📊 Requests Processed: ${healthResult.requests_processed}\n`;
-      content += `💾 State Size: ${healthResult.state_size}\n\n`;
-      
-      if (modulesResult.modules && modulesResult.modules.length > 0) {
-        content += `🔧 Available Modules (${modulesResult.modules.length}):\n`;
-        modulesResult.modules.forEach((module: string) => {
-          content += `  • ${module}\n`;
-        });
-      } else {
-        content += `⚠️ No modules currently loaded\n`;
-      }
-
-      const diagnosticMessage: Message = {
-        role: 'system',
-        content,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev.slice(0, -1), diagnosticMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        role: 'system',
-        content: `Error running full diagnostics: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev.slice(0, -1), errorMessage]);
+      console.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +65,11 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{
+        backgroundImage: 'url(/space_comet_lavender.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}>
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
@@ -160,102 +80,172 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-700 flex flex-col">
-      {/* Header */}
-      <div className="bg-white/10 backdrop-blur-lg border-b border-white/20 p-4">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
+    <div className="relative w-full h-screen flex flex-col overflow-hidden">
+      {/* Background */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: 'url(/space_comet_lavender.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      />
+      <div 
+        className="absolute inset-0 z-0" 
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.35)' }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col h-full">
+        {/* Header */}
+        <div className="h-[60px] flex items-center justify-between px-6" style={{
+          background: 'rgba(20, 20, 35, 0.65)',
+          borderBottom: '1px solid rgba(200, 166, 255, 0.25)'
+        }}>
           <div>
-            <h1 className="text-2xl font-bold text-white">HaleyOS Chat</h1>
-            <p className="text-white/80 text-sm">Logged in as {user.email}</p>
+            <h1 className="text-2xl font-bold" style={{ color: '#c8a6ff' }}>Haley</h1>
+            <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>AI Operating System</p>
           </div>
           <button
-            onClick={() => setShowDiagnostics(!showDiagnostics)}
-            className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+            onClick={() => setShowMagicWindow(!showMagicWindow)}
+            className="px-4 py-2 rounded-lg transition-colors"
+            style={{
+              background: 'rgba(200, 166, 255, 0.2)',
+              color: '#e8ddff',
+              border: '1px solid rgba(200, 166, 255, 0.35)'
+            }}
           >
-            {showDiagnostics ? 'Hide' : 'Show'} Diagnostics
+            {showMagicWindow ? 'Hide' : 'Show'} Magic Window
           </button>
         </div>
-      </div>
 
-      {/* Diagnostics Panel */}
-      {showDiagnostics && (
-        <div className="bg-white/10 backdrop-blur-lg border-b border-white/20 p-4">
-          <div className="max-w-4xl mx-auto flex gap-4">
-            <button
-              onClick={handleQuickDiagnostics}
-              disabled={isLoading}
-              className="px-6 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-            >
-              System Health
-            </button>
-            <button
-              onClick={handleFullDiagnostics}
-              disabled={isLoading}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-            >
-              Full Diagnostics
-            </button>
+        {/* Message Area */}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          <div className="max-w-[800px] mx-auto space-y-[10px]">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className="max-w-[75%] px-4 py-3"
+                  style={{
+                    borderRadius: '18px',
+                    backgroundColor: msg.role === 'user' 
+                      ? 'rgba(255, 255, 255, 0.15)' 
+                      : 'rgba(200, 166, 255, 0.20)',
+                    color: msg.role === 'user' ? '#ffffff' : '#e8ddff'
+                  }}
+                >
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  <div 
+                    className="text-xs mt-1"
+                    style={{ color: 'rgba(255, 255, 255, 0.45)' }}
+                  >
+                    {msg.timestamp.toLocaleTimeString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div
+                  className="px-4 py-3"
+                  style={{
+                    borderRadius: '18px',
+                    backgroundColor: 'rgba(200, 166, 255, 0.20)',
+                    color: '#e8ddff'
+                  }}
+                >
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-current rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-current rounded-full animate-bounce delay-200" />
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
         </div>
-      )}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-4xl mx-auto space-y-4">
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                  msg.role === 'user'
-                    ? 'bg-purple-500 text-white'
-                    : msg.role === 'system'
-                    ? 'bg-yellow-500/20 text-white border border-yellow-500/50'
-                    : 'bg-white/90 text-gray-800'
-                }`}
-              >
-                <div className="whitespace-pre-wrap">{msg.content}</div>
-                <div className="text-xs opacity-60 mt-1">
-                  {msg.timestamp.toLocaleTimeString()}
-                </div>
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-white/90 text-gray-800 rounded-2xl px-4 py-3">
-                <div className="flex space-x-2">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
+        {/* Magic Window */}
+        {showMagicWindow && (
+          <div 
+            className="mx-4 mb-4 p-4 max-h-[60%] overflow-auto"
+            style={{
+              background: 'rgba(255, 255, 255, 0.07)',
+              borderRadius: '16px',
+              border: '1px solid rgba(200, 166, 255, 0.35)'
+            }}
+          >
+            <p style={{ color: '#e8ddff' }}>Magic Window - Dynamic content appears here</p>
+          </div>
+        )}
 
-      {/* Input */}
-      <div className="bg-white/10 backdrop-blur-lg border-t border-white/20 p-4">
-        <div className="max-w-4xl mx-auto flex gap-2">
+        {/* Input Bar */}
+        <div 
+          className="h-[70px] px-4 flex items-center gap-2"
+          style={{
+            background: 'rgba(20, 20, 35, 0.65)',
+            borderTop: '1px solid rgba(200, 166, 255, 0.25)'
+          }}
+        >
+          {/* Plus Button */}
+          <button
+            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+            style={{
+              background: 'rgba(200, 166, 255, 0.2)',
+              color: '#c8a6ff'
+            }}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+
+          {/* Text Input */}
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder="Type your message..."
+            placeholder="Message Haley..."
             disabled={isLoading}
-            className="flex-1 px-4 py-3 rounded-xl bg-white/90 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+            className="flex-1 px-4 py-3 rounded-xl focus:outline-none disabled:opacity-50"
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: '#ffffff',
+              border: '1px solid rgba(200, 166, 255, 0.25)'
+            }}
           />
+
+          {/* Mic Button */}
+          <button
+            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+            style={{
+              background: 'rgba(200, 166, 255, 0.2)',
+              color: '#c8a6ff'
+            }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </button>
+
+          {/* Send Button */}
           <button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="px-8 py-3 bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white font-medium rounded-xl transition-colors"
+            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors disabled:opacity-50"
+            style={{
+              background: '#c8a6ff',
+              color: '#1a1a2e'
+            }}
           >
-            Send
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
           </button>
         </div>
       </div>
