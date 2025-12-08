@@ -1,18 +1,23 @@
 // src/app/chat/page.tsx
+// CORRECTED: Uses HaleyOS API (OS operations, not chat pipeline)
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessage } from '@/lib/haleyApi';
+import { sendMessage, getSystemStatus, executeModule } from '@/lib/haleyApi';
+import type { OSOperationResponse, SystemStatusResponse } from '@/lib/haleyApi';
 
 interface Message {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
-  request_id?: string;
-  model_used?: string;
-  mama_invoked?: boolean;
+  metadata?: {
+    operation?: string;
+    state_changed?: boolean;
+    mama_invoked?: boolean;
+    syscalls?: number;
+  };
 }
 
 export default function HaleyChatInterface(): JSX.Element {
@@ -21,13 +26,25 @@ export default function HaleyChatInterface(): JSX.Element {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showMagicWindow, setShowMagicWindow] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
+  const [osStatus, setOsStatus] = useState<SystemStatusResponse | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+
+  // Initial system message
+  useEffect(() => {
+    const systemMessage: Message = {
+      role: 'system',
+      content: 'HaleyOS initialized. This is an operating system interface, not a chatbot. Use natural language to interact with the OS.',
+      timestamp: new Date(),
+      metadata: {
+        operation: 'system_init'
+      }
+    };
+    setMessages([systemMessage]);
+    
+    // Load OS status
+    loadOSStatus();
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -43,6 +60,15 @@ export default function HaleyChatInterface(): JSX.Element {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const loadOSStatus = async () => {
+    try {
+      const status = await getSystemStatus();
+      setOsStatus(status);
+    } catch (error) {
+      console.error('Failed to load OS status:', error);
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -53,25 +79,50 @@ export default function HaleyChatInterface(): JSX.Element {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await sendMessage(input);
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: response.reply,
-        timestamp: new Date(),
-        request_id: response.request_id,
-        model_used: response.model_id,
-        mama_invoked: response.mama_invoked
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      // Send message via Baby → Kernel OS operation
+      const response: OSOperationResponse = await sendMessage(userInput);
+      
+      if (response.status === 'success') {
+        // Extract result
+        const resultContent = formatOSResult(response.result);
+        
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: resultContent,
+          timestamp: new Date(),
+          metadata: {
+            operation: 'compute',
+            state_changed: response.state_changed,
+            mama_invoked: response.result?.computation === 'deep_analysis'
+          }
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        // Error response
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: `OS Error: ${response.error_msg || 'Operation failed'}`,
+          timestamp: new Date(),
+          metadata: {
+            operation: 'error'
+          }
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+
+      // Refresh OS status
+      await loadOSStatus();
+      
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
         role: 'assistant',
-        content: `Error: ${error instanceof Error ? error.message : 'Failed to send message'}`,
+        content: `System error: ${error instanceof Error ? error.message : 'Failed to process operation'}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -80,166 +131,156 @@ export default function HaleyChatInterface(): JSX.Element {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setRecordedAudio(audioUrl);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      alert('Could not access microphone. Please check permissions.');
-    }
-  };
-
-  const sendRecording = async () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+  const formatOSResult = (result: any): string => {
+    if (!result) return 'Operation completed';
+    
+    if (typeof result === 'string') return result;
+    
+    if (result.computation) {
+      return `Computation: ${result.computation}\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
     }
     
-    setRecordedAudio(null);
-    setIsRecording(false);
+    if (result.result !== undefined) {
+      return `Result: ${JSON.stringify(result.result)}`;
+    }
+    
+    return JSON.stringify(result, null, 2);
   };
 
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
-    setRecordedAudio(null);
-    setIsRecording(false);
   };
+
+  // Quick action buttons
+  const quickActions = [
+    {
+      label: '🧮 Calculator',
+      action: async () => {
+        setIsLoading(true);
+        try {
+          const response = await executeModule('calculator', 'add', { a: 5, b: 3 });
+          const message: Message = {
+            role: 'assistant',
+            content: `Calculator result: ${response.result?.result}`,
+            timestamp: new Date(),
+            metadata: { operation: 'exec_module' }
+          };
+          setMessages(prev => [...prev, message]);
+        } catch (error) {
+          console.error('Calculator error:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    },
+    {
+      label: '📊 OS Status',
+      action: async () => {
+        await loadOSStatus();
+        if (osStatus) {
+          const message: Message = {
+            role: 'system',
+            content: `OS Status:\n- Kernel: ${osStatus.kernel_status.kernel}\n- Syscalls: ${osStatus.kernel_status.syscalls}\n- Mama invocations: ${osStatus.kernel_status.mama_invocations}\n- Mama state: ${osStatus.kernel_status.mama_state}\n- Processes: ${osStatus.kernel_status.processes}\n- Modules: ${osStatus.kernel_status.modules}`,
+            timestamp: new Date(),
+            metadata: { operation: 'status' }
+          };
+          setMessages(prev => [...prev, message]);
+        }
+      }
+    }
+  ];
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{
-        backgroundImage: 'url(/space_comet_lavender.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      }}>
-        <div className="text-white text-xl">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+        <div className="text-white text-xl">Loading HaleyOS...</div>
       </div>
     );
   }
 
   if (!user) {
-    return <div />;
+    return null;
   }
 
   return (
-    <div className="relative w-full h-screen flex flex-col overflow-hidden">
-      {/* Background */}
-      <div 
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: 'url(/space_comet_lavender.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      />
-      <div 
-        className="absolute inset-0 z-0" 
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.35)' }}
-      />
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col h-full">
+    <div className="flex h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+      {/* Main Chat Area */}
+      <div className="flex flex-col flex-1">
         {/* Header */}
-        <div className="h-[60px] flex items-center justify-between px-6" style={{
-          background: 'rgba(20, 20, 35, 0.65)',
-          borderBottom: '1px solid rgba(200, 166, 255, 0.25)'
-        }}>
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: '#c8a6ff' }}>Haley</h1>
-            <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>AI Operating System</p>
-          </div>
-          <div className="flex gap-2">
+        <div className="bg-black/30 backdrop-blur-md border-b border-white/10 p-4">
+          <div className="flex items-center justify-between max-w-5xl mx-auto">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                <span className="text-white font-bold text-lg">H</span>
+              </div>
+              <div>
+                <h1 className="text-white text-xl font-bold">HaleyOS</h1>
+                <p className="text-purple-200 text-sm">Operating System Interface</p>
+              </div>
+            </div>
+            
+            {/* OS Status Badge */}
+            {osStatus && (
+              <div className="flex items-center space-x-2 bg-black/40 px-4 py-2 rounded-full">
+                <div className={`w-2 h-2 rounded-full ${osStatus.kernel_status.mama_state === 'halted' ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
+                <span className="text-white text-sm">
+                  Syscalls: {osStatus.kernel_status.syscalls}
+                </span>
+                <span className="text-purple-300 text-sm">
+                  Mama: {osStatus.kernel_status.mama_state}
+                </span>
+              </div>
+            )}
+
             <button
               onClick={() => setShowDebug(!showDebug)}
-              className="px-3 py-1 rounded-lg transition-colors text-xs"
-              style={{
-                background: showDebug ? 'rgba(200, 166, 255, 0.3)' : 'rgba(200, 166, 255, 0.1)',
-                color: '#e8ddff',
-                border: '1px solid rgba(200, 166, 255, 0.35)'
-              }}
+              className="text-white/60 hover:text-white transition-colors"
             >
-              Debug
-            </button>
-            <button
-              onClick={() => setShowMagicWindow(!showMagicWindow)}
-              className="px-4 py-2 rounded-lg transition-colors"
-              style={{
-                background: 'rgba(200, 166, 255, 0.2)',
-                color: '#e8ddff',
-                border: '1px solid rgba(200, 166, 255, 0.35)'
-              }}
-            >
-              {showMagicWindow ? 'Hide' : 'Show'} Magic Window
+              {showDebug ? '🔍' : '🔍'}
             </button>
           </div>
         </div>
 
-        {/* Message Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="max-w-[800px] mx-auto space-y-[10px]">
-            {messages.map((msg, idx) => (
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="max-w-4xl mx-auto space-y-4">
+            {messages.map((message, index) => (
               <div
-                key={idx}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                key={index}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className="max-w-[75%] px-4 py-3"
-                  style={{
-                    borderRadius: '18px',
-                    backgroundColor: msg.role === 'user' 
-                      ? 'rgba(255, 255, 255, 0.15)' 
-                      : 'rgba(200, 166, 255, 0.20)',
-                    color: msg.role === 'user' ? '#ffffff' : '#e8ddff'
-                  }}
+                  className={`max-w-[80%] rounded-2xl px-6 py-4 ${
+                    message.role === 'user'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                      : message.role === 'system'
+                      ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-100'
+                      : 'bg-white/10 backdrop-blur-md text-white border border-white/20'
+                  }`}
                 >
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
-                  <div 
-                    className="text-xs mt-1 flex justify-between items-center gap-2"
-                    style={{ color: 'rgba(255, 255, 255, 0.45)' }}
-                  >
-                    <span>{msg.timestamp.toLocaleTimeString()}</span>
-                    {showDebug && msg.request_id && (
-                      <span className="text-[10px] font-mono">
-                        {msg.model_used || 'unknown'} • {msg.request_id.slice(0, 8)}
-                        {msg.mama_invoked && ' • mama'}
-                      </span>
-                    )}
-                  </div>
+                  <div className="whitespace-pre-wrap">{message.content}</div>
+                  {showDebug && message.metadata && (
+                    <div className="mt-2 pt-2 border-t border-white/20 text-xs opacity-60">
+                      {Object.entries(message.metadata).map(([key, value]) => (
+                        <div key={key}>
+                          {key}: {String(value)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div
-                  className="px-4 py-3"
-                  style={{
-                    borderRadius: '18px',
-                    backgroundColor: 'rgba(200, 166, 255, 0.20)',
-                    color: '#e8ddff'
-                  }}
-                >
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
                   <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                   </div>
                 </div>
               </div>
@@ -248,115 +289,46 @@ export default function HaleyChatInterface(): JSX.Element {
           </div>
         </div>
 
-        {/* Magic Window */}
-        {showMagicWindow && (
-          <div 
-            className="mx-4 mb-4 p-4 max-h-[60%] overflow-auto"
-            style={{
-              background: 'rgba(255, 255, 255, 0.07)',
-              borderRadius: '16px',
-              border: '1px solid rgba(200, 166, 255, 0.35)'
-            }}
-          >
-            <p style={{ color: '#e8ddff' }}>Magic Window - Dynamic content appears here</p>
+        {/* Quick Actions */}
+        <div className="px-4 pb-2">
+          <div className="max-w-4xl mx-auto flex space-x-2">
+            {quickActions.map((action, index) => (
+              <button
+                key={index}
+                onClick={action.action}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white text-sm border border-white/20 transition-colors"
+                disabled={isLoading}
+              >
+                {action.label}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* Input Bar */}
-        <div 
-          className="h-[70px] px-4 flex items-center gap-2"
-          style={{
-            background: 'rgba(20, 20, 35, 0.65)',
-            borderTop: '1px solid rgba(200, 166, 255, 0.25)'
-          }}
-        >
-          {/* Plus Button */}
-          <button
-            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors flex-shrink-0"
-            style={{
-              background: 'rgba(200, 166, 255, 0.2)',
-              color: '#c8a6ff'
-            }}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-
-          {/* Text Input */}
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            placeholder="Message Haley..."
-            disabled={isLoading || isRecording}
-            className="flex-1 px-4 py-3 rounded-xl focus:outline-none disabled:opacity-50"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#ffffff',
-              border: '1px solid rgba(200, 166, 255, 0.25)'
-            }}
-          />
-
-          {/* Recording Controls or Mic Button */}
-          {isRecording ? (
-            <>
-              <button
-                onClick={cancelRecording}
-                className="w-10 h-10 flex items-center justify-center rounded-full transition-colors flex-shrink-0"
-                style={{
-                  background: 'rgba(255, 100, 100, 0.3)',
-                  color: '#ff6666'
-                }}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <button
-                onClick={sendRecording}
-                className="w-10 h-10 flex items-center justify-center rounded-full transition-colors flex-shrink-0"
-                style={{
-                  background: '#c8a6ff',
-                  color: '#1a1a2e'
-                }}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={startRecording}
-                className="w-10 h-10 flex items-center justify-center rounded-full transition-colors flex-shrink-0"
-                style={{
-                  background: 'rgba(200, 166, 255, 0.2)',
-                  color: '#c8a6ff'
-                }}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-              </button>
-
+        {/* Input Area */}
+        <div className="bg-black/30 backdrop-blur-md border-t border-white/10 p-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex space-x-4 items-end">
+              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Enter OS operation..."
+                  className="w-full bg-transparent text-white placeholder-white/50 resize-none outline-none"
+                  rows={1}
+                  disabled={isLoading}
+                />
+              </div>
               <button
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
-                className="w-10 h-10 flex items-center justify-center rounded-full transition-colors disabled:opacity-50 flex-shrink-0"
-                style={{
-                  background: '#c8a6ff',
-                  color: '#1a1a2e'
-                }}
+                className="px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 rounded-2xl text-white font-medium transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
+                {isLoading ? '⏳' : '→'}
               </button>
-            </>
-          )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
