@@ -1,25 +1,27 @@
 // src/lib/haleyApi.ts
-// CORRECTED: Calls HaleyOS API (OS endpoints, not chat endpoints)
+// FIXED: Matches deployed api_enhanced.py endpoints
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
 // ============================================================================
-// OS API TYPES
+// BACKEND API TYPES (matches api_enhanced.py)
 // ============================================================================
 
-export interface OSOperationRequest {
-  operation: string;
-  params: {
+export interface ProcessRequest {
+  intent: string;
+  user_id: string;
+  payload?: {
     [key: string]: any;
   };
+  permissions?: string[];
 }
 
-export interface OSOperationResponse {
+export interface ProcessResponse {
   status: 'success' | 'error';
   result?: any;
-  state_changed?: boolean;
-  error_code?: number;
-  error_msg?: string;
+  error?: string;
+  module_generated?: boolean;
+  execution_path?: string[];
 }
 
 export interface SystemStatusResponse {
@@ -37,53 +39,52 @@ export interface SystemStatusResponse {
   note: string;
 }
 
-export interface OSInfo {
-  system: string;
-  type: string;
-  kernel: string;
-  version: string;
-  architecture: {
-    kernel: string;
-    mama: string;
-    baby: string;
-    modules: string;
-    sentinels: string;
-    adapters: string;
-  };
-  api: {
-    [key: string]: string;
-  };
+export interface OSOperationResponse {
+  status: 'success' | 'error';
+  result?: any;
+  state_changed?: boolean;
+  error_code?: number;
+  error_msg?: string;
 }
 
 // ============================================================================
-// OS API FUNCTIONS
+// API FUNCTIONS
 // ============================================================================
 
 /**
- * Send user message via Baby interface
- * Baby converts message to OS operation and makes syscall to kernel
+ * Send user message - routes to mama.compute intent
  */
 export async function sendMessage(message: string): Promise<OSOperationResponse> {
   try {
-    const response = await fetch(`${BACKEND_URL}/operation`, {
+    const response = await fetch(`${BACKEND_URL}/logic/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        operation: 'compute',
-        params: {
+        intent: 'mama.compute',
+        user_id: 'user', // TODO: Get from auth context
+        payload: {
           problem: message,
           context: {}
-        }
-      }),
+        },
+        permissions: ['user']
+      } as ProcessRequest),
     });
 
     if (!response.ok) {
-      throw new Error(`OS operation failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Request failed: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data: ProcessResponse = await response.json();
+    
+    // Convert ProcessResponse to OSOperationResponse format
+    return {
+      status: data.status,
+      result: data.result,
+      state_changed: false, // Logic engine doesn't expose this yet
+      error_msg: data.error
+    };
   } catch (error) {
     console.error('[HaleyAPI] Error:', error);
     throw error;
@@ -91,7 +92,7 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
 }
 
 /**
- * Execute module via Baby interface
+ * Execute module - routes to module execution intent
  */
 export async function executeModule(
   module: string,
@@ -99,26 +100,30 @@ export async function executeModule(
   params: any
 ): Promise<OSOperationResponse> {
   try {
-    const response = await fetch(`${BACKEND_URL}/operation`, {
+    const response = await fetch(`${BACKEND_URL}/logic/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        operation: 'exec',
-        params: {
-          module,
-          op: operation,
-          params
-        }
-      }),
+        intent: `module.${module}.${operation}`,
+        user_id: 'user',
+        payload: params,
+        permissions: ['user']
+      } as ProcessRequest),
     });
 
     if (!response.ok) {
       throw new Error(`Module execution failed: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data: ProcessResponse = await response.json();
+    
+    return {
+      status: data.status,
+      result: data.result,
+      error_msg: data.error
+    };
   } catch (error) {
     console.error('[HaleyAPI] Module execution error:', error);
     throw error;
@@ -126,70 +131,11 @@ export async function executeModule(
 }
 
 /**
- * Query system registry
- */
-export async function queryRegistry(query: string = '*'): Promise<OSOperationResponse> {
-  try {
-    const response = await fetch(`${BACKEND_URL}/operation`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        operation: 'query_registry',
-        params: { query }
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Registry query failed: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('[HaleyAPI] Registry query error:', error);
-    throw error;
-  }
-}
-
-/**
- * Call LLM via adapter (adapter will request prompt from Mama)
- */
-export async function callLLM(
-  llm: 'claude' | 'gpt' | 'gemini',
-  input: string,
-  mode: string = 'default'
-): Promise<any> {
-  try {
-    const response = await fetch(`${BACKEND_URL}/llm`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        llm,
-        input,
-        mode
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`LLM call failed: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('[HaleyAPI] LLM call error:', error);
-    throw error;
-  }
-}
-
-/**
- * Get OS status
+ * Get system status - uses system.health intent
  */
 export async function getSystemStatus(): Promise<SystemStatusResponse> {
   try {
-    const response = await fetch(`${BACKEND_URL}/status`, {
+    const response = await fetch(`${BACKEND_URL}/logic/system/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -200,17 +146,47 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
       throw new Error(`Status check failed: ${response.status} ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    
+    // Map to expected format
+    return {
+      os: 'HaleyOS',
+      kernel_status: {
+        kernel: 'Logic Engine',
+        syscalls: data.requests_processed || 0,
+        mama_invocations: data.mama_wakes || 0,
+        mama_state: data.mama_state || 'halted',
+        processes: 1,
+        modules: data.module_count || 0,
+        memory_keys: 0
+      },
+      baby_pid: 1001,
+      note: 'Operating System Interface'
+    };
   } catch (error) {
     console.error('[HaleyAPI] Status check error:', error);
-    throw error;
+    // Return default status on error
+    return {
+      os: 'HaleyOS',
+      kernel_status: {
+        kernel: 'Logic Engine',
+        syscalls: 0,
+        mama_invocations: 0,
+        mama_state: 'unknown',
+        processes: 1,
+        modules: 0,
+        memory_keys: 0
+      },
+      baby_pid: 1001,
+      note: 'Operating System Interface'
+    };
   }
 }
 
 /**
  * Get OS information
  */
-export async function getOSInfo(): Promise<OSInfo> {
+export async function getOSInfo() {
   try {
     const response = await fetch(`${BACKEND_URL}/`, {
       method: 'GET',
@@ -231,35 +207,127 @@ export async function getOSInfo(): Promise<OSInfo> {
 }
 
 /**
- * Make direct system call (advanced)
+ * List available modules
  */
-export async function makeSyscall(
-  syscall: string,
-  pid: number,
-  args: any,
-  context: any = {}
-): Promise<any> {
+export async function listModules() {
   try {
-    const response = await fetch(`${BACKEND_URL}/syscall`, {
+    const response = await fetch(`${BACKEND_URL}/logic/modules`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Module list failed: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[HaleyAPI] Module list error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Wake Mama Haley for deep computation
+ */
+export async function wakeMama(userId: string = 'user') {
+  try {
+    const response = await fetch(`${BACKEND_URL}/logic/mama/wake?user_id=${userId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Wake Mama failed: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[HaleyAPI] Wake Mama error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Request module generation
+ */
+export async function requestModuleGeneration(
+  moduleName: string,
+  moduleIntent: string,
+  capabilities: string[],
+  requestedBy: string = 'user'
+) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/logic/module/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        syscall,
-        pid,
-        args,
-        context
+        module_name: moduleName,
+        module_intent: moduleIntent,
+        capabilities,
+        requested_by: requestedBy
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Syscall failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Module generation failed: ${response.status} ${response.statusText}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error('[HaleyAPI] Syscall error:', error);
+    console.error('[HaleyAPI] Module generation error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check module generation status
+ */
+export async function checkModuleGenerationStatus(requestId: string) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/logic/module/status/${requestId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Status check failed: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[HaleyAPI] Status check error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Refresh module registry
+ */
+export async function refreshModules() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/logic/modules/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Module refresh failed: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[HaleyAPI] Module refresh error:', error);
     throw error;
   }
 }
