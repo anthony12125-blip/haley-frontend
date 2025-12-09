@@ -184,7 +184,7 @@ export default function HaleyChatInterface(): JSX.Element {
         if (osStatus) {
           const message: Message = {
             role: 'system',
-            content: `OS Status:\n- Kernel: ${osStatus.kernel_status.kernel}\n- Syscalls: ${osStatus.kernel_status.syscalls}\n- Mama invocations: ${osStatus.kernel_status.mama_invocations}\n- Mama state: ${osStatus.kernel_status.mama_state}\n- Processes: ${osStatus.kernel_status.processes}\n- Modules: ${osStatus.kernel_status.modules}`,
+            content: `OS Status:\n- Kernel: ${osStatus.kernel_status.kernel}\n- Syscalls: ${osStatus.kernel_status.syscalls}\n- Processes: ${osStatus.kernel_status.processes}\n- Modules: ${osStatus.kernel_status.modules}`,
             timestamp: new Date(),
             metadata: { operation: 'status' }
           };
@@ -230,13 +230,11 @@ export default function HaleyChatInterface(): JSX.Element {
             {/* OS Status Badge */}
             {osStatus && (
               <div className="flex items-center space-x-2 bg-black/40 px-4 py-2 rounded-full">
-                <div className={`w-2 h-2 rounded-full ${osStatus.kernel_status.mama_state === 'halted' ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
+                <div className="w-2 h-2 rounded-full bg-green-400"></div>
                 <span className="text-white text-sm">
                   Syscalls: {osStatus.kernel_status.syscalls}
                 </span>
-                <span className="text-purple-300 text-sm">
-                  Mama: {osStatus.kernel_status.mama_state}
-                </span>
+
               </div>
             )}
 
