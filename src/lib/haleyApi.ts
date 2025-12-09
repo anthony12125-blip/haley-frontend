@@ -17,7 +17,7 @@ export interface ProcessRequest {
 }
 
 export interface ProcessResponse {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'completed';
   result?: any;
   error?: string;
   module_generated?: boolean;
