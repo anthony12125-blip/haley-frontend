@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import '../styles/globals.css'
-import MagicWindow from '@/components/MagicWindow'
 import { AuthProvider } from '@/lib/authContext'
+import '@/styles/globals.css'
 
 export const metadata: Metadata = {
-  title: 'HaleyOS - AI Assistant',
-  description: 'Your personal AI assistant',
+  title: 'HaleyOS - Your AI Assistant',
+  description: 'HaleyOS AI Assistant Interface',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover',
 }
 
 export default function RootLayout({
@@ -15,9 +15,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans">
+      <head>
+        <meta name="theme-color" content="#000000" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
+      <body className="wallpaper-bg">
         <AuthProvider>
-          <MagicWindow />
           {children}
         </AuthProvider>
       </body>

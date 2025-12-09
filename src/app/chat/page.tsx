@@ -1,13 +1,18 @@
-// src/app/chat/page.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessage, getSystemStatus, executeModule } from '@/lib/haleyApi';
+import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
 import type { OSOperationResponse, SystemStatusResponse } from '@/lib/haleyApi';
+import { Menu, MoreVertical } from 'lucide-react';
+import ChatHeader from '@/components/ChatHeader';
+import ChatMessages from '@/components/ChatMessages';
+import ChatInputBar from '@/components/ChatInputBar';
+import MagicWindow from '@/components/MagicWindow';
+import Sidebar from '@/components/Sidebar';
 
-interface Message {
+export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
@@ -16,40 +21,45 @@ interface Message {
     state_changed?: boolean;
     mama_invoked?: boolean;
     syscalls?: number;
+    model_used?: string;
   };
 }
 
-export default function HaleyChatInterface(): JSX.Element {
-  const { user, loading } = useAuth();
+export default function ChatPage() {
+  const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showDebug, setShowDebug] = useState(false);
+  const [mode, setMode] = useState<'Assistant' | 'Regular' | 'Developer' | 'System'>('Assistant');
+  const [deepReasoningEnabled, setDeepReasoningEnabled] = useState(false);
   const [osStatus, setOsStatus] = useState<SystemStatusResponse | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [magicWindowContent, setMagicWindowContent] = useState<any>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initial system message
   useEffect(() => {
     const systemMessage: Message = {
       role: 'system',
-      content: 'HaleyOS initialized. This is an operating system interface, not a chatbot. Use natural language to interact with the OS.',
+      content: 'HaleyOS initialized. Ready to assist.',
       timestamp: new Date(),
       metadata: {
         operation: 'system_init'
       }
     };
     setMessages([systemMessage]);
-    
-    // Load OS status
     loadOSStatus();
   }, []);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+    if (!authLoading && !user) {
+      router.push('/');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     scrollToBottom();
@@ -68,26 +78,24 @@ export default function HaleyChatInterface(): JSX.Element {
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (messageText?: string, audioBlob?: Blob) => {
+    const textToSend = messageText || input;
+    if ((!textToSend.trim() && !audioBlob) || isLoading) return;
 
     const userMessage: Message = {
       role: 'user',
-      content: input,
+      content: audioBlob ? '[Voice message]' : textToSend,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    const userInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
-      // Send message via Baby → Kernel OS operation
-      const response: OSOperationResponse = await sendMessage(userInput);
+      const response: OSOperationResponse = await sendMessage(textToSend);
       
       if (response.status === 'success' || response.status === 'completed') {
-        // Extract result
         const resultContent = formatOSResult(response.result);
         
         const assistantMessage: Message = {
@@ -97,15 +105,20 @@ export default function HaleyChatInterface(): JSX.Element {
           metadata: {
             operation: 'compute',
             state_changed: response.state_changed,
-            mama_invoked: response.result?.computation === 'deep_analysis'
+            mama_invoked: response.result?.computation === 'deep_analysis',
+            model_used: response.model_used
           }
         };
         setMessages((prev) => [...prev, assistantMessage]);
+
+        // If voice was used, trigger TTS for response
+        if (audioBlob) {
+          speakResponse(resultContent);
+        }
       } else {
-        // Error response
         const errorMessage: Message = {
           role: 'assistant',
-          content: `OS Error: ${response.error_msg || 'Operation failed'}`,
+          content: `Error: ${response.error_msg || 'Operation failed'}`,
           timestamp: new Date(),
           metadata: {
             operation: 'error'
@@ -114,7 +127,6 @@ export default function HaleyChatInterface(): JSX.Element {
         setMessages((prev) => [...prev, errorMessage]);
       }
 
-      // Refresh OS status
       await loadOSStatus();
       
     } catch (error) {
@@ -132,207 +144,97 @@ export default function HaleyChatInterface(): JSX.Element {
 
   const formatOSResult = (result: any): string => {
     if (!result) return 'Operation completed';
-    
     if (typeof result === 'string') return result;
-    
     if (result.response) return result.response;
-    
     if (result.computation) {
       return `Computation: ${result.computation}\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
     }
-    
     if (result.result !== undefined) {
       return `Result: ${JSON.stringify(result.result)}`;
     }
-    
     return JSON.stringify(result, null, 2);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  const speakResponse = (text: string) => {
+    // TTS implementation - can use Web Speech API or backend service
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
     }
   };
 
-  // Quick action buttons
-  const quickActions = [
-    {
-      label: '🧮 Calculator',
-      action: async () => {
-        setIsLoading(true);
-        try {
-          const response = await executeModule('calculator', 'add', { a: 5, b: 3 });
-          const message: Message = {
-            role: 'assistant',
-            content: `Calculator result: ${response.result?.result}`,
-            timestamp: new Date(),
-            metadata: { operation: 'exec_module' }
-          };
-          setMessages(prev => [...prev, message]);
-        } catch (error) {
-          console.error('Calculator error:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    },
-    {
-      label: '📊 OS Status',
-      action: async () => {
-        await loadOSStatus();
-        if (osStatus) {
-          const message: Message = {
-            role: 'system',
-            content: `OS Status:\n- Kernel: ${osStatus.kernel_status.kernel}\n- Syscalls: ${osStatus.kernel_status.syscalls}\n- Processes: ${osStatus.kernel_status.processes}\n- Modules: ${osStatus.kernel_status.modules}`,
-            timestamp: new Date(),
-            metadata: { operation: 'status' }
-          };
-          setMessages(prev => [...prev, message]);
-        }
-      }
-    }
-  ];
+  const handleFileUpload = (files: FileList) => {
+    // Handle file uploads
+    console.log('Files uploaded:', files);
+    // TODO: Implement file upload to backend
+  };
 
-  if (loading) {
+  const handleGallerySelect = () => {
+    // Open gallery picker
+    console.log('Open gallery');
+    // TODO: Implement gallery selection
+  };
+
+  if (authLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
-        <div className="text-white text-xl">Loading HaleyOS...</div>
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-haley-text-body text-xl pulse-glow">Loading HaleyOS...</div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
-        <div className="text-white text-xl">Redirecting to login...</div>
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-haley-text-body text-xl">Redirecting...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onSignOut={signOut}
+      />
+
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 relative">
         {/* Header */}
-        <div className="bg-black/30 backdrop-blur-md border-b border-white/10 p-4">
-          <div className="flex items-center justify-between max-w-5xl mx-auto">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">H</span>
-              </div>
-              <div>
-                <h1 className="text-white text-xl font-bold">HaleyOS</h1>
-                <p className="text-purple-200 text-sm">Operating System Interface</p>
-              </div>
-            </div>
-            
-            {/* OS Status Badge */}
-            {osStatus && (
-              <div className="flex items-center space-x-2 bg-black/40 px-4 py-2 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="text-white text-sm">
-                  Syscalls: {osStatus.kernel_status.syscalls}
-                </span>
-
-              </div>
-            )}
-
-            <button
-              onClick={() => setShowDebug(!showDebug)}
-              className="text-white/60 hover:text-white transition-colors"
-            >
-              {showDebug ? '🔍' : '🔍'}
-            </button>
-          </div>
-        </div>
+        <ChatHeader
+          mode={mode}
+          onMenuClick={() => setSidebarOpen(true)}
+          onMoreClick={() => setMenuOpen(!menuOpen)}
+          osStatus={osStatus}
+        />
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-4xl mx-auto space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-6 py-4 ${
-                    message.role === 'user'
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                      : message.role === 'system'
-                      ? 'bg-yellow-500/20 border border-yellow-500/30 text-yellow-100'
-                      : 'bg-white/10 backdrop-blur-md text-white border border-white/20'
-                  }`}
-                >
-                  <div className="whitespace-pre-wrap">{message.content}</div>
-                  {showDebug && message.metadata && (
-                    <div className="mt-2 pt-2 border-t border-white/20 text-xs opacity-60">
-                      {Object.entries(message.metadata).map(([key, value]) => (
-                        <div key={key}>
-                          {key}: {String(value)}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/20">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
+        <ChatMessages
+          messages={messages}
+          isLoading={isLoading}
+          messagesEndRef={messagesEndRef}
+        />
 
-        {/* Quick Actions */}
-        <div className="px-4 pb-2">
-          <div className="max-w-4xl mx-auto flex space-x-2">
-            {quickActions.map((action, index) => (
-              <button
-                key={index}
-                onClick={action.action}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-white text-sm border border-white/20 transition-colors"
-                disabled={isLoading}
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Input Bar */}
+        <ChatInputBar
+          input={input}
+          setInput={setInput}
+          isLoading={isLoading}
+          onSend={handleSend}
+          deepReasoningEnabled={deepReasoningEnabled}
+          onToggleReasoning={() => setDeepReasoningEnabled(!deepReasoningEnabled)}
+          onFileUpload={handleFileUpload}
+          onGallerySelect={handleGallerySelect}
+        />
 
-        {/* Input Area */}
-        <div className="bg-black/30 backdrop-blur-md border-t border-white/10 p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex space-x-4 items-end">
-              <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-4">
-                <textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Enter OS operation..."
-                  className="w-full bg-transparent text-white placeholder-white/50 resize-none outline-none"
-                  rows={1}
-                  disabled={isLoading}
-                />
-              </div>
-              <button
-                onClick={handleSend}
-                disabled={isLoading || !input.trim()}
-                className="px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 rounded-2xl text-white font-medium transition-colors"
-              >
-                {isLoading ? '⏳' : '→'}
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* Magic Window - Bottom Left Floating */}
+        {magicWindowContent && (
+          <MagicWindow content={magicWindowContent} onClose={() => setMagicWindowContent(null)} />
+        )}
       </div>
     </div>
   );

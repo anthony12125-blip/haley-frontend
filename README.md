@@ -1,224 +1,214 @@
-# HaleyOS Frontend v2.0
+# HaleyOS Frontend v1.0
 
-Complete Next.js 14 frontend for HaleyOS AI Assistant with Magic Window canvas.
+A beautiful, feature-rich frontend for HaleyOS AI Assistant with custom theming, voice input, and Magic Window capabilities.
 
-## 🌟 Features
+## 🎨 Design Features
 
-### Authentication
-- ✅ Firebase Auth (Google + Email/Password)
-- ✅ Local persistence
-- ✅ Protected routes
-- ✅ Auto-redirect
+### Theme
+- **Primary Accent**: `#6A5FA7` (Purple)
+- **Secondary Accent**: `#8FB6FF` (Blue)
+- **Milky Way Wallpaper**: Diagonal orientation with comet accent
+- **Glass Morphism**: Backdrop blur effects throughout
+- **Dark Mode Optimized**: Perfect for night usage
 
-### Chat Interface
-- ✅ Real-time messaging
-- ✅ Enter to send / Shift+Enter for newline
-- ✅ Message history
-- ✅ Timestamps
+### Key UI Components
 
-### Magic Window Canvas
-- ✅ Full-screen animated background
-- ✅ 3-depth parallax stars
-- ✅ Drifting fog layer
-- ✅ Comet streaks
-- ✅ Idle shimmer
-- ✅ Purple/pink nebula gradients
-- ✅ 60 FPS capped
-- ✅ Mobile resolution scaling (0.7x)
+#### Login Screen
+- Centered glass card with subtle shadow
+- Email/password authentication
+- Google Sign-In integration
+- Beautiful wallpaper background with gradient overlay
 
-### Conjure Animations (10 types)
-1. swirl_energy
-2. spark_burst
-3. light_ripple
-4. comet_trail
-5. soft_pulse
-6. portal_open
-7. nebula_flash
-8. glyph_spin
-9. fracture_light
-10. wave_expansion
+#### Chat Interface
+- **Header**: Mode display (Assistant/Regular/Developer/System)
+- **Messages**: User bubbles (right) and assistant bubbles (left)
+- **Input Bar**: Multi-control bar with:
+  - Plus button (file/gallery upload)
+  - Thinking toggle (deep reasoning mode)
+  - Microphone button (tap to start, tap to send)
+  - Live call button (real-time voice with Haley)
+- **Magic Window**: Floating preview window for dynamic content
 
-### Voice & Files
-- ✅ Microphone (2-tap: record → stop & send)
-- ✅ File upload (images + ZIP)
-- ✅ Mobile photo picker
-- ✅ Desktop file explorer
+### Behavior Rules
 
-### Responsive Design
-- **Mobile**: Full-screen chat, Magic Window as background
-- **Desktop**: Sidebar + chat + Magic Window
+#### Mic & Call Exclusivity
+- Mic and Call buttons are mutually exclusive
+- When mic is recording, call button is disabled
+- When in call, mic button is disabled
 
-## 🚀 Quick Start
+#### Audio Response
+- Haley speaks responses ONLY when mic-record-send flow is used
+- Call mode always uses live audio
+- Text input does not trigger audio response
 
-### 1. Install Dependencies
+## 📦 Installation
 
 ```bash
+# Install dependencies
 npm install
-```
 
-### 2. Configure Environment
-
-```bash
+# Set up environment variables
 cp .env.example .env.local
-```
+# Edit .env.local with your Firebase credentials
 
-Your `.env.local` should have:
-
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyA0nz3gs5iUIVYZrGjGNC-QFsBujMYB04
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=haley-front-end.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=haley-front-end
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=haley-front-end.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=415166601162
-NEXT_PUBLIC_FIREBASE_APP_ID=1:415166601162:web:2964033f8f567b0e92133
-NEXT_PUBLIC_HALEY_URL=https://logic-engine-core-409495160162.us-central1.run.app
-```
-
-### 3. Run Development Server
-
-```bash
+# Run development server
 npm run dev
-```
 
-Open http://localhost:3000
-
-## 📦 Project Structure
-
-```
-src/
-├── app/
-│   ├── layout.tsx           # Root layout with MagicWindow
-│   ├── page.tsx             # Login page
-│   └── chat/
-│       └── page.tsx         # Chat interface
-├── components/
-│   ├── ChatInput.tsx        # Input box + mic + upload
-│   ├── MessageBubble.tsx    # Message display
-│   ├── MicButton.tsx        # 2-tap voice recording
-│   ├── PlusUploadButton.tsx # File upload
-│   ├── SidebarHistory.tsx   # Conversation history
-│   ├── MagicWindow.tsx      # Canvas background
-│   └── ConjureAnimation.tsx # Overlay animations
-├── lib/
-│   ├── firebaseClient.ts    # Firebase initialization
-│   ├── authContext.tsx      # Auth provider
-│   └── haleyApi.ts          # Backend API client
-└── styles/
-    └── globals.css          # Global styles
-```
-
-## 🔌 Backend Integration
-
-Frontend sends to: `POST /talk`
-
-```typescript
-{
-  message: string,
-  attachments?: File[],
-  firebaseUser: {
-    uid: string,
-    email: string | null,
-    displayName: string | null
-  }
-}
-```
-
-Response expected:
-
-```typescript
-{
-  reply: string,
-  meta?: {
-    timestamp?: string,
-    tokens_used?: number
-  },
-  magic_window?: {
-    animation?: string,  // One of the 10 animations
-    content?: any        // Content to display
-  }
-}
-```
-
-## 🎨 Theme Colors
-
-```css
---haley-primary: #C084FC
---haley-secondary: #A78BFA
---haley-accent: #F0ABFC
-```
-
-## 🛠️ Build for Production
-
-```bash
+# Build for production
 npm run build
 npm start
 ```
 
-## 🚀 Deploy to Firebase Hosting
+## 🔧 Environment Variables
 
+Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+```
+
+## 🏗️ Project Structure
+
+```
+haleyos-updated/
+├── public/
+│   └── wallpaper.png          # Milky Way background
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx         # Root layout with AuthProvider
+│   │   ├── page.tsx           # Login page
+│   │   └── chat/
+│   │       └── page.tsx       # Main chat interface
+│   ├── components/
+│   │   ├── ChatHeader.tsx     # Header with mode display
+│   │   ├── ChatMessages.tsx   # Message history display
+│   │   ├── ChatInputBar.tsx   # Input controls
+│   │   ├── ThinkingToggle.tsx # Deep reasoning toggle
+│   │   ├── Sidebar.tsx        # Navigation sidebar
+│   │   └── MagicWindow.tsx    # Dynamic preview window
+│   ├── lib/
+│   │   ├── authContext.tsx    # Firebase authentication
+│   │   ├── firebaseClient.ts  # Firebase configuration
+│   │   └── haleyApi.ts        # Backend API integration
+│   └── styles/
+│       └── globals.css        # Global styles and theme
+├── tailwind.config.js         # Tailwind with custom theme
+├── package.json
+└── README.md
+```
+
+## 🎯 Key Features
+
+### Authentication
+- Email/password sign-in and sign-up
+- Google OAuth integration
+- Persistent sessions with Firebase
+
+### Chat Interface
+- Real-time message streaming
+- System status display
+- Mode switching (Assistant/Regular/Developer/System)
+- Deep reasoning toggle for complex queries
+
+### Voice Features
+- **Tap-to-record**: Two-step mic interaction (tap to start, tap to send)
+- **Text-to-Speech**: Haley responds vocally when voice input is used
+- **Live Call**: Real-time voice conversation mode
+
+### File Handling
+- Upload files via plus button
+- Gallery image selection
+- Multi-file support
+
+### Magic Window
+- Floating preview window
+- Roblox integration preview
+- UI component previews
+- Code execution display
+- Minimizable and closable
+
+## 🎨 Theme Customization
+
+All colors are defined in:
+- `tailwind.config.js` - Tailwind theme extension
+- `src/styles/globals.css` - CSS variables and utilities
+
+### Color Palette
+```css
+--haley-primary: #6A5FA7
+--haley-primary-hover: #7B70C0
+--haley-primary-pressed: #584E8D
+--haley-secondary: #8FB6FF
+--haley-secondary-dim: #6A90D6
+--haley-input-bg: #121218
+--haley-input-border: #2A2A33
+--haley-text-title: #EDE9FF
+--haley-text-body: #D5D1E8
+--haley-text-subtext: #A29FC0
+```
+
+## 📱 Mobile Responsiveness
+
+- Safe area insets for notched devices
+- iOS viewport-fit support
+- Adaptive input bar sizing
+- Touch-optimized controls
+- Maximum width constraints for readability
+
+## 🔌 Backend Integration
+
+Connects to HaleyOS Logic Engine via REST API:
+- `/logic/process` - Send messages
+- `/logic/system/health` - System status
+- Automatic LLM routing via Baby Haley
+- Multi-model support (Claude, GPT, Gemini, etc.)
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
 ```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting
+vercel deploy
+```
+
+### Firebase Hosting
+```bash
+npm run build
 firebase deploy
 ```
 
-## 📱 Features by Platform
-
-### Mobile
-- Full-screen chat
-- Magic Window as permanent background
-- Slide-up conjure animations
-- Touch-optimized controls
-- Photo picker
-
-### Desktop
-- Sidebar with conversation history
-- Wide chat area
-- Magic Window always visible
-- File explorer
-- Keyboard shortcuts
-
-## 🎯 Environment Variables
-
-All required vars:
-
-```
-NEXT_PUBLIC_FIREBASE_API_KEY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-NEXT_PUBLIC_FIREBASE_PROJECT_ID
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-NEXT_PUBLIC_FIREBASE_APP_ID
-NEXT_PUBLIC_HALEY_URL
+### Docker
+```bash
+docker build -t haleyos-frontend .
+docker run -p 3000:3000 haleyos-frontend
 ```
 
-## 📝 Notes
+## 🛠️ Development
 
-- Firebase config is already set for `haley-front-end` project
-- Backend URL points to your Cloud Run service
-- Magic Window runs at 60 FPS max
-- Mobile uses 0.7x resolution scale for performance
-- All animations are CSS/Canvas based (no heavy libraries)
+```bash
+# Run with hot reload
+npm run dev
 
-## 🐛 Troubleshooting
+# Type checking
+npm run lint
 
-**Firebase Auth not working:**
-- Check Firebase Console → Authentication is enabled
-- Verify Google sign-in is configured
+# Build production
+npm run build
+```
 
-**Magic Window not rendering:**
-- Check browser console for canvas errors
-- Ensure WebGL is enabled
+## 📄 License
 
-**Backend connection fails:**
-- Verify `NEXT_PUBLIC_HALEY_URL` is correct
-- Check CORS is enabled on backend
+Proprietary - HaleyOS Project
 
-## 🎉 Ready to Deploy!
+## 🤝 Contributing
 
-Zero placeholders, zero TODOs. Everything is complete and production-ready.
+This is a private project. For access or contributions, contact the HaleyOS team.
 
 ---
 
-**Built for HaleyOS** ✨
+**HaleyOS Frontend v1.0** - Built with Next.js 14, React 18, TypeScript, and Tailwind CSS
