@@ -40,7 +40,7 @@ export interface SystemStatusResponse {
 }
 
 export interface OSOperationResponse {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'completed';
   result?: any;
   state_changed?: boolean;
   error_code?: number;
