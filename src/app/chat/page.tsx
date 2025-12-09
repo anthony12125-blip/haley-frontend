@@ -427,7 +427,7 @@ export default function HaleyChatInterface(): JSX.Element {
       // Send message via Baby → Kernel OS operation
       const response: OSOperationResponse = await sendMessage(userInput);
       
-      if (response.status === 'success') {
+      if (response.status === 'success' || response.status === 'completed') {
         // Extract result
         const resultContent = formatOSResult(response.result);
         
