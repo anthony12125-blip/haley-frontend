@@ -20,6 +20,5 @@ env:
     value: "415166601162"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: 1:415166601162:web:2964033f8f8567b0e92133
-  - variable: NEXT_PUBLIC_BACKEND_URL
-    value: https://logic-engine-core2-409495160162.us-central1.run.app
+  
 
