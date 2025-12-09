@@ -82,7 +82,7 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        intent: 'chat.message'
+        intent: 'chat.message',
         user_id: 'user',
         payload: {
   message: message
