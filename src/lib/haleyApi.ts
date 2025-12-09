@@ -1,10 +1,10 @@
 // src/lib/haleyApi.ts
-// FIXED: Matches deployed api_enhanced.py endpoints AND response format
+// UPDATED: Supreme Court + Dragon Awakening support
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
 // ============================================================================
-// BACKEND API TYPES (matches api_enhanced.py)
+// BACKEND API TYPES
 // ============================================================================
 
 export interface ProcessRequest {
@@ -47,6 +47,26 @@ export interface OSOperationResponse {
   error_msg?: string;
 }
 
+export interface CourtCase {
+  intent: string;
+  user_id: string;
+  payload?: any;
+  permissions?: string[];
+}
+
+export interface CourtRuling {
+  court: string;
+  case: CourtCase;
+  ruling: {
+    ruling: 'affirm' | 'deny' | 'abstain';
+    reasoning: string;
+    confidence: number;
+    votes: any[];
+    dragon_invoked: boolean;
+  };
+  status: string;
+}
+
 // ============================================================================
 // API FUNCTIONS
 // ============================================================================
@@ -63,7 +83,7 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
       },
       body: JSON.stringify({
         intent: 'mama.compute',
-        user_id: 'user', // TODO: Get from auth context
+        user_id: 'user',
         payload: {
           problem: message,
           context: {}
@@ -78,11 +98,10 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
 
     const data: ProcessResponse = await response.json();
     
-    // Convert ProcessResponse to OSOperationResponse format
     return {
       status: data.status,
       result: data.result,
-      state_changed: false, // Logic engine doesn't expose this yet
+      state_changed: false,
       error_msg: data.error
     };
   } catch (error) {
@@ -131,8 +150,7 @@ export async function executeModule(
 }
 
 /**
- * Get system status - uses system.health intent
- * FIXED: Correctly maps backend response fields
+ * Get system status - UPDATED for Dragon status
  */
 export async function getSystemStatus(): Promise<SystemStatusResponse> {
   try {
@@ -149,32 +167,33 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
 
     const data = await response.json();
     
-    // Map actual backend response to expected format
-    // Backend returns: mama_awake, requests_processed, state_size, modules_registered
+    // Map backend response with Dragon status
+    // Backend now returns: dragon: {state, mode, total_awakenings, ...}
+    const dragonStatus = data.dragon || {};
+    
     return {
       os: 'HaleyOS',
       kernel_status: {
         kernel: 'Logic Engine',
-        syscalls: data.requests_processed || 0,        // ✅ FIXED: was missing
-        mama_invocations: data.mama_awake ? 1 : 0,    // ✅ FIXED: derived from mama_awake
-        mama_state: data.mama_awake ? 'active' : 'halted',  // ✅ FIXED: derived from mama_awake
+        syscalls: data.requests_processed || 0,
+        mama_invocations: dragonStatus.total_awakenings || 0,  // Dragon awakenings
+        mama_state: dragonStatus.state || 'dormant',  // Dragon state
         processes: 1,
-        modules: data.modules_registered || 0,         // ✅ FIXED: was module_count
-        memory_keys: data.state_size || 0              // ✅ FIXED: was missing
+        modules: data.modules_registered || 0,
+        memory_keys: data.state_size || 0
       },
       baby_pid: 1001,
       note: 'Operating System Interface'
     };
   } catch (error) {
     console.error('[HaleyAPI] Status check error:', error);
-    // Return default status on error
     return {
       os: 'HaleyOS',
       kernel_status: {
         kernel: 'Logic Engine',
         syscalls: 0,
         mama_invocations: 0,
-        mama_state: 'unknown',
+        mama_state: 'dormant',
         processes: 1,
         modules: 0,
         memory_keys: 0
@@ -182,6 +201,54 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
       baby_pid: 1001,
       note: 'Operating System Interface'
     };
+  }
+}
+
+/**
+ * Submit case to Supreme Court
+ * Seven Justices deliberate, Dragon may awaken
+ */
+export async function submitToSupremeCourt(caseData: CourtCase): Promise<CourtRuling> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/logic/court/rule`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(caseData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Court ruling failed: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[HaleyAPI] Court error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get Supreme Court status
+ */
+export async function getCourtStatus() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/logic/court/status`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Court status failed: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('[HaleyAPI] Court status error:', error);
+    throw error;
   }
 }
 
@@ -232,7 +299,7 @@ export async function listModules() {
 }
 
 /**
- * Wake Mama Haley for deep computation
+ * Wake Mama Haley (legacy - now handled by Supreme Court)
  */
 export async function wakeMama(userId: string = 'user') {
   try {
