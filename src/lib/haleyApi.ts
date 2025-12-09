@@ -1,5 +1,5 @@
 // src/lib/haleyApi.ts
-// UPDATED: Supreme Court + Dragon Awakening support
+// PATCHED: Added deep_reasoning syscall support
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -14,6 +14,8 @@ export interface ProcessRequest {
     [key: string]: any;
   };
   permissions?: string[];
+  syscall?: string;  // NEW: syscall flag for deep reasoning
+  mode?: string;     // NEW: operation mode
 }
 
 export interface ProcessResponse {
@@ -45,6 +47,9 @@ export interface OSOperationResponse {
   state_changed?: boolean;
   error_code?: number;
   error_msg?: string;
+  mama_invoked?: boolean;     // NEW: track if Mama was invoked
+  baby_invoked?: boolean;     // NEW: track if Baby was invoked
+  operation?: string;         // NEW: operation type
 }
 
 export interface CourtCase {
@@ -68,27 +73,75 @@ export interface CourtRuling {
 }
 
 // ============================================================================
+// SYSCALL DETECTION
+// ============================================================================
+
+/**
+ * Detect if message contains deep reasoning syscall triggers
+ */
+function detectSyscall(message: string): { syscall: string | null; mode: string } {
+  const lowerMessage = message.toLowerCase();
+  
+  // Deep reasoning triggers
+  const deepReasoningTriggers = [
+    'deep reasoning',
+    'deep reason',
+    '/syscall deep',
+    '/syscall mama',
+    'mama',
+    'haley, run deep',
+    'run deep reasoning'
+  ];
+  
+  for (const trigger of deepReasoningTriggers) {
+    if (lowerMessage.includes(trigger)) {
+      return {
+        syscall: 'deep_reasoning',
+        mode: 'deep_reasoning'
+      };
+    }
+  }
+  
+  return {
+    syscall: null,
+    mode: 'auto'
+  };
+}
+
+// ============================================================================
 // API FUNCTIONS
 // ============================================================================
 
 /**
- * Send user message - routes to mama.compute intent
+ * Send user message - PATCHED to detect and send syscall flags
  */
 export async function sendMessage(message: string): Promise<OSOperationResponse> {
   try {
+    // Detect syscall from message content
+    const { syscall, mode } = detectSyscall(message);
+    
+    const requestPayload: ProcessRequest = {
+      intent: 'chat.message',
+      user_id: 'user',
+      payload: {
+        message: message
+      },
+      permissions: ['user']
+    };
+    
+    // Add syscall if detected
+    if (syscall) {
+      requestPayload.syscall = syscall;
+      requestPayload.mode = mode;
+      console.log('[HaleyAPI] Deep reasoning syscall detected:', syscall);
+    }
+    
     const response = await fetch(`${BACKEND_URL}/logic/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        intent: 'chat.message',
-        user_id: 'user',
-        payload: {
-  message: message
-},
-        permissions: ['user']
-      } as ProcessRequest),
+      body: JSON.stringify(requestPayload),
     });
 
     if (!response.ok) {
@@ -101,7 +154,10 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
       status: data.status,
       result: data.result,
       state_changed: false,
-      error_msg: data.error
+      error_msg: data.error,
+      mama_invoked: data.result?.mama_invoked || false,
+      baby_invoked: data.result?.baby_invoked || false,
+      operation: data.result?.operation || 'compute'
     };
   } catch (error) {
     console.error('[HaleyAPI] Error:', error);
