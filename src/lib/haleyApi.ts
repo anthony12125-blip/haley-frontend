@@ -1,5 +1,6 @@
 // src/lib/haleyApi.ts
-// PATCHED: Added deep_reasoning syscall support
+// UPDATED: Baby Haley now routes all LLM calls deterministically via task classification
+// No more syscall detection needed - routing is automatic
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -14,8 +15,7 @@ export interface ProcessRequest {
     [key: string]: any;
   };
   permissions?: string[];
-  syscall?: string;  // NEW: syscall flag for deep reasoning
-  mode?: string;     // NEW: operation mode
+  mode?: string;
 }
 
 export interface ProcessResponse {
@@ -31,8 +31,6 @@ export interface SystemStatusResponse {
   kernel_status: {
     kernel: string;
     syscalls: number;
-    mama_invocations: number;
-    mama_state: string;
     processes: number;
     modules: number;
     memory_keys: number;
@@ -47,9 +45,10 @@ export interface OSOperationResponse {
   state_changed?: boolean;
   error_code?: number;
   error_msg?: string;
-  mama_invoked?: boolean;     // NEW: track if Mama was invoked
-  baby_invoked?: boolean;     // NEW: track if Baby was invoked
-  operation?: string;         // NEW: operation type
+  baby_invoked?: boolean;
+  model_used?: string;
+  task?: string;
+  operation?: string;
 }
 
 export interface CourtCase {
@@ -73,68 +72,23 @@ export interface CourtRuling {
 }
 
 // ============================================================================
-// SYSCALL DETECTION
-// ============================================================================
-
-/**
- * Detect if message contains deep reasoning syscall triggers
- */
-function detectSyscall(message: string): { syscall: string | null; mode: string } {
-  const lowerMessage = message.toLowerCase();
-  
-  // Deep reasoning triggers
-  const deepReasoningTriggers = [
-    'deep reasoning',
-    'deep reason',
-    '/syscall deep',
-    '/syscall mama',
-    'mama',
-    'haley, run deep',
-    'run deep reasoning'
-  ];
-  
-  for (const trigger of deepReasoningTriggers) {
-    if (lowerMessage.includes(trigger)) {
-      return {
-        syscall: 'deep_reasoning',
-        mode: 'deep_reasoning'
-      };
-    }
-  }
-  
-  return {
-    syscall: null,
-    mode: 'auto'
-  };
-}
-
-// ============================================================================
 // API FUNCTIONS
 // ============================================================================
 
 /**
- * Send user message - PATCHED to detect and send syscall flags
+ * Send user message - Baby Haley automatically routes to appropriate LLM
  */
 export async function sendMessage(message: string): Promise<OSOperationResponse> {
   try {
-    // Detect syscall from message content
-    const { syscall, mode } = detectSyscall(message);
-    
     const requestPayload: ProcessRequest = {
       intent: 'chat.message',
       user_id: 'user',
       payload: {
         message: message
       },
-      permissions: ['user']
+      permissions: ['user'],
+      mode: 'auto'
     };
-    
-    // Add syscall if detected
-    if (syscall) {
-      requestPayload.syscall = syscall;
-      requestPayload.mode = mode;
-      console.log('[HaleyAPI] Deep reasoning syscall detected:', syscall);
-    }
     
     const response = await fetch(`${BACKEND_URL}/logic/process`, {
       method: 'POST',
@@ -155,9 +109,10 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
       result: data.result,
       state_changed: false,
       error_msg: data.error,
-      mama_invoked: data.result?.mama_invoked || false,
       baby_invoked: data.result?.baby_invoked || false,
-      operation: data.result?.operation || 'compute'
+      model_used: data.result?.model_used || 'unknown',
+      task: data.result?.task || 'general',
+      operation: 'chat'
     };
   } catch (error) {
     console.error('[HaleyAPI] Error:', error);
@@ -205,7 +160,7 @@ export async function executeModule(
 }
 
 /**
- * Get system status - UPDATED for Dragon status
+ * Get system status
  */
 export async function getSystemStatus(): Promise<SystemStatusResponse> {
   try {
@@ -222,23 +177,17 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
 
     const data = await response.json();
     
-    // Map backend response with Dragon status
-    // Backend now returns: dragon: {state, mode, total_awakenings, ...}
-    const dragonStatus = data.dragon || {};
-    
     return {
       os: 'HaleyOS',
       kernel_status: {
         kernel: 'Logic Engine',
         syscalls: data.requests_processed || 0,
-        mama_invocations: dragonStatus.total_awakenings || 0,  // Dragon awakenings
-        mama_state: dragonStatus.state || 'dormant',  // Dragon state
         processes: 1,
         modules: data.modules_registered || 0,
         memory_keys: data.state_size || 0
       },
       baby_pid: 1001,
-      note: 'Operating System Interface'
+      note: 'Multi-LLM Router Active'
     };
   } catch (error) {
     console.error('[HaleyAPI] Status check error:', error);
@@ -247,14 +196,12 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
       kernel_status: {
         kernel: 'Logic Engine',
         syscalls: 0,
-        mama_invocations: 0,
-        mama_state: 'dormant',
         processes: 1,
         modules: 0,
         memory_keys: 0
       },
       baby_pid: 1001,
-      note: 'Operating System Interface'
+      note: 'Multi-LLM Router Active'
     };
   }
 }
@@ -349,29 +296,6 @@ export async function listModules() {
     return await response.json();
   } catch (error) {
     console.error('[HaleyAPI] Module list error:', error);
-    throw error;
-  }
-}
-
-/**
- * Wake Mama Haley (legacy - now handled by Supreme Court)
- */
-export async function wakeMama(userId: string = 'user') {
-  try {
-    const response = await fetch(`${BACKEND_URL}/logic/mama/wake?user_id=${userId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Wake Mama failed: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('[HaleyAPI] Wake Mama error:', error);
     throw error;
   }
 }
