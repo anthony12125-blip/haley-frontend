@@ -85,9 +85,8 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
         intent: 'chat.message'
         user_id: 'user',
         payload: {
-          problem: message,
-          context: {}
-        },
+  message: message
+},
         permissions: ['user']
       } as ProcessRequest),
     });
