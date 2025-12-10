@@ -80,9 +80,11 @@ export default function Sidebar({
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 bottom-0 w-80 glass-strong border-r border-border z-50 transform transition-all duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`}
+        className={`fixed left-0 top-0 bottom-0 glass-strong border-r border-border z-50 transition-all duration-300 ${
+          isOpen 
+            ? 'translate-x-0 w-80' 
+            : '-translate-x-full w-80 md:translate-x-0 md:w-0 md:min-w-0 md:overflow-hidden md:border-r-0'
+        }`}
       >
         <div className="flex flex-col h-full">
           {/* Header with Collapse Button */}
