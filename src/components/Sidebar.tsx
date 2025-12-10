@@ -78,15 +78,80 @@ export default function Sidebar({
         onClick={onClose}
       />
 
-      {/* Sidebar */}
+      {/* Sidebar - Full width on mobile, Mini/Full on desktop */}
       <div
         className={`fixed left-0 top-0 bottom-0 glass-strong border-r border-border z-50 transition-all duration-300 ${
           isOpen 
             ? 'translate-x-0 w-80' 
-            : '-translate-x-full w-80 md:translate-x-0 md:w-0 md:min-w-0 md:overflow-hidden md:border-r-0'
+            : '-translate-x-full w-80 md:translate-x-0 md:w-[60px]'
         }`}
+        style={{
+          background: isOpen ? undefined : '#111418'
+        }}
       >
-        <div className="flex flex-col h-full">
+        {/* Mini Sidebar - Desktop only, when collapsed */}
+        {!isOpen && (
+          <div className="hidden md:flex flex-col h-full items-center py-3">
+            {/* Top: Haley Logo */}
+            <button
+              onClick={onClose}
+              className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+              title="Open Sidebar"
+            >
+              <span className="text-2xl font-bold text-gray-400 group-hover:text-gray-200">H</span>
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                Open Sidebar
+              </div>
+            </button>
+
+            {/* Middle: New Chat & Search */}
+            <div className="flex-1 flex flex-col items-center gap-2 mt-6">
+              <button
+                onClick={onNewConversation}
+                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                title="New Chat"
+              >
+                <Plus size={24} className="text-gray-400 group-hover:text-gray-200" />
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                  New Chat
+                </div>
+              </button>
+              
+              <button
+                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                title="Search Chats"
+              >
+                <MessageSquare size={24} className="text-gray-400 group-hover:text-gray-200" />
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                  Search Chats
+                </div>
+              </button>
+            </div>
+
+            {/* Bottom: Profile */}
+            <button
+              onClick={() => setShowAccountMenu(!showAccountMenu)}
+              className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+              title="Account"
+            >
+              {userPhotoURL ? (
+                <img 
+                  src={userPhotoURL} 
+                  alt="User" 
+                  className="w-8 h-8 rounded-full"
+                />
+              ) : (
+                <User size={24} className="text-gray-400 group-hover:text-gray-200" />
+              )}
+              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                Account
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Full Sidebar - Always on mobile, conditional on desktop */}
+        <div className={`flex flex-col h-full ${isOpen ? 'block' : 'hidden md:hidden'}`}>
           {/* Header with Collapse Button */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <h2 className="text-lg font-bold text-gradient">HaleyOS</h2>
