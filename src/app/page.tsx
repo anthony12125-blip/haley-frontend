@@ -1,28 +1,305 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Brain, Users, Zap } from 'lucide-react';
+import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import ChatHeader from '@/components/ChatHeader';
+import ChatMessages from '@/components/ChatMessages';
+import ChatInputBar from '@/components/ChatInputBar';
+import MagicWindow from '@/components/MagicWindow';
+import ModeSelector from '@/components/ModeSelector';
+import Sidebar from '@/components/Sidebar';
+import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
 
-export default function HomePage() {
-  const { user, loading, signInWithGoogle } = useAuth();
+export default function ChatPage() {
+  const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
+  const device = useDeviceDetection();
 
+  // UI State
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [magicWindowOpen, setMagicWindowOpen] = useState(false);
+  const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
+
+  // Set sidebar open by default on desktop
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/chat');
+    if (device.type === 'desktop') {
+      setSidebarOpen(true);
     }
-  }, [user, loading, router]);
+  }, [device.type]);
 
-  if (loading) {
+  // AI State
+  const [aiMode, setAiMode] = useState<AIMode>('single');
+  const [activeJustice, setActiveJustice] = useState<string | null>(null);
+  
+  // Chat State
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Feature Toggles
+  const [researchEnabled, setResearchEnabled] = useState(false);
+  const [logicEngineEnabled, setLogicEngineEnabled] = useState(false);
+  
+  // Magic Window
+  const [magicWindowContent, setMagicWindowContent] = useState<MagicWindowContent | null>(null);
+  
+  // System State
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  
+  // Conversation History - Per Justice
+  const [conversations, setConversations] = useState<ConversationHistory[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string>('default');
+  const [conversationsByJustice, setConversationsByJustice] = useState<Record<string, Message[]>>({
+    'haley': [],
+    'gemini': [],
+    'gpt': [],
+    'claude': [],
+    'llama': [],
+    'perplexity': [],
+    'mistral': [],
+    'grok': [],
+  });
+
+  // Available Justices and Agents (updated order)
+  const availableJustices = [
+    { id: 'gemini', name: 'Gemini', provider: 'Google' },
+    { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
+    { id: 'claude', name: 'Claude', provider: 'Anthropic' },
+    { id: 'llama', name: 'Llama', provider: 'Meta' },
+    { id: 'perplexity', name: 'Perplexity', provider: 'Perplexity AI' },
+    { id: 'mistral', name: 'Mistral', provider: 'Mistral AI' },
+    { id: 'grok', name: 'Grok', provider: 'xAI' },
+  ];
+
+  const availableAgents: Array<{ id: string; name: string; description: string }> = [];
+
+  // Initialize
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/');
+      return;
+    }
+
+    if (user) {
+      initializeChat();
+      loadSystemStatus();
+      const statusInterval = setInterval(loadSystemStatus, 30000); // Update every 30s
+      return () => clearInterval(statusInterval);
+    }
+  }, [user, authLoading, router]);
+
+  const initializeChat = () => {
+    const systemMessage: Message = {
+      id: generateId(),
+      role: 'system',
+      content: 'HaleyOS initialized. Multi-LLM router active. Ready to assist.',
+      timestamp: new Date(),
+      metadata: {
+        operation: 'system_init',
+      },
+    };
+    setMessages([systemMessage]);
+  };
+
+  const loadSystemStatus = async () => {
+    try {
+      const status = await getSystemStatus();
+      setSystemStatus(status);
+    } catch (error) {
+      console.error('Failed to load system status:', error);
+    }
+  };
+
+  const handleSend = async (messageText?: string, audioBlob?: Blob) => {
+    const textToSend = messageText || input;
+    if ((!textToSend.trim() && !audioBlob) || isLoading) return;
+
+    const userMessage: Message = {
+      id: generateId(),
+      role: 'user',
+      content: audioBlob ? '[Voice message]' : textToSend,
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await sendMessage(textToSend);
+
+      if (response.status === 'success' || response.status === 'completed') {
+        const assistantMessage: Message = {
+          id: generateId(),
+          role: 'assistant',
+          content: formatResponse(response.result),
+          timestamp: new Date(),
+          metadata: {
+            operation: 'chat',
+            model_used: response.model_used,
+            baby_invoked: response.baby_invoked,
+            task: response.task,
+            supreme_court: aiMode === 'supreme-court',
+            llm_sources: activeJustice ? [activeJustice] : undefined,
+          },
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+
+        // If audioBlob was used, speak the response
+        if (audioBlob) {
+          speakResponse(assistantMessage.content);
+        }
+
+        // Check if response includes visualization data
+        if (response.result?.visualization) {
+          setMagicWindowContent({
+            type: 'visualization',
+            content: response.result.visualization,
+            title: 'Analysis Results',
+          });
+          setMagicWindowOpen(true);
+        }
+      } else {
+        const errorMessage: Message = {
+          id: generateId(),
+          role: 'assistant',
+          content: `Error: ${response.error_msg || 'Operation failed'}`,
+          timestamp: new Date(),
+          metadata: {
+            operation: 'error',
+          },
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
+
+      await loadSystemStatus();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      const errorMessage: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: `System error: ${error instanceof Error ? error.message : 'Failed to process operation'}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatResponse = (result: any): string => {
+    if (!result) return 'Operation completed';
+    if (typeof result === 'string') return result;
+    if (result.response) return result.response;
+    if (result.computation) {
+      return `${result.computation}\n\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
+    }
+    if (result.result !== undefined) {
+      return `Result: ${JSON.stringify(result.result)}`;
+    }
+    return JSON.stringify(result, null, 2);
+  };
+
+  const speakResponse = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const handleFileUpload = (files: FileList) => {
+    console.log('Files uploaded:', files);
+    setMagicWindowContent({
+      type: 'data',
+      content: {
+        files: files.length,
+        names: Array.from(files).map(f => f.name).join(', '),
+      },
+      title: 'Uploaded Files',
+    });
+    setMagicWindowOpen(true);
+  };
+
+  const handleGallerySelect = () => {
+    console.log('Gallery selection');
+  };
+
+  const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
+    if (mode === 'haley') {
+      handleJusticeSelect(null);
+    }
+  };
+
+  const handleJusticeSelect = (justice: string | null) => {
+    const justiceKey = justice || 'haley';
+    
+    // Save current messages to current justice
+    const currentJusticeKey = activeJustice || 'haley';
+    setConversationsByJustice(prev => ({
+      ...prev,
+      [currentJusticeKey]: messages
+    }));
+    
+    // Load messages for selected justice
+    const loadedMessages = conversationsByJustice[justiceKey];
+    if (loadedMessages && loadedMessages.length > 0) {
+      setMessages(loadedMessages);
+    } else {
+      // Initialize with system message for new justice
+      const systemMessage: Message = {
+        id: generateId(),
+        role: 'system',
+        content: justice 
+          ? `Switched to ${justice.charAt(0).toUpperCase() + justice.slice(1)}. Ready to assist.`
+          : 'HaleyOS initialized. Multi-LLM router active. Ready to assist.',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'system_init',
+        },
+      };
+      setMessages([systemMessage]);
+    }
+    
+    setActiveJustice(justice);
+    setAiMode('single');
+    
+    console.log(`Switched to ${justiceKey} - loaded ${loadedMessages?.length || 0} messages`);
+  };
+
+  const handleRetryMessage = (messageId: string) => {
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex > 0) {
+      const previousMessage = messages[messageIndex - 1];
+      if (previousMessage.role === 'user') {
+        handleSend(previousMessage.content);
+      }
+    }
+  };
+
+  const handleBranchMessage = (messageId: string) => {
+    console.log('Branch conversation from message:', messageId);
+  };
+
+  const handleNewConversation = () => {
+    const newId = generateId();
+    setCurrentConversationId(newId);
+    initializeChat();
+    if (device.type !== 'desktop') {
+      setSidebarOpen(false);
+    }
+  };
+
+  if (authLoading) {
     return (
       <div className="full-screen flex items-center justify-center">
-        <div className="space-bg">
-          <div className="stars" />
-        </div>
-        <div className="relative z-10 text-center">
-          <div className="text-3xl font-bold text-gradient mb-4">HaleyOS</div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-gradient mb-4">HaleyOS</div>
           <div className="typing-indicator">
             <div className="typing-dot" />
             <div className="typing-dot" />
@@ -33,130 +310,107 @@ export default function HomePage() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="full-screen flex items-center justify-center">
+    <div className="full-screen flex overflow-hidden">
+      {/* Space Background */}
       <div className="space-bg">
         <div className="stars" />
-        {[...Array(5)].map((_, i) => (
+        {[...Array(3)].map((_, i) => (
           <div
             key={i}
             className="shooting-star"
             style={{
-              top: `${Math.random() * 100}%`,
-              right: `${Math.random() * 100}%`,
+              top: `${Math.random() * 50}%`,
+              right: `${Math.random() * 50}%`,
               animationDelay: `${Math.random() * 3}s`,
             }}
           />
         ))}
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-        {/* Hero */}
-        <div className="mb-12">
-          <h1 className="text-6xl md:text-8xl font-bold text-gradient mb-6">
-            HaleyOS
-          </h1>
-          <p className="text-xl md:text-2xl text-secondary mb-4">
-            The Ultimate Multi-LLM AI Assistant
-          </p>
-          <p className="text-lg text-secondary/80 max-w-2xl mx-auto">
-            Harness the power of multiple AI models working together.
-            From single AI responses to supreme court debates.
-          </p>
-        </div>
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(!sidebarOpen)}
+        onSignOut={signOut}
+        conversations={conversations}
+        currentConversationId={currentConversationId}
+        onNewConversation={handleNewConversation}
+        onSelectConversation={setCurrentConversationId}
+        activeJustice={activeJustice}
+        onSelectJustice={handleJusticeSelect}
+        userEmail={user.email || undefined}
+        userPhotoURL={user.photoURL || undefined}
+      />
 
-        {/* Features */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <FeatureCard
-            icon={<Sparkles size={32} />}
-            title="Single AI"
-            description="Fast, efficient responses from your chosen model"
-          />
-          <FeatureCard
-            icon={<Brain size={32} />}
-            title="Multi AI"
-            description="Multiple models collaborate for better answers"
-          />
-          <FeatureCard
-            icon={<Users size={32} />}
-            title="Supreme Court"
-            description="All AIs debate to reach consensus on complex topics"
-          />
-        </div>
+      {/* Main Chat Area */}
+      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
+        device.type === 'desktop' 
+          ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
+          : 'ml-0'
+      }`}>
+        {/* Header with hamburger menu */}
+        <ChatHeader
+          aiMode={aiMode}
+          activeModels={activeJustice ? [activeJustice] : ['Haley']}
+          activeJustice={activeJustice}
+          onToggleResearch={() => setResearchEnabled(!researchEnabled)}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
+          systemStatus={systemStatus}
+          researchEnabled={researchEnabled}
+          logicEngineEnabled={logicEngineEnabled}
+          onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
+        />
 
-        {/* Additional Features */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12">
-          <Badge icon={<Zap />} text="Research Mode" />
-          <Badge icon={<Brain />} text="Logic Engine" />
-          <Badge text="Voice Input" />
-          <Badge text="File Analysis" />
-          <Badge text="Magic Window" />
-        </div>
+        {/* Messages */}
+        <ChatMessages
+          messages={messages}
+          isLoading={isLoading}
+          onRetryMessage={handleRetryMessage}
+          onBranchMessage={handleBranchMessage}
+        />
 
-        {/* CTA */}
-        <div className="glass-strong rounded-2xl p-8 max-w-md mx-auto">
-          <h3 className="text-2xl font-bold mb-4">Get Started</h3>
-          <p className="text-secondary mb-6">
-            Sign in with Google to access HaleyOS
-          </p>
-          <button
-            onClick={signInWithGoogle}
-            className="btn-primary w-full flex items-center justify-center gap-3 text-lg"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            <span>Continue with Google</span>
-          </button>
-        </div>
+        {/* Input Bar */}
+        <ChatInputBar
+          input={input}
+          setInput={setInput}
+          isLoading={isLoading}
+          onSend={handleSend}
+          onFileUpload={handleFileUpload}
+          onGallerySelect={handleGallerySelect}
+          sidebarOpen={sidebarOpen && device.type === 'desktop'}
+        />
 
-        {/* Footer */}
-        <div className="mt-12 text-sm text-secondary/60">
-          <p>Powered by Claude, GPT-4, Gemini, and more</p>
-        </div>
+        {/* Magic Window - bottom right, translucent */}
+        <MagicWindow
+          isOpen={magicWindowOpen}
+          content={magicWindowContent}
+          researchEnabled={researchEnabled}
+          logicEngineEnabled={logicEngineEnabled}
+          onClose={() => setMagicWindowOpen(false)}
+        />
+
+        {/* Mode Selector Modal */}
+        <ModeSelector
+          isOpen={modeSelectorOpen}
+          currentMode={aiMode}
+          activeJustice={activeJustice}
+          onClose={() => setModeSelectorOpen(false)}
+          onSelectMode={handleModeSelect}
+          onSelectJustice={handleJusticeSelect}
+          availableJustices={availableJustices}
+          availableAgents={availableAgents}
+        />
       </div>
     </div>
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="glass-strong rounded-xl p-6 hover-lift transition-all">
-      <div className="text-primary mb-4">{icon}</div>
-      <h3 className="text-xl font-bold mb-2">{title}</h3>
-      <p className="text-secondary text-sm">{description}</p>
-    </div>
-  );
-}
-
-function Badge({ icon, text }: { icon?: React.ReactNode; text: string }) {
-  return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-panel-medium border border-border rounded-full">
-      {icon && <span className="text-primary">{icon}</span>}
-      <span className="text-sm">{text}</span>
-    </div>
-  );
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
