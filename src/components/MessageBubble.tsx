@@ -6,11 +6,13 @@ import type { Message } from '@/types';
 
 interface MessageBubbleProps {
   message: Message;
-  onRetry?: (messageId: string) => void;
-  onBranch?: (messageId: string) => void;
+  onReadAloud?: () => void;
+  onShare?: () => Promise<void>;
+  onRetry?: () => void;
+  onBranch?: () => void;
 }
 
-export default function MessageBubble({ message, onRetry, onBranch }: MessageBubbleProps) {
+export default function MessageBubble({ message, onReadAloud, onShare, onRetry, onBranch }: MessageBubbleProps) {
   const [showActions, setShowActions] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -157,7 +159,7 @@ export default function MessageBubble({ message, onRetry, onBranch }: MessageBub
             </button>
             {message.role === 'assistant' && onRetry && (
               <button
-                onClick={() => onRetry(message.id)}
+                onClick={onRetry}
                 className="icon-btn !w-8 !h-8"
                 title="Retry"
               >
@@ -166,7 +168,7 @@ export default function MessageBubble({ message, onRetry, onBranch }: MessageBub
             )}
             {onBranch && (
               <button
-                onClick={() => onBranch(message.id)}
+                onClick={onBranch}
                 className="icon-btn !w-8 !h-8"
                 title="Branch"
               >
