@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Users,
   User,
+  Sparkles,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 
@@ -34,13 +35,13 @@ interface SidebarProps {
 }
 
 const THE_SEVEN = [
-  { id: 'gemini', name: 'Gemini', color: 'hue-yellow' },
-  { id: 'gpt', name: 'GPT', color: 'hue-green' },
-  { id: 'claude', name: 'Claude', color: 'hue-red' },
-  { id: 'llama', name: 'Meta', color: 'hue-purple' },
-  { id: 'perplexity', name: 'Perplexity', color: 'hue-cyan' },
+  { id: 'gemini', name: 'Gemini', color: 'hue-teal' },
+  { id: 'gpt', name: 'GPT', color: 'hue-blue' },
+  { id: 'claude', name: 'Claude', color: 'hue-orange' },
+  { id: 'llama', name: 'Meta', color: 'hue-gold' },
+  { id: 'perplexity', name: 'Perplexity', color: 'hue-purple' },
   { id: 'mistral', name: 'Mistral', color: 'hue-blue' },
-  { id: 'grok', name: 'Grok', color: 'hue-pink' },
+  { id: 'grok', name: 'Grok', color: 'hue-red' },
 ];
 
 export default function Sidebar({
@@ -107,6 +108,21 @@ export default function Sidebar({
             </button>
           </div>
 
+          {/* Haley Quick Launch Button */}
+          <div className="px-4 pb-4">
+            <button
+              onClick={() => onSelectJustice?.(null)}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
+                !activeJustice
+                  ? 'bg-gray-700/40 border-gray-600 text-gray-100'
+                  : 'bg-gray-800/30 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'
+              }`}
+            >
+              <Sparkles size={18} />
+              <span className="font-medium">Haley</span>
+            </button>
+          </div>
+
           {/* The Seven Section - Collapsible */}
           <div className="px-4 mb-4">
             <button
@@ -135,7 +151,11 @@ export default function Sidebar({
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{justice.name}</span>
                       {activeJustice === justice.id && (
-                        <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                        <div className={`w-2 h-2 rounded-full ${justice.color} shadow-lg animate-pulse`} 
+                             style={{ 
+                               boxShadow: `0 0 8px currentColor, 0 0 12px currentColor` 
+                             }} 
+                        />
                       )}
                     </div>
                   </button>

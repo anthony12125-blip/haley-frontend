@@ -95,26 +95,39 @@ body {
 }
 
 /* ============================================================================
-   AI SELECTION HUE OVERLAYS (VERY SOFT)
+   AI SELECTION HUE OVERLAYS (20% OPACITY)
    ============================================================================ */
+.hue-teal {
+  background: linear-gradient(to bottom, rgba(0, 188, 212, 0.20), transparent) !important;
+}
+
+.hue-orange {
+  background: linear-gradient(to bottom, rgba(255, 152, 0, 0.20), transparent) !important;
+}
+
+.hue-blue {
+  background: linear-gradient(to bottom, rgba(33, 150, 243, 0.20), transparent) !important;
+}
+
+.hue-purple {
+  background: linear-gradient(to bottom, rgba(156, 39, 176, 0.20), transparent) !important;
+}
+
+.hue-gold {
+  background: linear-gradient(to bottom, rgba(255, 215, 0, 0.20), transparent) !important;
+}
+
+.hue-red {
+  background: linear-gradient(to bottom, rgba(244, 67, 54, 0.20), transparent) !important;
+}
+
+/* Legacy colors - keeping for compatibility */
 .hue-yellow {
   background: linear-gradient(to bottom, rgba(255, 235, 59, 0.03), transparent) !important;
 }
 
-.hue-red {
-  background: linear-gradient(to bottom, rgba(244, 67, 54, 0.03), transparent) !important;
-}
-
 .hue-green {
   background: linear-gradient(to bottom, rgba(76, 175, 80, 0.03), transparent) !important;
-}
-
-.hue-blue {
-  background: linear-gradient(to bottom, rgba(33, 150, 243, 0.03), transparent) !important;
-}
-
-.hue-purple {
-  background: linear-gradient(to bottom, rgba(156, 39, 176, 0.03), transparent) !important;
 }
 
 .hue-pink {

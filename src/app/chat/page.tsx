@@ -49,9 +49,19 @@ export default function ChatPage() {
   // System State
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   
-  // Conversation History
+  // Conversation History - Per Justice
   const [conversations, setConversations] = useState<ConversationHistory[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('default');
+  const [conversationsByJustice, setConversationsByJustice] = useState<Record<string, Message[]>>({
+    'haley': [],
+    'gemini': [],
+    'gpt': [],
+    'claude': [],
+    'llama': [],
+    'perplexity': [],
+    'mistral': [],
+    'grok': [],
+  });
 
   // Available Justices and Agents (updated order)
   const availableJustices = [
@@ -222,17 +232,44 @@ export default function ChatPage() {
 
   const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
     if (mode === 'haley') {
-      setAiMode('single');
-      setActiveJustice(null);
+      handleJusticeSelect(null);
     }
   };
 
-  const handleJusticeSelect = (justice: string) => {
+  const handleJusticeSelect = (justice: string | null) => {
+    const justiceKey = justice || 'haley';
+    
+    // Save current messages to current justice
+    const currentJusticeKey = activeJustice || 'haley';
+    setConversationsByJustice(prev => ({
+      ...prev,
+      [currentJusticeKey]: messages
+    }));
+    
+    // Load messages for selected justice
+    const loadedMessages = conversationsByJustice[justiceKey];
+    if (loadedMessages && loadedMessages.length > 0) {
+      setMessages(loadedMessages);
+    } else {
+      // Initialize with system message for new justice
+      const systemMessage: Message = {
+        id: generateId(),
+        role: 'system',
+        content: justice 
+          ? `Switched to ${justice.charAt(0).toUpperCase() + justice.slice(1)}. Ready to assist.`
+          : 'HaleyOS initialized. Multi-LLM router active. Ready to assist.',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'system_init',
+        },
+      };
+      setMessages([systemMessage]);
+    }
+    
     setActiveJustice(justice);
     setAiMode('single');
     
-    // Load justice-specific conversation history
-    console.log(`Switched to ${justice} - loading conversation history`);
+    console.log(`Switched to ${justiceKey} - loaded ${loadedMessages?.length || 0} messages`);
   };
 
   const handleRetryMessage = (messageId: string) => {

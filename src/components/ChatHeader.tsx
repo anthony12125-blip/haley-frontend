@@ -31,28 +31,51 @@ export default function ChatHeader({
 }: ChatHeaderProps) {
   // Get AI mode color hue
   const getAIHue = () => {
-    if (activeJustice === 'gemini') return 'hue-yellow';
-    if (activeJustice === 'claude') return 'hue-red';
-    if (activeJustice === 'gpt') return 'hue-green';
+    if (activeJustice === 'gemini') return 'hue-teal';
+    if (activeJustice === 'claude') return 'hue-orange';
+    if (activeJustice === 'gpt') return 'hue-blue';
+    if (activeJustice === 'perplexity') return 'hue-purple';
+    if (activeJustice === 'llama') return 'hue-gold';
+    if (activeJustice === 'grok') return 'hue-red';
     if (aiMode === 'supreme-court') return 'hue-purple';
     return '';
+  };
+
+  // Get display name for top bar
+  const getDisplayName = () => {
+    if (activeJustice) {
+      const justice = {
+        'gemini': 'Gemini',
+        'gpt': 'GPT',
+        'claude': 'Claude',
+        'llama': 'Meta',
+        'perplexity': 'Perplexity',
+        'mistral': 'Mistral',
+        'grok': 'Grok',
+      }[activeJustice];
+      return justice || 'Haley';
+    }
+    return 'Haley';
   };
 
   return (
     <header className={`glass-strong border-b border-border safe-top ${getAIHue()}`}>
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: Hamburger Menu */}
+        {/* Left: Hamburger Menu - Hidden on desktop */}
         <button
           onClick={onToggleSidebar}
-          className="icon-btn"
+          className="icon-btn md:hidden"
           title="Toggle sidebar"
         >
           <Menu size={24} />
         </button>
+        
+        {/* Desktop: Empty space for alignment */}
+        <div className="hidden md:block w-10" />
 
-        {/* Center: Haley Title */}
+        {/* Center: Dynamic Title */}
         <div className="flex items-center justify-center">
-          <h1 className="text-xl font-bold text-gradient">Haley</h1>
+          <h1 className="text-xl font-bold text-gradient">{getDisplayName()}</h1>
         </div>
 
         {/* Right: Microscope and Puzzle Piece */}
