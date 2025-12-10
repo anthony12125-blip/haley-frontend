@@ -37,7 +37,10 @@ export async function saveChat(
     const existingChat = await getDoc(chatRef);
     if (existingChat.exists()) {
       const data = existingChat.data();
-      timestamp = data.timestamp?.toDate() || timestamp;
+      // Handle Firebase Timestamp objects
+      timestamp = data.timestamp instanceof Timestamp 
+        ? data.timestamp.toDate() 
+        : (data.timestamp instanceof Date ? data.timestamp : new Date());
     }
   } catch (error) {
     console.log('Creating new chat');
@@ -103,12 +106,20 @@ export async function loadAllChats(userId: string): Promise<ConversationHistory[
     
     return querySnapshot.docs.map(doc => {
       const data = doc.data() as ChatDocument;
+      
+      // Handle Firebase Timestamp objects properly
+      const getDateValue = (value: any): Date => {
+        if (value instanceof Date) return value;
+        if (value instanceof Timestamp) return value.toDate();
+        return new Date();
+      };
+      
       return {
         id: data.id,
         title: data.title,
         lastMessage: data.messages[data.messages.length - 1]?.content || '',
-        timestamp: data.timestamp instanceof Date ? data.timestamp : data.timestamp?.toDate() || new Date(),
-        lastActive: data.lastActive instanceof Date ? data.lastActive : data.lastActive?.toDate() || new Date(),
+        timestamp: getDateValue(data.timestamp),
+        lastActive: getDateValue(data.lastActive),
         messageCount: data.messageCount,
         justiceMode: data.justiceMode,
       };
