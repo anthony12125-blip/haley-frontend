@@ -1,185 +1,225 @@
-# HaleyOS Frontend v1.0
+# HaleyOS Frontend - Rebuilt
 
-A beautiful, feature-rich frontend for HaleyOS AI Assistant with custom theming, voice input, and Magic Window capabilities.
+A pixel-perfect, production-ready frontend for HaleyOS with multi-LLM support, supreme court mode, and advanced UI features.
 
-## 🎨 Design Features
+## ✨ Features
 
-### Theme
-- **Primary Accent**: `#6A5FA7` (Purple)
-- **Secondary Accent**: `#8FB6FF` (Blue)
-- **Milky Way Wallpaper**: Diagonal orientation with comet accent
-- **Glass Morphism**: Backdrop blur effects throughout
-- **Dark Mode Optimized**: Perfect for night usage
+### 🤖 AI Modes
+- **Single AI**: Fast responses from one model
+- **Multi AI**: Multiple models collaborate
+- **Supreme Court**: All AIs debate to reach consensus
 
-### Key UI Components
+### 🎨 UI Components
+- **AI Switcher**: Top-center bubble with long-press menu
+- **Magic Window**: Doctor Strange-style portal animations
+- **Research Toggle**: Microscope icon for deep research
+- **Logic Engine Toggle**: Puzzle piece icon for advanced reasoning
+- **Supreme Court Indicator**: Shows active models during debates
 
-#### Login Screen
-- Centered glass card with subtle shadow
-- Email/password authentication
-- Google Sign-In integration
-- Beautiful wallpaper background with gradient overlay
+### 🌌 Design
+- Space-themed dark background with animated stars
+- Shooting star effects
+- Glass morphism panels
+- Smooth 60fps animations
+- Responsive design (phone, tablet, desktop)
 
-#### Chat Interface
-- **Header**: Mode display (Assistant/Regular/Developer/System)
-- **Messages**: User bubbles (right) and assistant bubbles (left)
-- **Input Bar**: Multi-control bar with:
-  - Plus button (file/gallery upload)
-  - Thinking toggle (deep reasoning mode)
-  - Microphone button (tap to start, tap to send)
-  - Live call button (real-time voice with Haley)
-- **Magic Window**: Floating preview window for dynamic content
+### 💬 Chat Features
+- Message actions: Copy, Read Aloud, Share
+- More menu: Retry, Branch conversation
+- Voice input with recording indicator
+- File upload support
+- Auto-scrolling messages
+- Typing indicators
 
-### Behavior Rules
+### 📱 Mobile Support
+- Safe area insets for iOS
+- Keyboard gap fixes
+- Touch-optimized controls
+- Collapsible sidebar
+- Device detection
 
-#### Mic & Call Exclusivity
-- Mic and Call buttons are mutually exclusive
-- When mic is recording, call button is disabled
-- When in call, mic button is disabled
+## 🚀 Getting Started
 
-#### Audio Response
-- Haley speaks responses ONLY when mic-record-send flow is used
-- Call mode always uses live audio
-- Text input does not trigger audio response
-
-## 📦 Installation
-
+### Prerequisites
 ```bash
-# Install dependencies
+Node.js 18+ 
+npm or yarn
+```
+
+### Installation
+```bash
+cd haley-rebuilt
 npm install
+```
 
-# Set up environment variables
-cp .env.example .env.local
-# Edit .env.local with your Firebase credentials
+### Environment Variables
+Create a `.env.local` file:
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
+NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-auth-domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+```
 
-# Run development server
+### Development
+```bash
 npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000)
 
-# Build for production
+### Production Build
+```bash
 npm run build
 npm start
 ```
 
-## 🔧 Environment Variables
-
-Create a `.env.local` file:
-
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8080
-```
-
-## 🏗️ Project Structure
+## 📁 Project Structure
 
 ```
-haleyos-updated/
-├── public/
-│   └── wallpaper.png          # Milky Way background
+haley-rebuilt/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx         # Root layout with AuthProvider
-│   │   ├── page.tsx           # Login page
+│   │   ├── layout.tsx          # Root layout with auth
+│   │   ├── page.tsx            # Landing page
 │   │   └── chat/
-│   │       └── page.tsx       # Main chat interface
+│   │       └── page.tsx        # Main chat interface
 │   ├── components/
-│   │   ├── ChatHeader.tsx     # Header with mode display
-│   │   ├── ChatMessages.tsx   # Message history display
-│   │   ├── ChatInputBar.tsx   # Input controls
-│   │   ├── ThinkingToggle.tsx # Deep reasoning toggle
-│   │   ├── Sidebar.tsx        # Navigation sidebar
-│   │   └── MagicWindow.tsx    # Dynamic preview window
+│   │   ├── AISwitcher.tsx      # AI mode selector
+│   │   ├── ChatHeader.tsx      # Header with status
+│   │   ├── ChatMessages.tsx    # Message list
+│   │   ├── ChatInputBar.tsx    # Input with controls
+│   │   ├── LogicEngineToggle.tsx
+│   │   ├── MagicWindowContainer.tsx
+│   │   ├── MessageBubble.tsx
+│   │   ├── ResearchToggle.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── SupremeCourtIndicator.tsx
+│   ├── hooks/
+│   │   ├── useDeviceDetection.ts
+│   │   └── useLongPress.ts
 │   ├── lib/
-│   │   ├── authContext.tsx    # Firebase authentication
-│   │   ├── firebaseClient.ts  # Firebase configuration
-│   │   └── haleyApi.ts        # Backend API integration
-│   └── styles/
-│       └── globals.css        # Global styles and theme
-├── tailwind.config.js         # Tailwind with custom theme
+│   │   ├── authContext.tsx     # Firebase auth
+│   │   ├── firebaseClient.ts   # Firebase config
+│   │   └── haleyApi.ts         # Backend API
+│   ├── styles/
+│   │   └── globals.css         # All styles
+│   └── types/
+│       └── index.ts            # TypeScript types
+├── public/
+│   └── wallpaper.png           # Space background
 ├── package.json
-└── README.md
+├── tsconfig.json
+├── tailwind.config.js
+└── next.config.js
 ```
-
-## 🎯 Key Features
-
-### Authentication
-- Email/password sign-in and sign-up
-- Google OAuth integration
-- Persistent sessions with Firebase
-
-### Chat Interface
-- Real-time message streaming
-- System status display
-- Mode switching (Assistant/Regular/Developer/System)
-- Deep reasoning toggle for complex queries
-
-### Voice Features
-- **Tap-to-record**: Two-step mic interaction (tap to start, tap to send)
-- **Text-to-Speech**: Haley responds vocally when voice input is used
-- **Live Call**: Real-time voice conversation mode
-
-### File Handling
-- Upload files via plus button
-- Gallery image selection
-- Multi-file support
-
-### Magic Window
-- Floating preview window
-- Roblox integration preview
-- UI component previews
-- Code execution display
-- Minimizable and closable
 
 ## 🎨 Theme Customization
 
-All colors are defined in:
-- `tailwind.config.js` - Tailwind theme extension
-- `src/styles/globals.css` - CSS variables and utilities
-
-### Color Palette
+Colors are defined in `globals.css`:
 ```css
---haley-primary: #6A5FA7
---haley-primary-hover: #7B70C0
---haley-primary-pressed: #584E8D
---haley-secondary: #8FB6FF
---haley-secondary-dim: #6A90D6
---haley-input-bg: #121218
---haley-input-border: #2A2A33
---haley-text-title: #EDE9FF
---haley-text-body: #D5D1E8
---haley-text-subtext: #A29FC0
+:root {
+  --primary: #4fb4ff;
+  --accent: #7fd4ff;
+  --panel-dark: #111418;
+  --text-primary: #e5f2ff;
+  /* ... */
+}
 ```
 
-## 📱 Mobile Responsiveness
+## 🔧 API Integration
 
-- Safe area insets for notched devices
-- iOS viewport-fit support
-- Adaptive input bar sizing
-- Touch-optimized controls
-- Maximum width constraints for readability
+The frontend connects to HaleyOS backend via `haleyApi.ts`:
 
-## 🔌 Backend Integration
+```typescript
+// Send message
+await sendMessage(text);
 
-Connects to HaleyOS Logic Engine via REST API:
-- `/logic/process` - Send messages
-- `/logic/system/health` - System status
-- Automatic LLM routing via Baby Haley
-- Multi-model support (Claude, GPT, Gemini, etc.)
+// Get system status
+await getSystemStatus();
+```
 
-## 🚀 Deployment
+Endpoints:
+- `POST /logic/process` - Send chat messages
+- `GET /logic/system/health` - System status
+
+## 📱 Device Support
+
+Automatically detects and adapts to:
+- **Phone** (≤768px): Single column, collapsible sidebar
+- **Tablet** (≤1024px): Optimized touch controls
+- **Desktop** (>1024px): Full layout with persistent sidebar
+
+## ✨ Animations
+
+### Portal Animation (Magic Window)
+```css
+@keyframes portalOpen {
+  0% { transform: scale(0) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(180deg); }
+  100% { transform: scale(1) rotate(360deg); }
+}
+```
+
+### Shooting Stars
+Randomly positioned with staggered delays
+
+### Typing Indicator
+Three dots with bounce animation
+
+## 🔐 Authentication
+
+Firebase Authentication with Google Sign-In:
+- Protected routes
+- Session management
+- Auto-redirect on login/logout
+
+## 🎯 Key Implementation Details
+
+### Long Press for AI Switcher
+```typescript
+const longPressHandlers = useLongPress({
+  onLongPress: () => setShowMenu(true),
+  onClick: () => cycleMode(),
+  duration: 500,
+});
+```
+
+### Magic Window Content Types
+- Visualization
+- Code
+- Image
+- Data
+
+### Supreme Court Mode
+When enabled:
+- Multiple LLMs process request
+- Results aggregated
+- Consensus displayed
+- Model badges shown
+
+## 📊 Performance
+
+- **60fps animations**: GPU-accelerated transforms
+- **Optimized re-renders**: React memoization
+- **Lazy loading**: Code splitting by route
+- **Image optimization**: Next.js image component
+
+## 🐛 Troubleshooting
+
+### Keyboard covers input on iOS
+✅ Fixed with safe area insets and sticky positioning
+
+### Background stretches on mobile
+✅ Fixed with `background-size: cover` and proper viewport
+
+### Messages don't scroll
+✅ Auto-scroll with `scrollIntoView` on new messages
+
+## 🚢 Deployment
 
 ### Vercel (Recommended)
 ```bash
-vercel deploy
-```
-
-### Firebase Hosting
-```bash
-npm run build
-firebase deploy
+vercel
 ```
 
 ### Docker
@@ -188,27 +228,26 @@ docker build -t haleyos-frontend .
 docker run -p 3000:3000 haleyos-frontend
 ```
 
-## 🛠️ Development
-
+### Firebase Hosting
 ```bash
-# Run with hot reload
-npm run dev
-
-# Type checking
-npm run lint
-
-# Build production
 npm run build
+firebase deploy
 ```
 
-## 📄 License
+## 📝 License
 
 Proprietary - HaleyOS Project
 
 ## 🤝 Contributing
 
-This is a private project. For access or contributions, contact the HaleyOS team.
+This is a private project. For questions or issues, contact the development team.
+
+## 📞 Support
+
+- Backend API: Ensure HaleyOS backend is running
+- Firebase: Configure Firebase project correctly
+- Environment: Check all `.env.local` variables
 
 ---
 
-**HaleyOS Frontend v1.0** - Built with Next.js 14, React 18, TypeScript, and Tailwind CSS
+Built with ❤️ using Next.js, React, TypeScript, and Tailwind CSS

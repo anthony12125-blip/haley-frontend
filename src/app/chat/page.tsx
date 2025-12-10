@@ -1,80 +1,84 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
-import type { OSOperationResponse, SystemStatusResponse } from '@/lib/haleyApi';
-import { Menu, MoreVertical } from 'lucide-react';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import AISwitcher from '@/components/AISwitcher';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInputBar from '@/components/ChatInputBar';
-import MagicWindow from '@/components/MagicWindow';
+import MagicWindowContainer from '@/components/MagicWindowContainer';
 import Sidebar from '@/components/Sidebar';
-
-export interface Message {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-  metadata?: {
-    operation?: string;
-    state_changed?: boolean;
-    mama_invoked?: boolean;
-    syscalls?: number;
-    model_used?: string;
-  };
-}
+import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
 
 export default function ChatPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
+  const device = useDeviceDetection();
+
+  // UI State
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // AI State
+  const [aiMode, setAiMode] = useState<AIMode>('single');
+  const [activeModels, setActiveModels] = useState<string[]>(['Claude']);
   
+  // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<'Assistant' | 'Regular' | 'Developer' | 'System'>('Assistant');
-  const [deepReasoningEnabled, setDeepReasoningEnabled] = useState(false);
-  const [osStatus, setOsStatus] = useState<SystemStatusResponse | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [magicWindowContent, setMagicWindowContent] = useState<any>(null);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Feature Toggles
+  const [researchEnabled, setResearchEnabled] = useState(false);
+  const [logicEngineEnabled, setLogicEngineEnabled] = useState(false);
+  
+  // Magic Window
+  const [magicWindowContent, setMagicWindowContent] = useState<MagicWindowContent | null>(null);
+  
+  // System State
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  
+  // Conversation History
+  const [conversations, setConversations] = useState<ConversationHistory[]>([]);
+  const [currentConversationId, setCurrentConversationId] = useState<string>('default');
 
-  // Initial system message
-  useEffect(() => {
-    const systemMessage: Message = {
-      role: 'system',
-      content: 'HaleyOS initialized. Ready to assist.',
-      timestamp: new Date(),
-      metadata: {
-        operation: 'system_init'
-      }
-    };
-    setMessages([systemMessage]);
-    loadOSStatus();
-  }, []);
-
+  // Initialize
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/');
+      return;
+    }
+
+    if (user) {
+      initializeChat();
+      loadSystemStatus();
+      const statusInterval = setInterval(loadSystemStatus, 30000); // Update every 30s
+      return () => clearInterval(statusInterval);
     }
   }, [user, authLoading, router]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const initializeChat = () => {
+    const systemMessage: Message = {
+      id: generateId(),
+      role: 'system',
+      content: 'HaleyOS initialized. Multi-LLM router active. Ready to assist.',
+      timestamp: new Date(),
+      metadata: {
+        operation: 'system_init',
+      },
+    };
+    setMessages([systemMessage]);
   };
 
-  const loadOSStatus = async () => {
+  const loadSystemStatus = async () => {
     try {
       const status = await getSystemStatus();
-      setOsStatus(status);
+      setSystemStatus(status);
     } catch (error) {
-      console.error('Failed to load OS status:', error);
+      console.error('Failed to load system status:', error);
     }
   };
 
@@ -83,6 +87,7 @@ export default function ChatPage() {
     if ((!textToSend.trim() && !audioBlob) || isLoading) return;
 
     const userMessage: Message = {
+      id: generateId(),
       role: 'user',
       content: audioBlob ? '[Voice message]' : textToSend,
       timestamp: new Date(),
@@ -93,45 +98,56 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const response: OSOperationResponse = await sendMessage(textToSend);
-      
+      const response = await sendMessage(textToSend);
+
       if (response.status === 'success' || response.status === 'completed') {
-        const resultContent = formatOSResult(response.result);
-        
         const assistantMessage: Message = {
+          id: generateId(),
           role: 'assistant',
-          content: resultContent,
+          content: formatResponse(response.result),
           timestamp: new Date(),
           metadata: {
-            operation: 'compute',
-            state_changed: response.state_changed,
-            mama_invoked: response.result?.computation === 'deep_analysis',
-            model_used: response.model_used
-          }
+            operation: 'chat',
+            model_used: response.model_used,
+            baby_invoked: response.baby_invoked,
+            task: response.task,
+            supreme_court: aiMode === 'supreme-court',
+            llm_sources: aiMode === 'supreme-court' ? activeModels : undefined,
+          },
         };
         setMessages((prev) => [...prev, assistantMessage]);
 
-        // If voice was used, trigger TTS for response
+        // If audioBlob was used, speak the response
         if (audioBlob) {
-          speakResponse(resultContent);
+          speakResponse(assistantMessage.content);
+        }
+
+        // Check if response includes visualization data
+        if (response.result?.visualization) {
+          setMagicWindowContent({
+            type: 'visualization',
+            content: response.result.visualization,
+            title: 'Analysis Results',
+          });
         }
       } else {
         const errorMessage: Message = {
+          id: generateId(),
           role: 'assistant',
           content: `Error: ${response.error_msg || 'Operation failed'}`,
           timestamp: new Date(),
           metadata: {
-            operation: 'error'
-          }
+            operation: 'error',
+          },
         };
         setMessages((prev) => [...prev, errorMessage]);
       }
 
-      await loadOSStatus();
-      
+      await loadSystemStatus();
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
+        id: generateId(),
         role: 'assistant',
         content: `System error: ${error instanceof Error ? error.message : 'Failed to process operation'}`,
         timestamp: new Date(),
@@ -142,12 +158,12 @@ export default function ChatPage() {
     }
   };
 
-  const formatOSResult = (result: any): string => {
+  const formatResponse = (result: any): string => {
     if (!result) return 'Operation completed';
     if (typeof result === 'string') return result;
     if (result.response) return result.response;
     if (result.computation) {
-      return `Computation: ${result.computation}\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
+      return `${result.computation}\n\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
     }
     if (result.result !== undefined) {
       return `Result: ${JSON.stringify(result.result)}`;
@@ -156,8 +172,8 @@ export default function ChatPage() {
   };
 
   const speakResponse = (text: string) => {
-    // TTS implementation - can use Web Speech API or backend service
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
@@ -166,57 +182,129 @@ export default function ChatPage() {
   };
 
   const handleFileUpload = (files: FileList) => {
-    // Handle file uploads
     console.log('Files uploaded:', files);
     // TODO: Implement file upload to backend
+    setMagicWindowContent({
+      type: 'data',
+      content: {
+        files: files.length,
+        names: Array.from(files).map(f => f.name).join(', '),
+      },
+      title: 'Uploaded Files',
+    });
   };
 
   const handleGallerySelect = () => {
-    // Open gallery picker
-    console.log('Open gallery');
+    console.log('Gallery selection');
     // TODO: Implement gallery selection
+  };
+
+  const handleAIModeChange = (mode: AIMode) => {
+    setAiMode(mode);
+    if (mode === 'supreme-court') {
+      setActiveModels(['Claude', 'GPT-4', 'Gemini', 'Mistral']);
+    } else if (mode === 'multi') {
+      setActiveModels(['Claude', 'GPT-4']);
+    } else {
+      setActiveModels(['Claude']);
+    }
+  };
+
+  const handleRetryMessage = (messageId: string) => {
+    const messageIndex = messages.findIndex(m => m.id === messageId);
+    if (messageIndex > 0) {
+      const previousMessage = messages[messageIndex - 1];
+      if (previousMessage.role === 'user') {
+        handleSend(previousMessage.content);
+      }
+    }
+  };
+
+  const handleBranchMessage = (messageId: string) => {
+    console.log('Branch conversation from message:', messageId);
+    // TODO: Implement conversation branching
+  };
+
+  const handleNewConversation = () => {
+    const newId = generateId();
+    setCurrentConversationId(newId);
+    initializeChat();
+    setSidebarOpen(false);
   };
 
   if (authLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-haley-text-body text-xl pulse-glow">Loading HaleyOS...</div>
+      <div className="full-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-gradient mb-4">HaleyOS</div>
+          <div className="typing-indicator">
+            <div className="typing-dot" />
+            <div className="typing-dot" />
+            <div className="typing-dot" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-haley-text-body text-xl">Redirecting...</div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="full-screen flex overflow-hidden">
+      {/* Space Background */}
+      <div className="space-bg">
+        <div className="stars" />
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="shooting-star"
+            style={{
+              top: `${Math.random() * 50}%`,
+              right: `${Math.random() * 50}%`,
+              animationDelay: `${Math.random() * 3}s`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen}
+      <Sidebar
+        isOpen={sidebarOpen || device.type === 'desktop'}
         onClose={() => setSidebarOpen(false)}
         onSignOut={signOut}
+        conversations={conversations}
+        currentConversationId={currentConversationId}
+        onNewConversation={handleNewConversation}
+        onSelectConversation={setCurrentConversationId}
       />
 
       {/* Main Chat Area */}
-      <div className="flex flex-col flex-1 relative">
-        {/* Header */}
-        <ChatHeader
-          mode={mode}
-          onMenuClick={() => setSidebarOpen(true)}
-          onMoreClick={() => setMenuOpen(!menuOpen)}
-          osStatus={osStatus}
+      <div className="flex-1 flex flex-col relative z-10">
+        {/* AI Mode Switcher */}
+        <AISwitcher
+          currentMode={aiMode}
+          onModeChange={handleAIModeChange}
+          activeModels={activeModels}
         />
 
-        {/* Messages Area */}
+        {/* Header */}
+        <ChatHeader
+          mode="Assistant"
+          aiMode={aiMode}
+          activeModels={activeModels}
+          onMenuClick={() => setSidebarOpen(true)}
+          onMoreClick={() => setMenuOpen(!menuOpen)}
+          systemStatus={systemStatus}
+        />
+
+        {/* Messages */}
         <ChatMessages
           messages={messages}
           isLoading={isLoading}
-          messagesEndRef={messagesEndRef}
+          onRetryMessage={handleRetryMessage}
+          onBranchMessage={handleBranchMessage}
         />
 
         {/* Input Bar */}
@@ -225,17 +313,24 @@ export default function ChatPage() {
           setInput={setInput}
           isLoading={isLoading}
           onSend={handleSend}
-          deepReasoningEnabled={deepReasoningEnabled}
-          onToggleReasoning={() => setDeepReasoningEnabled(!deepReasoningEnabled)}
+          researchEnabled={researchEnabled}
+          logicEngineEnabled={logicEngineEnabled}
+          onToggleResearch={() => setResearchEnabled(!researchEnabled)}
+          onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
           onFileUpload={handleFileUpload}
           onGallerySelect={handleGallerySelect}
         />
 
-        {/* Magic Window - Bottom Left Floating */}
-        {magicWindowContent && (
-          <MagicWindow content={magicWindowContent} onClose={() => setMagicWindowContent(null)} />
-        )}
+        {/* Magic Window */}
+        <MagicWindowContainer
+          content={magicWindowContent}
+          onClose={() => setMagicWindowContent(null)}
+        />
       </div>
     </div>
   );
+}
+
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }

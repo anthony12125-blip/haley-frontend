@@ -1,30 +1,30 @@
-import type { Metadata } from 'next'
-import { AuthProvider } from '@/lib/authContext'
-import '@/styles/globals.css'
+import type { Metadata } from 'next';
+import { AuthProvider } from '@/lib/authContext';
+import '@/styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'HaleyOS - Your AI Assistant',
-  description: 'HaleyOS AI Assistant Interface',
+  title: 'HaleyOS - Multi-LLM AI Assistant',
+  description: 'HaleyOS: Advanced AI assistant with multi-model support and supreme court mode',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover',
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <head>
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#111418" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body className="wallpaper-bg">
+      <body className="prevent-select">
         <AuthProvider>
           {children}
         </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { Plus, Mic, Phone } from 'lucide-react';
-import ThinkingToggle from './ThinkingToggle';
+import { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, Mic, StopCircle, Image as ImageIcon } from 'lucide-react';
+import ResearchToggle from './ResearchToggle';
+import LogicEngineToggle from './LogicEngineToggle';
 
 interface ChatInputBarProps {
   input: string;
   setInput: (value: string) => void;
   isLoading: boolean;
-  onSend: (text?: string, audioBlob?: Blob) => void;
-  deepReasoningEnabled: boolean;
-  onToggleReasoning: () => void;
-  onFileUpload: (files: FileList) => void;
-  onGallerySelect: () => void;
+  onSend: (message?: string, audioBlob?: Blob) => void;
+  researchEnabled: boolean;
+  logicEngineEnabled: boolean;
+  onToggleResearch: () => void;
+  onToggleLogicEngine: () => void;
+  onFileUpload?: (files: FileList) => void;
+  onGallerySelect?: () => void;
 }
 
 export default function ChatInputBar({
@@ -20,31 +23,58 @@ export default function ChatInputBar({
   setInput,
   isLoading,
   onSend,
-  deepReasoningEnabled,
-  onToggleReasoning,
+  researchEnabled,
+  logicEngineEnabled,
+  onToggleResearch,
+  onToggleLogicEngine,
   onFileUpload,
   onGallerySelect,
 }: ChatInputBarProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [isInCall, setIsInCall] = useState(false);
-  const [showUploadSheet, setShowUploadSheet] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recordingIntervalRef = useRef<NodeJS.Timeout>();
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input]);
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      handleSend();
+    }
+  };
+
+  const handleSend = () => {
+    if (input.trim() && !isLoading) {
+      onSend(input);
+      setInput('');
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0 && onFileUpload) {
+      onFileUpload(e.target.files);
     }
   };
 
   const startRecording = async () => {
-    if (isInCall) return; // Exclusive with call
-    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
+      
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -60,8 +90,14 @@ export default function ChatInputBar({
 
       mediaRecorder.start();
       setIsRecording(true);
+      setRecordingTime(0);
+
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
     } catch (error) {
       console.error('Error accessing microphone:', error);
+      alert('Could not access microphone. Please check permissions.');
     }
   };
 
@@ -69,153 +105,114 @@ export default function ChatInputBar({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
     }
   };
 
-  const toggleCall = () => {
-    if (isRecording) return; // Exclusive with recording
-    
-    setIsInCall(!isInCall);
-    // TODO: Implement real-time call with Haley
-    console.log('Call toggled:', !isInCall);
-  };
-
-  const handlePlusClick = () => {
-    setShowUploadSheet(!showUploadSheet);
-  };
-
-  const handleFileSelect = () => {
-    fileInputRef.current?.click();
-    setShowUploadSheet(false);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onFileUpload(e.target.files);
-    }
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <>
-      {/* Upload Sheet */}
-      {showUploadSheet && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={() => setShowUploadSheet(false)}
-        >
-          <div 
-            className="absolute bottom-20 left-4 right-4 glass rounded-haley-lg p-4 space-y-2"
-            onClick={(e) => e.stopPropagation()}
+    <div className="input-container glass-strong border-t border-border safe-bottom">
+      {/* Toggle Controls */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border overflow-x-auto">
+        <ResearchToggle enabled={researchEnabled} onToggle={onToggleResearch} />
+        <LogicEngineToggle enabled={logicEngineEnabled} onToggle={onToggleLogicEngine} />
+      </div>
+
+      {/* Main Input Area */}
+      <div className="flex items-end gap-2 p-4">
+        {/* Left Actions */}
+        <div className="flex items-center gap-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            accept="*/*"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="icon-btn"
+            title="Attach file"
+            disabled={isLoading}
           >
+            <Paperclip size={20} />
+          </button>
+          {onGallerySelect && (
             <button
-              onClick={handleFileSelect}
-              className="w-full py-3 text-left px-4 hover:bg-white/10 rounded-haley text-haley-text-body transition-colors"
+              onClick={onGallerySelect}
+              className="icon-btn"
+              title="Select from gallery"
+              disabled={isLoading}
             >
-              📁 Files
+              <ImageIcon size={20} />
             </button>
-            <button
-              onClick={() => {
-                onGallerySelect();
-                setShowUploadSheet(false);
-              }}
-              className="w-full py-3 text-left px-4 hover:bg-white/10 rounded-haley text-haley-text-body transition-colors"
-            >
-              🖼️ Gallery
-            </button>
-          </div>
+          )}
         </div>
-      )}
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={handleFileChange}
-      />
-
-      {/* Input Bar */}
-      <div className="fixed bottom-0 left-0 right-0 glass-light border-t border-white/10 safe-area-bottom">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div 
-            className="flex items-end space-x-2 bg-black/55 rounded-haley-xl px-3 py-2"
-            style={{ minHeight: '56px' }}
-          >
-            {/* Plus Button */}
-            <button
-              onClick={handlePlusClick}
-              disabled={isLoading}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
-              aria-label="Attach files"
-            >
-              <Plus className="w-6 h-6 text-haley-text-body" />
-            </button>
-
-            {/* Text Input Area */}
-            <div className="flex-1 min-w-0">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Message Haley..."
-                disabled={isLoading || isRecording || isInCall}
-                className="w-full bg-transparent text-haley-input-text placeholder:text-haley-input-placeholder resize-none outline-none py-2"
-                rows={1}
-                style={{ 
-                  maxHeight: '120px',
-                  minHeight: '24px'
-                }}
-              />
+        {/* Text Input */}
+        <div className="flex-1 relative">
+          {isRecording ? (
+            <div className="flex items-center justify-between bg-panel-dark border border-error rounded-xl px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-error rounded-full animate-pulse" />
+                <span className="text-error font-semibold">Recording</span>
+                <span className="text-secondary text-sm">{formatTime(recordingTime)}</span>
+              </div>
+              <button
+                onClick={stopRecording}
+                className="text-error hover:text-error/80 transition-colors"
+              >
+                <StopCircle size={24} />
+              </button>
             </div>
-
-            {/* Reasoning Toggle */}
-            <ThinkingToggle
-              enabled={deepReasoningEnabled}
-              onToggle={onToggleReasoning}
+          ) : (
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message HaleyOS..."
+              className="input-field resize-none min-h-[44px] max-h-[200px]"
               disabled={isLoading}
+              rows={1}
             />
+          )}
+        </div>
 
-            {/* Mic Button */}
-            {!isInCall && (
-              <button
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isLoading}
-                className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                  isRecording 
-                    ? 'bg-red-500 hover:bg-red-600' 
-                    : 'hover:bg-white/10'
-                } disabled:opacity-50`}
-                aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-              >
-                {isRecording ? (
-                  <div className="w-6 h-6 flex items-center justify-center">
-                    <div className="w-4 h-4 bg-white rounded"></div>
-                  </div>
-                ) : (
-                  <Mic className="w-6 h-6 text-haley-text-body" />
-                )}
-              </button>
-            )}
-
-            {/* Live Call Button */}
-            {!isRecording && (
-              <button
-                onClick={toggleCall}
-                disabled={isLoading}
-                className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                  isInCall 
-                    ? 'bg-haley-secondary hover:bg-haley-secondary-dim' 
-                    : 'hover:bg-white/10'
-                } disabled:opacity-50`}
-                aria-label={isInCall ? 'End call' : 'Start call'}
-              >
-                <Phone className={`w-6 h-6 ${isInCall ? 'text-white' : 'text-haley-text-body'}`} />
-              </button>
-            )}
-          </div>
+        {/* Right Actions */}
+        <div className="flex items-center gap-1">
+          {!isRecording && (
+            <button
+              onClick={startRecording}
+              className="icon-btn"
+              title="Voice input"
+              disabled={isLoading}
+            >
+              <Mic size={20} />
+            </button>
+          )}
+          <button
+            onClick={handleSend}
+            disabled={isLoading || (!input.trim() && !isRecording)}
+            className={`icon-btn ${
+              input.trim() && !isLoading
+                ? 'bg-primary text-white hover:bg-accent'
+                : 'opacity-50 cursor-not-allowed'
+            }`}
+            title="Send message"
+          >
+            <Send size={20} />
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

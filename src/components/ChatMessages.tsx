@@ -1,65 +1,88 @@
 'use client';
 
-import { Message } from '@/app/chat/page';
+import { useEffect, useRef } from 'react';
+import MessageBubble from './MessageBubble';
+import type { Message } from '@/types';
 
 interface ChatMessagesProps {
   messages: Message[];
   isLoading: boolean;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
+  onRetryMessage?: (messageId: string) => void;
+  onBranchMessage?: (messageId: string) => void;
 }
 
-export default function ChatMessages({ messages, isLoading, messagesEndRef }: ChatMessagesProps) {
+export default function ChatMessages({
+  messages,
+  isLoading,
+  onRetryMessage,
+  onBranchMessage,
+}: ChatMessagesProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleReadAloud = (content: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(content);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const handleShare = async (message: Message) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: message.content,
+          title: 'HaleyOS Message',
+        });
+      } catch (err) {
+        console.log('Share cancelled');
+      }
+    } else {
+      await navigator.clipboard.writeText(message.content);
+      alert('Message copied to clipboard!');
+    }
+  };
+
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 safe-area-bottom" style={{ paddingBottom: '90px' }}>
-      <div className="max-w-4xl mx-auto space-y-2">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`message-bubble ${
-                message.role === 'user'
-                  ? 'message-bubble-user'
-                  : message.role === 'system'
-                  ? 'bg-haley-secondary/20 border border-haley-secondary/30 text-haley-text-body'
-                  : 'message-bubble-assistant'
-              }`}
-            >
-              <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {message.content}
-              </div>
-              <div className="timestamp mt-1">
-                {message.timestamp.toLocaleTimeString([], { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </div>
+    <div
+      ref={containerRef}
+      className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
+    >
+      {messages.map((message) => (
+        <MessageBubble
+          key={message.id}
+          message={message}
+          onReadAloud={() => handleReadAloud(message.content)}
+          onShare={() => handleShare(message)}
+          onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
+          onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
+        />
+      ))}
+
+      {isLoading && (
+        <div className="flex justify-start">
+          <div className="message-bubble message-assistant">
+            <div className="typing-indicator">
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+              <div className="typing-dot" />
             </div>
           </div>
-        ))}
-        
-        {/* Loading Indicator */}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="message-bubble-assistant">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-haley-text-body rounded-full animate-bounce"></div>
-                <div 
-                  className="w-2 h-2 bg-haley-text-body rounded-full animate-bounce" 
-                  style={{ animationDelay: '0.1s' }}
-                ></div>
-                <div 
-                  className="w-2 h-2 bg-haley-text-body rounded-full animate-bounce" 
-                  style={{ animationDelay: '0.2s' }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
+        </div>
+      )}
+
+      <div ref={messagesEndRef} />
     </div>
   );
 }
