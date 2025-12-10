@@ -349,7 +349,9 @@ export default function ChatPage() {
 
       {/* Main Chat Area */}
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
-        sidebarOpen && device.type === 'desktop' ? 'ml-80' : 'ml-0'
+        device.type === 'desktop' 
+          ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
+          : 'ml-0'
       }`}>
         {/* Header with hamburger menu */}
         <ChatHeader
