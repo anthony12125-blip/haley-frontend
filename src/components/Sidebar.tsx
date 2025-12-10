@@ -29,7 +29,7 @@ interface SidebarProps {
   onSelectConversation?: (id: string) => void;
   onDeleteConversation?: (id: string) => void;
   activeJustice?: string | null;
-  onSelectJustice?: (justice: string) => void;
+  onSelectJustice?: (justice: string | null) => void;
   userEmail?: string;
   userPhotoURL?: string;
 }
