@@ -291,7 +291,6 @@ export default function ChatPage() {
 
         {/* Header */}
         <ChatHeader
-          mode="Assistant"
           aiMode={aiMode}
           activeModels={activeModels}
           onMenuClick={() => setSidebarOpen(true)}

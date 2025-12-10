@@ -6,7 +6,6 @@ import SupremeCourtIndicator from './SupremeCourtIndicator';
 import type { SystemStatus, AIMode } from '@/types';
 
 interface ChatHeaderProps {
-  mode: AIMode;
   aiMode: AIMode;
   activeModels: string[];
   onMenuClick: () => void;
@@ -15,7 +14,6 @@ interface ChatHeaderProps {
 }
 
 export default function ChatHeader({
-  mode,
   aiMode,
   activeModels,
   onMenuClick,
