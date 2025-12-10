@@ -7,11 +7,11 @@ import {
   MessageSquare,
   Settings,
   LogOut,
-  User,
   History,
   Trash2,
   ChevronRight,
-  Menu,
+  ChevronLeft,
+  Users,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 
@@ -24,7 +24,19 @@ interface SidebarProps {
   onNewConversation?: () => void;
   onSelectConversation?: (id: string) => void;
   onDeleteConversation?: (id: string) => void;
+  activeJustice?: string | null;
+  onSelectJustice?: (justice: string) => void;
 }
+
+const SEVEN_JUSTICES = [
+  { id: 'claude', name: 'Claude', color: 'hue-red' },
+  { id: 'gpt', name: 'GPT-4', color: 'hue-green' },
+  { id: 'gemini', name: 'Gemini', color: 'hue-yellow' },
+  { id: 'mistral', name: 'Mistral', color: 'hue-blue' },
+  { id: 'llama', name: 'Llama', color: 'hue-purple' },
+  { id: 'command', name: 'Command', color: 'hue-pink' },
+  { id: 'perplexity', name: 'Perplexity', color: 'hue-cyan' },
+];
 
 export default function Sidebar({
   isOpen,
@@ -35,36 +47,43 @@ export default function Sidebar({
   onNewConversation,
   onSelectConversation,
   onDeleteConversation,
+  activeJustice,
+  onSelectJustice,
 }: SidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
+
+  const handleJusticeSelect = (justiceId: string) => {
+    if (onSelectJustice) {
+      onSelectJustice(justiceId);
+    }
+  };
 
   return (
     <>
       {/* Overlay - Mobile only */}
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden ${
-          isOpen ? 'block' : 'hidden'
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
       />
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 bottom-0 w-80 glass-strong border-r border-border z-50 transform transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
+        className={`fixed left-0 top-0 bottom-0 w-80 glass-strong border-r border-border z-50 transform transition-all duration-300 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0`}
       >
         <div className="flex flex-col h-full">
-          {/* Header with Hamburger (desktop) and Close (mobile) */}
+          {/* Header with Collapse Button */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <div className="flex items-center gap-3">
-              <button onClick={onClose} className="icon-btn hidden md:flex" title="Toggle sidebar">
-                <Menu size={20} />
-              </button>
-              <h2 className="text-lg font-bold text-gradient">Conversations</h2>
-            </div>
-            <button onClick={onClose} className="icon-btn md:hidden">
-              <X size={20} />
+            <h2 className="text-lg font-bold text-gradient">HaleyOS</h2>
+            <button 
+              onClick={onClose} 
+              className="icon-btn"
+              title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            >
+              {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
             </button>
           </div>
 
@@ -79,8 +98,39 @@ export default function Sidebar({
             </button>
           </div>
 
+          {/* Justices Section */}
+          <div className="px-4 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Users size={16} className="text-secondary" />
+              <h3 className="text-sm font-semibold text-secondary">Seven Justices</h3>
+            </div>
+            <div className="space-y-2">
+              {SEVEN_JUSTICES.map((justice) => (
+                <button
+                  key={justice.id}
+                  onClick={() => handleJusticeSelect(justice.id)}
+                  className={`w-full p-2 rounded-lg border transition-all text-left text-sm ${
+                    activeJustice === justice.id
+                      ? `${justice.color} bg-primary/20 border-primary text-primary`
+                      : 'bg-panel-dark border-border text-secondary hover:border-accent hover:text-primary'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{justice.name}</span>
+                    {activeJustice === justice.id && (
+                      <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Conversations List */}
           <div className="flex-1 overflow-y-auto px-4 space-y-2">
+            <h3 className="text-sm font-semibold text-secondary mb-2 sticky top-0 bg-panel-dark py-2">
+              Recent Chats
+            </h3>
             {conversations.length === 0 ? (
               <div className="text-center py-8">
                 <History size={48} className="mx-auto text-secondary opacity-50 mb-3" />

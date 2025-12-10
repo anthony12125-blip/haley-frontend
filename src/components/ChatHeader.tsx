@@ -1,45 +1,76 @@
 'use client';
 
-import { Menu, MoreVertical, Wifi, WifiOff } from 'lucide-react';
+import { Microscope, Puzzle, Wifi, WifiOff } from 'lucide-react';
 import { useState } from 'react';
-import SupremeCourtIndicator from './SupremeCourtIndicator';
+import { useLongPress } from '@/hooks/useLongPress';
 import type { SystemStatus, AIMode } from '@/types';
 
 interface ChatHeaderProps {
   aiMode: AIMode;
   activeModels: string[];
-  onMenuClick: () => void;
-  onMoreClick: () => void;
+  activeJustice: string | null;
+  onToggleResearch: () => void;
+  onOpenMagicWindow: () => void;
+  onOpenModeSelector: () => void;
   systemStatus: SystemStatus | null;
+  researchEnabled: boolean;
 }
 
 export default function ChatHeader({
   aiMode,
   activeModels,
-  onMenuClick,
-  onMoreClick,
+  activeJustice,
+  onToggleResearch,
+  onOpenMagicWindow,
+  onOpenModeSelector,
   systemStatus,
+  researchEnabled,
 }: ChatHeaderProps) {
   const [showStatus, setShowStatus] = useState(false);
 
   const isOnline = systemStatus !== null;
 
+  // Long press handlers for Haley button
+  const longPressHandlers = useLongPress({
+    onLongPress: onOpenModeSelector,
+    onClick: () => {}, // No action on single tap
+    duration: 500,
+  });
+
+  // Get AI mode color hue
+  const getAIHue = () => {
+    if (activeJustice === 'gemini') return 'hue-yellow';
+    if (activeJustice === 'claude') return 'hue-red';
+    if (activeJustice === 'gpt') return 'hue-green';
+    if (aiMode === 'supreme-court') return 'hue-purple';
+    return '';
+  };
+
   return (
-    <header className="glass-strong border-b border-border safe-top">
+    <header className={`glass-strong border-b border-border safe-top ${getAIHue()}`}>
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: Menu */}
-        <button onClick={onMenuClick} className="icon-btn">
-          <Menu size={24} />
+        {/* Left: Research Mode Toggle */}
+        <button
+          onClick={onToggleResearch}
+          className={`icon-btn ${researchEnabled ? 'bg-primary/20 text-primary' : ''}`}
+          title="Toggle Research Mode"
+        >
+          <Microscope size={24} />
         </button>
 
-        {/* Center: Title & Status */}
-        <div className="flex-1 flex items-center justify-center gap-3">
-          <h1 className="text-xl font-bold text-gradient">HaleyOS</h1>
-          {aiMode === 'supreme-court' && (
-            <SupremeCourtIndicator activeModels={activeModels} />
-          )}
+        {/* Center: Haley Button (long-press for mode selector) */}
+        <div
+          className="flex items-center justify-center gap-3 cursor-pointer select-none"
+          {...longPressHandlers}
+        >
+          <h1 className="text-xl font-bold text-gradient">Haley</h1>
+          
+          {/* Status Indicator */}
           <button
-            onClick={() => setShowStatus(!showStatus)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowStatus(!showStatus);
+            }}
             className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-panel-light transition-colors"
           >
             {isOnline ? (
@@ -53,9 +84,13 @@ export default function ChatHeader({
           </button>
         </div>
 
-        {/* Right: More Options */}
-        <button onClick={onMoreClick} className="icon-btn">
-          <MoreVertical size={24} />
+        {/* Right: Magic Window Toggle */}
+        <button
+          onClick={onOpenMagicWindow}
+          className="icon-btn"
+          title="Open Magic Window"
+        >
+          <Puzzle size={24} />
         </button>
       </div>
 

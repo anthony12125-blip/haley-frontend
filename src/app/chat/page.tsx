@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
-import AISwitcher from '@/components/AISwitcher';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInputBar from '@/components/ChatInputBar';
-import MagicWindowContainer from '@/components/MagicWindowContainer';
+import MagicWindow from '@/components/MagicWindow';
+import ModeSelector from '@/components/ModeSelector';
 import Sidebar from '@/components/Sidebar';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
 
@@ -20,7 +20,8 @@ export default function ChatPage() {
 
   // UI State
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [magicWindowOpen, setMagicWindowOpen] = useState(false);
+  const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
 
   // Set sidebar open by default on desktop
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function ChatPage() {
 
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
-  const [activeModels, setActiveModels] = useState<string[]>(['Claude']);
+  const [activeJustice, setActiveJustice] = useState<string | null>(null);
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -51,6 +52,19 @@ export default function ChatPage() {
   // Conversation History
   const [conversations, setConversations] = useState<ConversationHistory[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('default');
+
+  // Available Justices and Agents
+  const availableJustices = [
+    { id: 'claude', name: 'Claude', provider: 'Anthropic' },
+    { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
+    { id: 'gemini', name: 'Gemini', provider: 'Google' },
+    { id: 'mistral', name: 'Mistral', provider: 'Mistral AI' },
+    { id: 'llama', name: 'Llama', provider: 'Meta' },
+    { id: 'command', name: 'Command', provider: 'Cohere' },
+    { id: 'perplexity', name: 'Perplexity', provider: 'Perplexity AI' },
+  ];
+
+  const availableAgents: Array<{ id: string; name: string; description: string }> = [];
 
   // Initialize
   useEffect(() => {
@@ -119,7 +133,7 @@ export default function ChatPage() {
             baby_invoked: response.baby_invoked,
             task: response.task,
             supreme_court: aiMode === 'supreme-court',
-            llm_sources: aiMode === 'supreme-court' ? activeModels : undefined,
+            llm_sources: activeJustice ? [activeJustice] : undefined,
           },
         };
         setMessages((prev) => [...prev, assistantMessage]);
@@ -136,6 +150,7 @@ export default function ChatPage() {
             content: response.result.visualization,
             title: 'Analysis Results',
           });
+          setMagicWindowOpen(true);
         }
       } else {
         const errorMessage: Message = {
@@ -190,7 +205,6 @@ export default function ChatPage() {
 
   const handleFileUpload = (files: FileList) => {
     console.log('Files uploaded:', files);
-    // TODO: Implement file upload to backend
     setMagicWindowContent({
       type: 'data',
       content: {
@@ -199,22 +213,26 @@ export default function ChatPage() {
       },
       title: 'Uploaded Files',
     });
+    setMagicWindowOpen(true);
   };
 
   const handleGallerySelect = () => {
     console.log('Gallery selection');
-    // TODO: Implement gallery selection
   };
 
-  const handleAIModeChange = (mode: AIMode) => {
-    setAiMode(mode);
-    if (mode === 'supreme-court') {
-      setActiveModels(['Claude', 'GPT-4', 'Gemini', 'Mistral']);
-    } else if (mode === 'multi') {
-      setActiveModels(['Claude', 'GPT-4']);
-    } else {
-      setActiveModels(['Claude']);
+  const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
+    if (mode === 'haley') {
+      setAiMode('single');
+      setActiveJustice(null);
     }
+  };
+
+  const handleJusticeSelect = (justice: string) => {
+    setActiveJustice(justice);
+    setAiMode('single');
+    
+    // Load justice-specific conversation history
+    console.log(`Switched to ${justice} - loading conversation history`);
   };
 
   const handleRetryMessage = (messageId: string) => {
@@ -229,14 +247,15 @@ export default function ChatPage() {
 
   const handleBranchMessage = (messageId: string) => {
     console.log('Branch conversation from message:', messageId);
-    // TODO: Implement conversation branching
   };
 
   const handleNewConversation = () => {
     const newId = generateId();
     setCurrentConversationId(newId);
     initializeChat();
-    setSidebarOpen(false);
+    if (device.type !== 'desktop') {
+      setSidebarOpen(false);
+    }
   };
 
   if (authLoading) {
@@ -276,7 +295,7 @@ export default function ChatPage() {
         ))}
       </div>
 
-      {/* Sidebar - Always present, controlled by isOpen state */}
+      {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(!sidebarOpen)}
@@ -285,24 +304,24 @@ export default function ChatPage() {
         currentConversationId={currentConversationId}
         onNewConversation={handleNewConversation}
         onSelectConversation={setCurrentConversationId}
+        activeJustice={activeJustice}
+        onSelectJustice={handleJusticeSelect}
       />
 
-      {/* Main Chat Area - Adjusts based on sidebar state on desktop */}
-      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300`}>
-        {/* AI Mode Switcher */}
-        <AISwitcher
-          currentMode={aiMode}
-          onModeChange={handleAIModeChange}
-          activeModels={activeModels}
-        />
-
+      {/* Main Chat Area */}
+      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
+        sidebarOpen && device.type === 'desktop' ? 'ml-80' : 'ml-0'
+      }`}>
         {/* Header */}
         <ChatHeader
           aiMode={aiMode}
-          activeModels={activeModels}
-          onMenuClick={() => setSidebarOpen(true)}
-          onMoreClick={() => setMenuOpen(!menuOpen)}
+          activeModels={activeJustice ? [activeJustice] : ['Haley']}
+          activeJustice={activeJustice}
+          onToggleResearch={() => setResearchEnabled(!researchEnabled)}
+          onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
+          onOpenModeSelector={() => setModeSelectorOpen(true)}
           systemStatus={systemStatus}
+          researchEnabled={researchEnabled}
         />
 
         {/* Messages */}
@@ -319,18 +338,32 @@ export default function ChatPage() {
           setInput={setInput}
           isLoading={isLoading}
           onSend={handleSend}
+          onFileUpload={handleFileUpload}
+          onGallerySelect={handleGallerySelect}
+          sidebarOpen={sidebarOpen && device.type === 'desktop'}
+        />
+
+        {/* Magic Window */}
+        <MagicWindow
+          isOpen={magicWindowOpen}
+          content={magicWindowContent}
           researchEnabled={researchEnabled}
           logicEngineEnabled={logicEngineEnabled}
           onToggleResearch={() => setResearchEnabled(!researchEnabled)}
           onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
-          onFileUpload={handleFileUpload}
-          onGallerySelect={handleGallerySelect}
+          onClose={() => setMagicWindowOpen(false)}
         />
 
-        {/* Magic Window */}
-        <MagicWindowContainer
-          content={magicWindowContent}
-          onClose={() => setMagicWindowContent(null)}
+        {/* Mode Selector Modal */}
+        <ModeSelector
+          isOpen={modeSelectorOpen}
+          currentMode={aiMode}
+          activeJustice={activeJustice}
+          onClose={() => setModeSelectorOpen(false)}
+          onSelectMode={handleModeSelect}
+          onSelectJustice={handleJusticeSelect}
+          availableJustices={availableJustices}
+          availableAgents={availableAgents}
         />
       </div>
     </div>
