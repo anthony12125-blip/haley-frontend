@@ -89,5 +89,7 @@ export interface ConversationHistory {
   title: string;
   lastMessage: string;
   timestamp: Date;
+  lastActive: Date;
   messageCount: number;
+  justiceMode?: string | null;
 }
