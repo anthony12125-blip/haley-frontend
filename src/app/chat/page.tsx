@@ -22,6 +22,13 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Set sidebar open by default on desktop
+  useEffect(() => {
+    if (device.type === 'desktop') {
+      setSidebarOpen(true);
+    }
+  }, [device.type]);
+
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
   const [activeModels, setActiveModels] = useState<string[]>(['Claude']);
@@ -269,10 +276,10 @@ export default function ChatPage() {
         ))}
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar - Always present, controlled by isOpen state */}
       <Sidebar
-        isOpen={sidebarOpen || device.type === 'desktop'}
-        onClose={() => setSidebarOpen(false)}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(!sidebarOpen)}
         onSignOut={signOut}
         conversations={conversations}
         currentConversationId={currentConversationId}
@@ -280,8 +287,8 @@ export default function ChatPage() {
         onSelectConversation={setCurrentConversationId}
       />
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative z-10">
+      {/* Main Chat Area - Adjusts based on sidebar state on desktop */}
+      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300`}>
         {/* AI Mode Switcher */}
         <AISwitcher
           currentMode={aiMode}

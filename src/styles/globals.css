@@ -4,8 +4,8 @@
 
 :root {
   /* HaleyOS New Space Theme - Primary Colors */
-  --primary: #4fb4ff;
-  --accent: #7fd4ff;
+  --primary: #3a82d1;
+  --accent: #5f9fe0;
   --panel-dark: #111418;
   --panel-medium: #1a1e22;
   --panel-light: #22262b;
@@ -527,6 +527,13 @@ body {
   left: 0;
   right: 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Desktop: offset input to not overlap sidebar */
+@media (min-width: 768px) {
+  .input-container {
+    left: 320px; /* Sidebar width is 80 * 4 = 320px */
+  }
 }
 
 @supports (-webkit-touch-callout: none) {

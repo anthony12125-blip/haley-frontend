@@ -11,6 +11,7 @@ import {
   History,
   Trash2,
   ChevronRight,
+  Menu,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 
@@ -37,26 +38,31 @@ export default function Sidebar({
 }: SidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
 
-  if (!isOpen) return null;
-
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay - Mobile only */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden ${
+          isOpen ? 'block' : 'hidden'
+        }`}
         onClick={onClose}
       />
 
       {/* Sidebar */}
       <div
         className={`fixed left-0 top-0 bottom-0 w-80 glass-strong border-r border-border z-50 transform transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:relative md:translate-x-0`}
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
+          {/* Header with Hamburger (desktop) and Close (mobile) */}
           <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="text-lg font-bold text-gradient">Conversations</h2>
+            <div className="flex items-center gap-3">
+              <button onClick={onClose} className="icon-btn hidden md:flex" title="Toggle sidebar">
+                <Menu size={20} />
+              </button>
+              <h2 className="text-lg font-bold text-gradient">Conversations</h2>
+            </div>
             <button onClick={onClose} className="icon-btn md:hidden">
               <X size={20} />
             </button>

@@ -24,6 +24,24 @@ export default function MessageBubble({
   const [showActions, setShowActions] = useState(false);
   const [copied, setCopied] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      setHideTimeout(null);
+    }
+    setShowActions(true);
+  };
+
+  const handleMouseLeave = () => {
+    // Add delay before hiding to allow cursor to move to action menu
+    const timeout = setTimeout(() => {
+      setShowActions(false);
+      setMoreMenuOpen(false);
+    }, 200);
+    setHideTimeout(timeout);
+  };
 
   const handleCopy = async () => {
     if (onCopy) {
@@ -76,11 +94,8 @@ export default function MessageBubble({
       className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} ${
         message.role === 'system' ? 'justify-center' : ''
       }`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => {
-        setShowActions(false);
-        setMoreMenuOpen(false);
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="relative group">
         <div
@@ -101,7 +116,11 @@ export default function MessageBubble({
 
         {/* Action Buttons */}
         {message.role !== 'system' && (showActions || moreMenuOpen) && (
-          <div className="absolute -bottom-8 left-0 right-0 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div 
+            className="absolute -bottom-8 left-0 right-0 flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
             <button
               onClick={handleCopy}
               className="bg-panel-dark border border-border rounded-lg px-2 py-1 hover:bg-panel-light transition-colors"
