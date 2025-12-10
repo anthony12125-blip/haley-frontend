@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
+import { saveChat, loadAllChats, loadChat, deleteChat as deleteStoredChat } from '@/lib/chatStorage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -85,11 +86,23 @@ export default function ChatPage() {
 
     if (user) {
       initializeChat();
+      loadConversationsFromStorage();
       loadSystemStatus();
       const statusInterval = setInterval(loadSystemStatus, 30000); // Update every 30s
       return () => clearInterval(statusInterval);
     }
   }, [user, authLoading, router]);
+
+  const loadConversationsFromStorage = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const loadedConversations = await loadAllChats(user.uid);
+      setConversations(loadedConversations);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    }
+  };
 
   const initializeChat = () => {
     const systemMessage: Message = {
@@ -176,6 +189,17 @@ export default function ChatPage() {
       }
 
       await loadSystemStatus();
+      
+      // Save chat after successful message exchange
+      if (user?.uid) {
+        // Use a callback to get the latest messages state
+        setMessages((currentMessages) => {
+          saveChat(user.uid!, currentConversationId, currentMessages, activeJustice)
+            .then(() => loadConversationsFromStorage())
+            .catch((error) => console.error('Error saving chat:', error));
+          return currentMessages;
+        });
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
@@ -286,12 +310,57 @@ export default function ChatPage() {
     console.log('Branch conversation from message:', messageId);
   };
 
-  const handleNewConversation = () => {
+  const handleNewConversation = async () => {
+    // Save current chat before creating new one
+    if (user?.uid && messages.length > 1) {
+      await saveChat(user.uid, currentConversationId, messages, activeJustice);
+      await loadConversationsFromStorage();
+    }
+    
     const newId = generateId();
     setCurrentConversationId(newId);
     initializeChat();
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
+    }
+  };
+
+  const handleSelectConversation = async (id: string) => {
+    // Save current chat before switching
+    if (user?.uid && messages.length > 1 && id !== currentConversationId) {
+      await saveChat(user.uid, currentConversationId, messages, activeJustice);
+    }
+    
+    setCurrentConversationId(id);
+    
+    // Load the selected conversation
+    if (user?.uid) {
+      const loadedMessages = await loadChat(user.uid, id);
+      if (loadedMessages && loadedMessages.length > 0) {
+        setMessages(loadedMessages);
+      } else {
+        initializeChat();
+      }
+    }
+    
+    if (device.type !== 'desktop') {
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleDeleteConversation = async (id: string) => {
+    if (!user?.uid) return;
+    
+    try {
+      await deleteStoredChat(user.uid, id);
+      await loadConversationsFromStorage();
+      
+      // If we deleted the current conversation, start a new one
+      if (id === currentConversationId) {
+        handleNewConversation();
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
     }
   };
 
@@ -340,9 +409,11 @@ export default function ChatPage() {
         conversations={conversations}
         currentConversationId={currentConversationId}
         onNewConversation={handleNewConversation}
-        onSelectConversation={setCurrentConversationId}
+        onSelectConversation={handleSelectConversation}
+        onDeleteConversation={handleDeleteConversation}
         activeJustice={activeJustice}
         onSelectJustice={handleJusticeSelect}
+        userName={user.displayName || undefined}
         userEmail={user.email || undefined}
         userPhotoURL={user.photoURL || undefined}
       />
