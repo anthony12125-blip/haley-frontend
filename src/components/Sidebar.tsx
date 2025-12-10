@@ -30,6 +30,7 @@ interface SidebarProps {
   onDeleteConversation?: (id: string) => void;
   activeJustice?: string | null;
   onSelectJustice?: (justice: string | null) => void;
+  userName?: string;
   userEmail?: string;
   userPhotoURL?: string;
 }
@@ -55,6 +56,7 @@ export default function Sidebar({
   onDeleteConversation,
   activeJustice,
   onSelectJustice,
+  userName,
   userEmail = 'user@example.com',
   userPhotoURL,
 }: SidebarProps) {
@@ -265,7 +267,7 @@ export default function Sidebar({
                         <div className="flex items-center gap-2 mt-2 text-xs text-secondary">
                           <span>{conv.messageCount} messages</span>
                           <span>•</span>
-                          <span>{formatDate(conv.timestamp)}</span>
+                          <span>{formatDate(conv.lastActive || conv.timestamp)}</span>
                         </div>
                       </div>
                       <button
@@ -305,7 +307,9 @@ export default function Sidebar({
                   </div>
                 )}
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-sm font-medium text-primary truncate">{userEmail}</div>
+                  <div className="text-sm font-medium text-gray-300 truncate">
+                    {userName || 'User'}
+                  </div>
                 </div>
                 <ChevronRight size={16} className={`transition-transform ${showAccountMenu ? 'rotate-90' : ''}`} />
               </button>
@@ -477,11 +481,16 @@ function SettingRow({
 
 function formatDate(date: Date): string {
   const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
 
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Yesterday';
-  if (days < 7) return `${days} days ago`;
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
   return date.toLocaleDateString();
 }
