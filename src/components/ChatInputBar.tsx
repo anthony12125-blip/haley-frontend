@@ -126,7 +126,7 @@ export default function ChatInputBar({
   return (
     <div 
       className={`input-container glass-strong border-t border-border safe-bottom transition-all duration-300 ${
-        sidebarOpen ? 'md:left-80' : 'md:left-0'
+        sidebarOpen ? 'md:left-80' : 'md:left-[60px]'
       }`}
     >
       {/* Main Input Area */}
