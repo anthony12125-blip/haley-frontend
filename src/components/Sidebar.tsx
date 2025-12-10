@@ -258,7 +258,7 @@ function SettingRow({
       <div className="flex items-center justify-between p-3 bg-panel-dark rounded-lg">
         <span className="text-sm">{label}</span>
         <select
-          value={value}
+          value={value as string}
           onChange={(e) => setValue(e.target.value)}
           className="bg-panel-medium border border-border rounded px-3 py-1 text-sm"
         >
