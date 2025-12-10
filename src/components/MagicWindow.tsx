@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Maximize2, Minimize2, ChevronDown, ChevronUp } from 'lucide-react';
-import ResearchToggle from './ResearchToggle';
-import LogicEngineToggle from './LogicEngineToggle';
+import { X, Maximize2, Minimize2, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import type { MagicWindowContent } from '@/types';
 
 interface MagicWindowProps {
@@ -11,8 +9,6 @@ interface MagicWindowProps {
   content: MagicWindowContent | null;
   researchEnabled: boolean;
   logicEngineEnabled: boolean;
-  onToggleResearch: () => void;
-  onToggleLogicEngine: () => void;
   onClose: () => void;
 }
 
@@ -29,14 +25,11 @@ export default function MagicWindow({
   content,
   researchEnabled,
   logicEngineEnabled,
-  onToggleResearch,
-  onToggleLogicEngine,
   onClose,
 }: MagicWindowProps) {
   const [isMaximized, setIsMaximized] = useState(false);
   const [currentAnimation, setCurrentAnimation] = useState(ANIMATIONS[0]);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showToggles, setShowToggles] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,7 +51,8 @@ export default function MagicWindow({
       style={{
         width: isMaximized ? '90vw' : '380px',
         height: isMaximized ? '85vh' : isExpanded ? '500px' : '80px',
-        left: isMaximized ? '50%' : '20px',
+        right: isMaximized ? 'auto' : '20px',
+        left: isMaximized ? '50%' : 'auto',
         top: isMaximized ? '50%' : 'auto',
         bottom: isMaximized ? 'auto' : '80px',
         transform: isMaximized ? 'translate(-50%, -50%)' : 'none',
@@ -66,35 +60,33 @@ export default function MagicWindow({
       }}
     >
       {/* Portal Ring Effect with Dr. Strange style */}
-      <div className="portal-ring" />
+      <div className="portal-ring" style={{ opacity: 0.35 }} />
       
       {/* Multiple rotating rings */}
-      <div className="portal-ring-outer" />
+      <div className="portal-ring-outer" style={{ opacity: 0.25 }} />
       
       {/* Spark Effects */}
-      <div className="portal-sparks" />
+      <div className="portal-sparks" style={{ opacity: 0.2 }} />
 
-      {/* Window Content */}
-      <div className="glass-strong rounded-[20px] w-full h-full flex flex-col overflow-hidden relative z-10">
+      {/* Window Content with translucent background and soft edges */}
+      <div className="rounded-[24px] w-full h-full flex flex-col overflow-hidden relative z-10" 
+           style={{ 
+             background: 'rgba(17, 20, 24, 0.35)',
+             backdropFilter: 'blur(24px)',
+             WebkitBackdropFilter: 'blur(24px)',
+             border: '1px solid rgba(255, 255, 255, 0.1)'
+           }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b border-border">
+        <div className="flex items-center justify-between p-3 border-b border-border/30">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-2 text-sm font-semibold text-gradient flex-1 text-left"
           >
             {isExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+            <Sparkles size={16} className="text-primary" />
             <span>Magic Window</span>
           </button>
           <div className="flex items-center gap-1">
-            {!isMaximized && (
-              <button
-                onClick={() => setShowToggles(!showToggles)}
-                className="icon-btn !w-8 !h-8"
-                title="Toggle controls"
-              >
-                {showToggles ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-              </button>
-            )}
             <button
               onClick={() => setIsMaximized(!isMaximized)}
               className="icon-btn !w-8 !h-8"
@@ -112,12 +104,19 @@ export default function MagicWindow({
           </div>
         </div>
 
-        {/* Collapsible Toggles Section */}
-        {isExpanded && showToggles && (
-          <div className="p-3 border-b border-border space-y-2 animate-slideDown">
-            <div className="text-xs text-secondary mb-2 font-semibold">System Controls</div>
-            <ResearchToggle enabled={researchEnabled} onToggle={onToggleResearch} />
-            <LogicEngineToggle enabled={logicEngineEnabled} onToggle={onToggleLogicEngine} />
+        {/* System Status Indicators */}
+        {isExpanded && (
+          <div className="px-3 py-2 border-b border-border/30">
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${researchEnabled ? 'bg-success animate-pulse' : 'bg-secondary/30'}`} />
+                <span className={researchEnabled ? 'text-success' : 'text-secondary'}>Research</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${logicEngineEnabled ? 'bg-success animate-pulse' : 'bg-secondary/30'}`} />
+                <span className={logicEngineEnabled ? 'text-success' : 'text-secondary'}>Logic Engine</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -156,7 +155,7 @@ function renderContent(content: MagicWindowContent) {
     
     case 'code':
       return (
-        <pre className="bg-panel-dark p-4 rounded-lg overflow-x-auto text-sm font-mono">
+        <pre className="bg-panel-dark/50 p-4 rounded-lg overflow-x-auto text-sm font-mono">
           <code>{typeof content.content === 'string' ? content.content : JSON.stringify(content.content, null, 2)}</code>
         </pre>
       );
@@ -176,7 +175,7 @@ function renderContent(content: MagicWindowContent) {
       return (
         <div className="space-y-2">
           {Object.entries(content.content).map(([key, value]) => (
-            <div key={key} className="bg-panel-dark p-3 rounded-lg">
+            <div key={key} className="bg-panel-dark/50 p-3 rounded-lg">
               <div className="text-xs text-secondary uppercase mb-1">{key}</div>
               <div className="text-primary font-mono">{String(value)}</div>
             </div>

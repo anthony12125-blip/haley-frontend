@@ -53,15 +53,15 @@ export default function ChatPage() {
   const [conversations, setConversations] = useState<ConversationHistory[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('default');
 
-  // Available Justices and Agents
+  // Available Justices and Agents (updated order)
   const availableJustices = [
-    { id: 'claude', name: 'Claude', provider: 'Anthropic' },
-    { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
     { id: 'gemini', name: 'Gemini', provider: 'Google' },
-    { id: 'mistral', name: 'Mistral', provider: 'Mistral AI' },
+    { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
+    { id: 'claude', name: 'Claude', provider: 'Anthropic' },
     { id: 'llama', name: 'Llama', provider: 'Meta' },
-    { id: 'command', name: 'Command', provider: 'Cohere' },
     { id: 'perplexity', name: 'Perplexity', provider: 'Perplexity AI' },
+    { id: 'mistral', name: 'Mistral', provider: 'Mistral AI' },
+    { id: 'grok', name: 'Grok', provider: 'xAI' },
   ];
 
   const availableAgents: Array<{ id: string; name: string; description: string }> = [];
@@ -306,22 +306,26 @@ export default function ChatPage() {
         onSelectConversation={setCurrentConversationId}
         activeJustice={activeJustice}
         onSelectJustice={handleJusticeSelect}
+        userEmail={user.email || undefined}
+        userPhotoURL={user.photoURL || undefined}
       />
 
       {/* Main Chat Area */}
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
         sidebarOpen && device.type === 'desktop' ? 'ml-80' : 'ml-0'
       }`}>
-        {/* Header */}
+        {/* Header with hamburger menu */}
         <ChatHeader
           aiMode={aiMode}
           activeModels={activeJustice ? [activeJustice] : ['Haley']}
           activeJustice={activeJustice}
           onToggleResearch={() => setResearchEnabled(!researchEnabled)}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
-          onOpenModeSelector={() => setModeSelectorOpen(true)}
           systemStatus={systemStatus}
           researchEnabled={researchEnabled}
+          logicEngineEnabled={logicEngineEnabled}
+          onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
         />
 
         {/* Messages */}
@@ -343,14 +347,12 @@ export default function ChatPage() {
           sidebarOpen={sidebarOpen && device.type === 'desktop'}
         />
 
-        {/* Magic Window */}
+        {/* Magic Window - bottom right, translucent */}
         <MagicWindow
           isOpen={magicWindowOpen}
           content={magicWindowContent}
           researchEnabled={researchEnabled}
           logicEngineEnabled={logicEngineEnabled}
-          onToggleResearch={() => setResearchEnabled(!researchEnabled)}
-          onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
           onClose={() => setMagicWindowOpen(false)}
         />
 

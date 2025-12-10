@@ -11,7 +11,10 @@ import {
   Trash2,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Users,
+  User,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 
@@ -26,16 +29,18 @@ interface SidebarProps {
   onDeleteConversation?: (id: string) => void;
   activeJustice?: string | null;
   onSelectJustice?: (justice: string) => void;
+  userEmail?: string;
+  userPhotoURL?: string;
 }
 
-const SEVEN_JUSTICES = [
-  { id: 'claude', name: 'Claude', color: 'hue-red' },
-  { id: 'gpt', name: 'GPT-4', color: 'hue-green' },
+const THE_SEVEN = [
   { id: 'gemini', name: 'Gemini', color: 'hue-yellow' },
-  { id: 'mistral', name: 'Mistral', color: 'hue-blue' },
-  { id: 'llama', name: 'Llama', color: 'hue-purple' },
-  { id: 'command', name: 'Command', color: 'hue-pink' },
+  { id: 'gpt', name: 'GPT', color: 'hue-green' },
+  { id: 'claude', name: 'Claude', color: 'hue-red' },
+  { id: 'llama', name: 'Meta', color: 'hue-purple' },
   { id: 'perplexity', name: 'Perplexity', color: 'hue-cyan' },
+  { id: 'mistral', name: 'Mistral', color: 'hue-blue' },
+  { id: 'grok', name: 'Grok', color: 'hue-pink' },
 ];
 
 export default function Sidebar({
@@ -49,8 +54,12 @@ export default function Sidebar({
   onDeleteConversation,
   activeJustice,
   onSelectJustice,
+  userEmail = 'user@example.com',
+  userPhotoURL,
 }: SidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const [theSevenCollapsed, setTheSevenCollapsed] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const handleJusticeSelect = (justiceId: string) => {
     if (onSelectJustice) {
@@ -98,32 +107,41 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* Justices Section */}
+          {/* The Seven Section - Collapsible */}
           <div className="px-4 mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Users size={16} className="text-secondary" />
-              <h3 className="text-sm font-semibold text-secondary">Seven Justices</h3>
-            </div>
-            <div className="space-y-2">
-              {SEVEN_JUSTICES.map((justice) => (
-                <button
-                  key={justice.id}
-                  onClick={() => handleJusticeSelect(justice.id)}
-                  className={`w-full p-2 rounded-lg border transition-all text-left text-sm ${
-                    activeJustice === justice.id
-                      ? `${justice.color} bg-primary/20 border-primary text-primary`
-                      : 'bg-panel-dark border-border text-secondary hover:border-accent hover:text-primary'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{justice.name}</span>
-                    {activeJustice === justice.id && (
-                      <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setTheSevenCollapsed(!theSevenCollapsed)}
+              className="flex items-center justify-between w-full mb-3 text-sm font-semibold text-secondary hover:text-primary transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Users size={16} />
+                <span>The Seven</span>
+              </div>
+              {theSevenCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+            </button>
+            
+            {!theSevenCollapsed && (
+              <div className="space-y-2">
+                {THE_SEVEN.map((justice) => (
+                  <button
+                    key={justice.id}
+                    onClick={() => handleJusticeSelect(justice.id)}
+                    className={`w-full p-2 rounded-lg border transition-all text-left text-sm ${
+                      activeJustice === justice.id
+                        ? `${justice.color} bg-primary/20 border-primary text-primary`
+                        : 'bg-panel-dark border-border text-secondary hover:border-accent hover:text-primary'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{justice.name}</span>
+                      {activeJustice === justice.id && (
+                        <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Conversations List */}
@@ -180,23 +198,57 @@ export default function Sidebar({
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer with Google Account Chip */}
           <div className="border-t border-border p-4 space-y-2">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
-            >
-              <Settings size={20} />
-              <span className="text-sm">Settings</span>
-              <ChevronRight size={16} className="ml-auto" />
-            </button>
-            <button
-              onClick={onSignOut}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors"
-            >
-              <LogOut size={20} />
-              <span className="text-sm">Sign Out</span>
-            </button>
+            {/* Google Account Chip */}
+            <div className="relative">
+              <button
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
+              >
+                {userPhotoURL ? (
+                  <img 
+                    src={userPhotoURL} 
+                    alt="User" 
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                    <User size={18} />
+                  </div>
+                )}
+                <div className="flex-1 text-left min-w-0">
+                  <div className="text-sm font-medium text-primary truncate">{userEmail}</div>
+                </div>
+                <ChevronRight size={16} className={`transition-transform ${showAccountMenu ? 'rotate-90' : ''}`} />
+              </button>
+
+              {/* Account Dropdown Menu */}
+              {showAccountMenu && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 glass-strong rounded-xl border border-border p-2 space-y-1">
+                  <button
+                    onClick={() => {
+                      setShowSettings(true);
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                  >
+                    <Settings size={18} />
+                    <span className="text-sm">Settings</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onSignOut();
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors text-left"
+                  >
+                    <LogOut size={18} />
+                    <span className="text-sm">Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

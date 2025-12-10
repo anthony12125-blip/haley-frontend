@@ -15,14 +15,14 @@ interface ModeSelectorProps {
   availableAgents: Array<{ id: string; name: string; description: string }>;
 }
 
-const SEVEN_JUSTICES = [
-  { id: 'claude', name: 'Claude', provider: 'Anthropic', color: 'bg-red-500/20 border-red-500' },
-  { id: 'gpt', name: 'GPT-4', provider: 'OpenAI', color: 'bg-green-500/20 border-green-500' },
+const THE_SEVEN_JUSTICES = [
   { id: 'gemini', name: 'Gemini', provider: 'Google', color: 'bg-yellow-500/20 border-yellow-500' },
-  { id: 'mistral', name: 'Mistral', provider: 'Mistral AI', color: 'bg-blue-500/20 border-blue-500' },
+  { id: 'gpt', name: 'GPT-4', provider: 'OpenAI', color: 'bg-green-500/20 border-green-500' },
+  { id: 'claude', name: 'Claude', provider: 'Anthropic', color: 'bg-red-500/20 border-red-500' },
   { id: 'llama', name: 'Llama', provider: 'Meta', color: 'bg-purple-500/20 border-purple-500' },
-  { id: 'command', name: 'Command', provider: 'Cohere', color: 'bg-pink-500/20 border-pink-500' },
   { id: 'perplexity', name: 'Perplexity', provider: 'Perplexity AI', color: 'bg-cyan-500/20 border-cyan-500' },
+  { id: 'mistral', name: 'Mistral', provider: 'Mistral AI', color: 'bg-blue-500/20 border-blue-500' },
+  { id: 'grok', name: 'Grok', provider: 'xAI', color: 'bg-pink-500/20 border-pink-500' },
 ];
 
 export default function ModeSelector({
@@ -119,8 +119,8 @@ export default function ModeSelector({
 
           {selectedTab === 'ais' && (
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-secondary mb-3">Seven Justices</h4>
-              {SEVEN_JUSTICES.map((justice) => (
+              <h4 className="text-sm font-semibold text-secondary mb-3">The Seven</h4>
+              {THE_SEVEN_JUSTICES.map((justice) => (
                 <button
                   key={justice.id}
                   onClick={() => handleJusticeSelect(justice.id)}
