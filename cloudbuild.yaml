@@ -1,0 +1,123 @@
+# Cloud Build Configuration for HaleyOS Frontend
+# This file handles building and deploying to Cloud Run
+
+steps:
+  # Step 1: Clean install dependencies
+  - name: 'node:18-alpine'
+    id: 'install-deps'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        echo "Installing dependencies..."
+        apk add --no-cache libc6-compat
+        rm -rf node_modules package-lock.json .next
+        npm install --legacy-peer-deps
+    env:
+      - 'NODE_ENV=production'
+
+  # Step 2: Build Next.js application
+  - name: 'node:18-alpine'
+    id: 'build-nextjs'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        echo "Building Next.js application..."
+        npm run build
+    env:
+      - 'NODE_ENV=production'
+      - 'NEXT_TELEMETRY_DISABLED=1'
+      - 'NEXT_PUBLIC_BACKEND_URL=https://logic-engine-core2-409495160162.us-central1.run.app'
+      - 'NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyAOnz3gs5iUYfVZrGjGNC-QfsBujvMYBQ4'
+      - 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=haley-front-end.firebaseapp.com'
+      - 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=haley-front-end'
+      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=haley-front-end.firebasestorage.app'
+      - 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=415166601162'
+      - 'NEXT_PUBLIC_FIREBASE_APP_ID=1:415166601162:web:2964033f8f8567b0e92133'
+
+  # Step 3: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-f'
+      - 'Dockerfile.cloudrun'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/haley-frontend:$SHORT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/haley-frontend:latest'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_BACKEND_URL=https://logic-engine-core2-409495160162.us-central1.run.app'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyAOnz3gs5iUYfVZrGjGNC-QfsBujvMYBQ4'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=haley-front-end.firebaseapp.com'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=haley-front-end'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=haley-front-end.firebasestorage.app'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=415166601162'
+      - '--build-arg'
+      - 'NEXT_PUBLIC_FIREBASE_APP_ID=1:415166601162:web:2964033f8f8567b0e92133'
+      - '.'
+
+  # Step 4: Push Docker image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/haley-frontend:$SHORT_SHA'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-latest'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/haley-frontend:latest'
+
+  # Step 5: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-cloudrun'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'haley-frontend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/haley-frontend:$SHORT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '3000'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '4'
+      - '--min-instances'
+      - '0'
+      - '--set-env-vars'
+      - 'NODE_ENV=production,NEXT_TELEMETRY_DISABLED=1'
+
+# Images to push to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/haley-frontend:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/haley-frontend:latest'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'  # More CPU for faster builds
+  logging: CLOUD_LOGGING_ONLY
+  
+# Timeout (30 minutes max)
+timeout: 1800s
+
+# Substitutions for variables
+substitutions:
+  _SERVICE_NAME: 'haley-frontend'
+  _REGION: 'us-central1'
