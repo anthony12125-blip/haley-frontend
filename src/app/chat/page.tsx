@@ -27,12 +27,28 @@ export default function ChatPage() {
   const [magicWindowOpen, setMagicWindowOpen] = useState(false);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
 
-  // Set sidebar open by default on desktop
+  // Initialize sidebar state from localStorage, with desktop default
   useEffect(() => {
-    if (device.type === 'desktop') {
-      setSidebarOpen(true);
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('haley_sidebarCollapsed');
+      if (savedState !== null) {
+        // If we have saved state, use the inverse (since we store "collapsed" but state is "open")
+        const isCollapsed = JSON.parse(savedState);
+        setSidebarOpen(!isCollapsed);
+      } else if (device.type === 'desktop') {
+        // Default behavior: open on desktop
+        setSidebarOpen(true);
+      }
     }
   }, [device.type]);
+
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Store the inverse: we store "collapsed" state, but our state is "open"
+      localStorage.setItem('haley_sidebarCollapsed', JSON.stringify(!sidebarOpen));
+    }
+  }, [sidebarOpen]);
 
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');

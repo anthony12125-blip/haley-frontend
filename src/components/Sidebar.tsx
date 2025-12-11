@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   X,
   Plus,
@@ -61,8 +61,29 @@ export default function Sidebar({
   userPhotoURL,
 }: SidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
-  const [theSevenCollapsed, setTheSevenCollapsed] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  
+  // Initialize theSevenCollapsed from localStorage (default to expanded = false for collapsed)
+  const [theSevenCollapsed, setTheSevenCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('haley_justicesExpanded');
+      if (savedState !== null) {
+        // We store "expanded" but state is "collapsed", so invert
+        const isExpanded = JSON.parse(savedState);
+        return !isExpanded;
+      }
+    }
+    // Default: expanded (collapsed = false)
+    return false;
+  });
+
+  // Save theSevenCollapsed state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Store the inverse: we store "expanded" state, but our state is "collapsed"
+      localStorage.setItem('haley_justicesExpanded', JSON.stringify(!theSevenCollapsed));
+    }
+  }, [theSevenCollapsed]);
 
   const handleJusticeSelect = (justiceId: string) => {
     if (onSelectJustice) {
