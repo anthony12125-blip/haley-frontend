@@ -5,7 +5,8 @@ import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy,
 import { app } from './firebaseClient';
 import type { Message, ConversationHistory } from '@/types';
 
-const db = getFirestore(app);
+// Guard against SSR - only initialize Firestore in browser
+const db = typeof window !== 'undefined' && app ? getFirestore(app) : null;
 
 export interface ChatDocument {
   id: string;
@@ -27,6 +28,7 @@ export async function saveChat(
   messages: Message[],
   justiceMode: string | null = null
 ): Promise<void> {
+  if (!db) throw new Error('Firestore not initialized');
   if (!userId) throw new Error('User ID required');
   
   const chatRef = doc(db, 'users', userId, 'chats', chatId);
@@ -73,7 +75,7 @@ export async function saveChat(
  * Load a specific chat
  */
 export async function loadChat(userId: string, chatId: string): Promise<Message[] | null> {
-  if (!userId) return null;
+  if (!db || !userId) return null;
   
   try {
     const chatRef = doc(db, 'users', userId, 'chats', chatId);
@@ -97,7 +99,7 @@ export async function loadChat(userId: string, chatId: string): Promise<Message[
  * Load all chats for a user
  */
 export async function loadAllChats(userId: string): Promise<ConversationHistory[]> {
-  if (!userId) return [];
+  if (!db || !userId) return [];
   
   try {
     const chatsRef = collection(db, 'users', userId, 'chats');
@@ -134,7 +136,7 @@ export async function loadAllChats(userId: string): Promise<ConversationHistory[
  * Delete a chat
  */
 export async function deleteChat(userId: string, chatId: string): Promise<void> {
-  if (!userId) return;
+  if (!db || !userId) return;
   
   try {
     const chatRef = doc(db, 'users', userId, 'chats', chatId);

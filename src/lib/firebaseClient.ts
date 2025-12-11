@@ -10,12 +10,22 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
 };
 
-let app: FirebaseApp;
-let auth: Auth;
+// Initialize Firebase only in browser environment
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
 
 if (typeof window !== 'undefined') {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   auth = getAuth(app);
 }
 
-export { app, auth };
+// Export with fallback - will throw runtime error if used during SSR
+export { app as app, auth };
+
+// Safe getter that throws helpful error if used during SSR
+export function getFirebaseApp(): FirebaseApp {
+  if (!app) {
+    throw new Error('Firebase app is not initialized. This should only be called in the browser.');
+  }
+  return app;
+}
