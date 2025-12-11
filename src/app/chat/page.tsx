@@ -330,18 +330,38 @@ export default function ChatPage() {
   };
 
   const handleNewConversation = async () => {
-    // Save current chat before creating new one
-    if (user?.uid && messages.length > 1) {
-      await saveChat(user.uid, currentConversationId, messages, activeJustice);
-      await loadConversationsFromStorage();
-    }
+    // TEMP FIX v1: Create new chat without Firestore persistence
+    // Full persistence will be handled in Module 1.5
     
+    // Generate new chat ID
     const newId = generateId();
+    
+    // Create new chat object for local state
+    const newChat: ConversationHistory = {
+      id: newId,
+      title: 'New Chat',
+      lastMessage: 'No messages yet',
+      timestamp: new Date(),
+      lastActive: new Date(),
+      messageCount: 0,
+      justice: activeJustice || undefined,
+    };
+    
+    // Add to conversations list (in-memory only, not saved to Firestore)
+    setConversations(prev => [newChat, ...prev]);
+    
+    // Switch to new chat
     setCurrentConversationId(newId);
+    
+    // Initialize with system message
     initializeChat();
+    
+    // Close sidebar on mobile
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
     }
+    
+    console.log('New chat created (temp, not saved):', newId);
   };
 
   const handleSelectConversation = async (id: string) => {

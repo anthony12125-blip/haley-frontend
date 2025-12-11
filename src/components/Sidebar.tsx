@@ -16,6 +16,7 @@ import {
   Users,
   User,
   Sparkles,
+  HelpCircle,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 
@@ -152,24 +153,78 @@ export default function Sidebar({
             </div>
 
             {/* Bottom: Profile */}
-            <button
-              onClick={() => setShowAccountMenu(!showAccountMenu)}
-              className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
-              title="Account"
-            >
-              {userPhotoURL ? (
-                <img 
-                  src={userPhotoURL} 
-                  alt="User" 
-                  className="w-8 h-8 rounded-full"
-                />
-              ) : (
-                <User size={24} className="text-gray-400 group-hover:text-gray-200" />
+            <div className="relative">
+              <button
+                onClick={() => setShowAccountMenu(!showAccountMenu)}
+                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                title="Account"
+              >
+                {userPhotoURL ? (
+                  <img 
+                    src={userPhotoURL} 
+                    alt="User" 
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <User size={24} className="text-gray-400 group-hover:text-gray-200" />
+                )}
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                  Account
+                </div>
+              </button>
+              
+              {/* Popover menu for mini sidebar - appears to the right */}
+              {showAccountMenu && !isOpen && (
+                <div 
+                  className="absolute left-full bottom-0 ml-2 min-w-[180px] glass-strong rounded-lg border border-border p-2 space-y-1 shadow-lg z-[60]"
+                  style={{
+                    background: '#1a1e22',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      console.log('Account clicked');
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                  >
+                    <User size={18} />
+                    <span className="text-sm">Account</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSettings(true);
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                  >
+                    <Settings size={18} />
+                    <span className="text-sm">Settings</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('Help clicked');
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                  >
+                    <HelpCircle size={18} />
+                    <span className="text-sm">Help</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onSignOut();
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors text-left"
+                  >
+                    <LogOut size={18} />
+                    <span className="text-sm">Log out</span>
+                  </button>
+                </div>
               )}
-              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                Account
-              </div>
-            </button>
+            </div>
           </div>
         )}
 
@@ -217,13 +272,17 @@ export default function Sidebar({
           <div className="px-4 mb-4">
             <button
               onClick={() => setTheSevenCollapsed(!theSevenCollapsed)}
-              className="flex items-center justify-between w-full mb-3 text-sm font-semibold text-secondary hover:text-primary transition-colors"
+              className={`flex items-center justify-between w-full mb-3 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                !theSevenCollapsed 
+                  ? 'bg-white/[0.07] text-[#e5f2ff]'
+                  : 'bg-transparent text-white/60 hover:text-white/80'
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Users size={16} />
                 <span>The Seven</span>
               </div>
-              {theSevenCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+              <span className="text-xs">▼</span>
             </button>
             
             {!theSevenCollapsed && (
@@ -314,7 +373,11 @@ export default function Sidebar({
             <div className="relative">
               <button
                 onClick={() => setShowAccountMenu(!showAccountMenu)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                  showAccountMenu
+                    ? 'bg-white/[0.07] text-[#e5f2ff]'
+                    : 'hover:bg-panel-light text-white/60'
+                }`}
               >
                 {userPhotoURL ? (
                   <img 
@@ -328,16 +391,36 @@ export default function Sidebar({
                   </div>
                 )}
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-sm font-medium text-gray-300 truncate">
+                  <div className="text-sm font-medium truncate">
                     {userName || 'User'}
                   </div>
                 </div>
-                <ChevronRight size={16} className={`transition-transform ${showAccountMenu ? 'rotate-90' : ''}`} />
+                <span className="text-xs">▼</span>
               </button>
 
-              {/* Account Dropdown Menu */}
+              {/* Account Dropdown Menu / Popover */}
               {showAccountMenu && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 glass-strong rounded-xl border border-border p-2 space-y-1">
+                <div 
+                  className={`absolute mb-2 glass-strong rounded-lg border border-border p-2 space-y-1 shadow-lg ${
+                    isOpen 
+                      ? 'bottom-full left-0 right-0'
+                      : 'left-full bottom-0 ml-2 min-w-[180px]'
+                  }`}
+                  style={{
+                    background: '#1a1e22',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      console.log('Account clicked');
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                  >
+                    <User size={18} />
+                    <span className="text-sm">Account</span>
+                  </button>
                   <button
                     onClick={() => {
                       setShowSettings(true);
@@ -350,13 +433,23 @@ export default function Sidebar({
                   </button>
                   <button
                     onClick={() => {
+                      console.log('Help clicked');
+                      setShowAccountMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                  >
+                    <HelpCircle size={18} />
+                    <span className="text-sm">Help</span>
+                  </button>
+                  <button
+                    onClick={() => {
                       onSignOut();
                       setShowAccountMenu(false);
                     }}
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors text-left"
                   >
                     <LogOut size={18} />
-                    <span className="text-sm">Sign Out</span>
+                    <span className="text-sm">Log out</span>
                   </button>
                 </div>
               )}
@@ -368,6 +461,14 @@ export default function Sidebar({
       {/* Settings Modal */}
       {showSettings && (
         <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
+      
+      {/* Overlay for Account Menu - click outside to close */}
+      {showAccountMenu && (
+        <div
+          className="fixed inset-0 z-[55]"
+          onClick={() => setShowAccountMenu(false)}
+        />
       )}
     </>
   );
