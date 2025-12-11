@@ -10,7 +10,9 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
+
+# Use npm install with legacy-peer-deps for better compatibility
+RUN npm install --legacy-peer-deps --production=false
 
 # Rebuild the source code only when needed
 FROM base AS builder
