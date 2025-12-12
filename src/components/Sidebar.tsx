@@ -53,34 +53,34 @@ const THE_SEVEN = [
 // Custom Haley icon component
 function HaleyIcon({ size = 24, className = '' }: { size?: number; className?: string }) {
   return (
-    <div
+    <div 
       className={`relative ${className}`}
       style={{ width: size, height: size }}
     >
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
+      <svg 
+        width={size} 
+        height={size} 
+        viewBox="0 0 24 24" 
+        fill="none" 
         xmlns="http://www.w3.org/2000/svg"
       >
-        <circle
-          cx="12"
-          cy="12"
-          r="10"
-          fill="currentColor"
+        <circle 
+          cx="12" 
+          cy="12" 
+          r="10" 
+          fill="currentColor" 
           opacity="0.2"
         />
-        <path
-          d="M12 7V12L15 15"
-          stroke="currentColor"
-          strokeWidth="2"
+        <path 
+          d="M12 7V12L15 15" 
+          stroke="currentColor" 
+          strokeWidth="2" 
           strokeLinecap="round"
         />
-        <circle
-          cx="12"
-          cy="12"
-          r="2"
+        <circle 
+          cx="12" 
+          cy="12" 
+          r="2" 
           fill="currentColor"
         />
       </svg>
@@ -94,7 +94,7 @@ function MigrateIcon({ size = 24, showAI = true }: { size?: number; showAI?: boo
     <div className="relative" style={{ width: size, height: size }}>
       <Mail size={size * 0.7} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       {showAI && (
-        <span
+        <span 
           className="absolute bottom-0 right-0 text-[8px] font-bold bg-primary rounded px-1"
           style={{ fontSize: size * 0.3 }}
         >
@@ -126,7 +126,7 @@ export default function Sidebar({
   const [showSettings, setShowSettings] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showHaleyMenu, setShowHaleyMenu] = useState(false);
-
+  
   // Initialize theSevenCollapsed from localStorage (default to expanded = false for collapsed)
   const [theSevenCollapsed, setTheSevenCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -160,17 +160,19 @@ export default function Sidebar({
     <>
       {/* Overlay - Mobile only */}
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={onClose}
       />
 
       {/* Sidebar - Full width on mobile, Mini/Full on desktop */}
       <div
-        className={`fixed left-0 top-0 bottom-0 glass-strong border-r border-border z-50 transition-all duration-300 ${isOpen
-            ? 'translate-x-0 w-80'
+        className={`fixed left-0 top-0 bottom-0 glass-strong border-r border-border z-50 transition-all duration-300 ${
+          isOpen 
+            ? 'translate-x-0 w-80' 
             : '-translate-x-full w-80 md:translate-x-0 md:w-[60px]'
-          }`}
+        }`}
         style={{
           background: isOpen ? undefined : '#111418'
         }}
@@ -249,9 +251,9 @@ export default function Sidebar({
                 title="Account"
               >
                 {userPhotoURL ? (
-                  <img
-                    src={userPhotoURL}
-                    alt="User"
+                  <img 
+                    src={userPhotoURL} 
+                    alt="User" 
                     className="w-8 h-8 rounded-full"
                   />
                 ) : (
@@ -261,10 +263,10 @@ export default function Sidebar({
                   Account
                 </div>
               </button>
-
+              
               {/* Popover menu for mini sidebar - appears to the right */}
               {showAccountMenu && (
-                <div
+                <div 
                   className="absolute left-full bottom-0 ml-2 min-w-[180px] glass-strong rounded-lg border border-border p-2 space-y-1 shadow-lg z-[60]"
                   style={{
                     background: '#1a1e22',
@@ -316,7 +318,7 @@ export default function Sidebar({
 
               {/* Haley AI Menu popover for mini sidebar */}
               {showHaleyMenu && (
-                <div
+                <div 
                   className="absolute left-full bottom-0 ml-2 min-w-[200px] glass-strong rounded-lg border border-border p-2 space-y-1 shadow-lg z-[60]"
                   style={{
                     background: '#1a1e22',
@@ -330,10 +332,11 @@ export default function Sidebar({
                     <button
                       key={justice.id}
                       onClick={() => handleJusticeSelect(justice.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${activeJustice === justice.id
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                        activeJustice === justice.id
                           ? 'bg-primary/20 text-primary'
                           : 'hover:bg-panel-light'
-                        }`}
+                      }`}
                     >
                       <div className={`w-2 h-2 rounded-full ${justice.color}`} />
                       <span className="text-sm">{justice.name}</span>
@@ -434,10 +437,11 @@ export default function Sidebar({
                     <button
                       key={justice.id}
                       onClick={() => handleJusticeSelect(justice.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${activeJustice === justice.id
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                        activeJustice === justice.id
                           ? 'bg-primary/20 text-primary'
                           : 'hover:bg-panel-light'
-                        }`}
+                      }`}
                     >
                       <div className={`w-2 h-2 rounded-full ${justice.color}`} />
                       <span className="text-sm">{justice.name}</span>
@@ -446,7 +450,7 @@ export default function Sidebar({
                       )}
                     </button>
                   ))}
-
+                  
                   {isSupremeCourtMode && (
                     <div className="mt-2 pt-2 border-t border-border">
                       <div className="px-3 py-2 flex items-center gap-2 bg-primary/10 rounded-lg">
@@ -473,10 +477,11 @@ export default function Sidebar({
                   conversations.map((conv) => (
                     <div
                       key={conv.id}
-                      className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${currentConversationId === conv.id
+                      className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+                        currentConversationId === conv.id
                           ? 'bg-primary/20'
                           : 'hover:bg-panel-light'
-                        }`}
+                      }`}
                       onClick={() => onSelectConversation?.(conv.id)}
                     >
                       <MessageSquare size={16} className="flex-shrink-0" />
@@ -511,9 +516,9 @@ export default function Sidebar({
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
                 >
                   {userPhotoURL ? (
-                    <img
-                      src={userPhotoURL}
-                      alt="User"
+                    <img 
+                      src={userPhotoURL} 
+                      alt="User" 
                       className="w-8 h-8 rounded-full"
                     />
                   ) : (
@@ -532,7 +537,7 @@ export default function Sidebar({
                 </button>
 
                 {showAccountMenu && (
-                  <div
+                  <div 
                     className="absolute bottom-full left-0 right-0 mb-2 glass-strong rounded-lg border border-border p-2 space-y-1 shadow-lg z-[60]"
                     style={{
                       background: '#1a1e22',
@@ -591,7 +596,7 @@ export default function Sidebar({
       {showSettings && (
         <SettingsModal onClose={() => setShowSettings(false)} />
       )}
-
+      
       {/* Overlay for Menus - click outside to close */}
       {(showAccountMenu || showHaleyMenu) && (
         <div
