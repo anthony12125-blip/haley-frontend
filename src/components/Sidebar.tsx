@@ -18,6 +18,7 @@ import {
   Mail,
   RotateCcw,
   Send,
+  MoreVertical,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -105,6 +106,7 @@ export default function Sidebar({
   const [showSettings, setShowSettings] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showHaleyMenu, setShowHaleyMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   
   // Initialize theSevenCollapsed from localStorage (default to expanded = false for collapsed)
   const [theSevenCollapsed, setTheSevenCollapsed] = useState(() => {
@@ -124,6 +126,21 @@ export default function Sidebar({
       localStorage.setItem('haley_justicesExpanded', JSON.stringify(!theSevenCollapsed));
     }
   }, [theSevenCollapsed]);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showUserMenu) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.user-menu-container')) {
+          setShowUserMenu(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUserMenu]);
 
   const handleJusticeSelect = (justiceId: string) => {
     if (onSelectJustice) {
@@ -331,7 +348,53 @@ export default function Sidebar({
                 </div>
               )}
             </div>
-          </div>
+
+            {/* Bottom: User Profile - Collapsed */}
+            <div className="relative user-menu-container">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative mb-3"
+                title={userName || userEmail}
+              >
+                {userPhotoURL ? (
+                  <img 
+                    src={userPhotoURL} 
+                    alt="Profile" 
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <User size={22} className="text-gray-400 group-hover:text-gray-200" />
+                )}
+              </button>
+
+              {/* User Menu Dropdown - Collapsed View */}
+              {showUserMenu && (
+                <div className="absolute bottom-full left-full ml-2 mb-2 w-48 glass-strong rounded-lg border border-border shadow-xl z-[60]">
+                  <div className="p-2">
+                    <button
+                      onClick={() => {
+                        setShowSettings(true);
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                    >
+                      <Settings size={18} />
+                      <span className="text-sm">Settings</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        onSignOut();
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors text-left"
+                    >
+                      <LogOut size={18} />
+                      <span className="text-sm">Log out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
         )}
 
         {/* Full Sidebar - When expanded */}
@@ -481,22 +544,63 @@ export default function Sidebar({
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer - User Profile */}
             <div className="p-3 border-t border-border">
-              <button
-                onClick={() => setShowSettings(true)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
-              >
-                <Settings size={18} />
-                <span className="text-sm">Settings</span>
-              </button>
-              <button
-                onClick={onSignOut}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors"
-              >
-                <LogOut size={18} />
-                <span className="text-sm">Log out</span>
-              </button>
+              <div className="relative user-menu-container">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
+                >
+                  {userPhotoURL ? (
+                    <img 
+                      src={userPhotoURL} 
+                      alt="Profile" 
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <User size={18} className="text-primary" />
+                    </div>
+                  )}
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {userName || 'User'}
+                    </div>
+                    <div className="text-xs text-secondary truncate">
+                      {userEmail}
+                    </div>
+                  </div>
+                  <MoreVertical size={18} className="text-gray-400 flex-shrink-0" />
+                </button>
+
+                {/* User Menu Dropdown - Expanded View */}
+                {showUserMenu && (
+                  <div className="absolute bottom-full left-0 right-0 mb-2 glass-strong rounded-lg border border-border shadow-xl z-[60]">
+                    <div className="p-2">
+                      <button
+                        onClick={() => {
+                          setShowSettings(true);
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                      >
+                        <Settings size={18} />
+                        <span className="text-sm">Settings</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          onSignOut();
+                          setShowUserMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors text-left"
+                      >
+                        <LogOut size={18} />
+                        <span className="text-sm">Log out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
