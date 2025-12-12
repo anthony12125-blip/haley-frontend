@@ -1,0 +1,38 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BACKEND_URL: https://logic-engine-core2-409495160162.us-central1.run.app
+          NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyAOnz3gs5iUYfVZrGjGNC-QfsBujvMYBQ4
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: haley-front-end.firebaseapp.com
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: haley-front-end
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: haley-front-end.firebasestorage.app
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "415166601162"
+          NEXT_PUBLIC_FIREBASE_APP_ID: 1:415166601162:web:2964033f8f8567b0e92133
+          
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ 1//05fW6zZMs3I7_CgYIARAAGAUSNwF-L9IrBHcstaHjV77ZLyxhOVXTSW1YJlzDyZEAriqYRYPTgdHSCERBJQKuN8ElpA56fGZ9Ju0 }}
