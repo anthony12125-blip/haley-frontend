@@ -232,80 +232,6 @@ export default function Sidebar({
                   The Seven
                 </div>
               </button>
-            </div>
-
-            {/* Bottom: Profile */}
-            <div className="relative">
-              <button
-                onClick={() => setShowAccountMenu(!showAccountMenu)}
-                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
-                title="Account"
-              >
-                {userPhotoURL ? (
-                  <img 
-                    src={userPhotoURL} 
-                    alt="User" 
-                    className="w-8 h-8 rounded-full"
-                  />
-                ) : (
-                  <User size={24} className="text-gray-400 group-hover:text-gray-200" />
-                )}
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  Account
-                </div>
-              </button>
-              
-              {/* Popover menu for mini sidebar - appears to the right */}
-              {showAccountMenu && (
-                <div 
-                  className="absolute left-full bottom-0 ml-2 min-w-[180px] glass-strong rounded-lg border border-border p-2 space-y-1 shadow-lg z-[60]"
-                  style={{
-                    background: '#1a1e22',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      console.log('Account clicked');
-                      setShowAccountMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
-                  >
-                    <User size={18} />
-                    <span className="text-sm">Account</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowSettings(true);
-                      setShowAccountMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
-                  >
-                    <Settings size={18} />
-                    <span className="text-sm">Settings</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      console.log('Help clicked');
-                      setShowAccountMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
-                  >
-                    <HelpCircle size={18} />
-                    <span className="text-sm">Help</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      onSignOut();
-                      setShowAccountMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors text-left"
-                  >
-                    <LogOut size={18} />
-                    <span className="text-sm">Log out</span>
-                  </button>
-                </div>
-              )}
 
               {/* Haley AI Menu popover for mini sidebar */}
               {showHaleyMenu && (
@@ -395,6 +321,7 @@ export default function Sidebar({
                 </div>
               )}
             </div>
+          </div>
         )}
 
         {/* Full Sidebar - When expanded */}
