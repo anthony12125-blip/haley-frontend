@@ -9,8 +9,6 @@ import {
   LogOut,
   History,
   Trash2,
-  ChevronRight,
-  ChevronLeft,
   ChevronDown,
   ChevronUp,
   Users,
@@ -22,6 +20,8 @@ import {
   Send,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
+import { HaleyCoreGlyph } from './HaleyCoreGlyph';
+import { HaleyIndicator } from './HaleyIndicator';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -53,44 +53,6 @@ const THE_SEVEN = [
   { id: 'grok', name: 'Grok', color: 'hue-cyan' },
 ];
 
-// Custom Haley icon component
-function HaleyIcon({ size = 24, className = '' }: { size?: number; className?: string }) {
-  return (
-    <div 
-      className={`relative ${className}`}
-      style={{ width: size, height: size }}
-    >
-      <svg 
-        width={size} 
-        height={size} 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <circle 
-          cx="12" 
-          cy="12" 
-          r="10" 
-          fill="currentColor" 
-          opacity="0.2"
-        />
-        <path 
-          d="M12 7V12L15 15" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round"
-        />
-        <circle 
-          cx="12" 
-          cy="12" 
-          r="2" 
-          fill="currentColor"
-        />
-      </svg>
-    </div>
-  );
-}
-
 // Custom Migrate icon component (envelope with wings)
 function MigrateIcon({ size = 24, showAI = true }: { size?: number; showAI?: boolean }) {
   return (
@@ -98,7 +60,7 @@ function MigrateIcon({ size = 24, showAI = true }: { size?: number; showAI?: boo
       <Mail size={size * 0.7} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
       {showAI && (
         <span 
-          className="absolute bottom-0 right-0 text-[8px] font-bold bg-primary rounded px-1"
+          className="absolute -top-1 -right-1 text-[8px] font-bold text-primary"
           style={{ fontSize: size * 0.3 }}
         >
           AI
@@ -106,6 +68,20 @@ function MigrateIcon({ size = 24, showAI = true }: { size?: number; showAI?: boo
       )}
     </div>
   );
+}
+
+// Helper function to format dates
+function formatDate(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
 }
 
 export default function Sidebar({
@@ -183,17 +159,12 @@ export default function Sidebar({
         {/* Mini Sidebar - Desktop only, when collapsed */}
         {!isOpen && (
           <div className="hidden md:flex flex-col h-full items-center py-3">
-            {/* Top: Expand Arrow - Static visible background */}
-            <button
+            {/* Top: Haley Indicator - Shows comet when collapsed */}
+            <HaleyIndicator 
+              isExpanded={false}
               onClick={onToggle}
-              className="w-12 h-12 flex items-center justify-center rounded-lg bg-panel-medium hover:bg-gray-800/70 transition-colors group relative mb-4"
-              title="Open Sidebar"
-            >
-              <ChevronRight size={20} className="text-gray-400 group-hover:text-gray-200" />
-              <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                Open Sidebar
-              </div>
-            </button>
+              className="mb-4"
+            />
 
             {/* Primary Action Buttons */}
             <div className="flex-1 flex flex-col items-center gap-2">
@@ -233,13 +204,13 @@ export default function Sidebar({
                 </div>
               </button>
 
-              {/* Haley Menu */}
+              {/* Haley Menu - Using Core Glyph */}
               <button
                 onClick={() => setShowHaleyMenu(!showHaleyMenu)}
                 className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
                 title="The Seven"
               >
-                <HaleyIcon size={22} className="text-gray-400 group-hover:text-gray-200" />
+                <HaleyCoreGlyph size={22} className="text-gray-400 group-hover:text-gray-200" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
                   The Seven
                 </div>
@@ -348,14 +319,14 @@ export default function Sidebar({
                       )}
                     </button>
                   ))}
+                  
                   {isSupremeCourtMode && (
-                    <>
-                      <div className="h-px bg-border my-1" />
-                      <div className="px-3 py-2 flex items-center gap-2">
+                    <div className="mt-2 pt-2 border-t border-border">
+                      <div className="px-3 py-2 flex items-center gap-2 bg-primary/10 rounded-lg">
                         <Users size={14} className="text-primary" />
-                        <span className="text-xs text-primary font-semibold">FULL COURT</span>
+                        <span className="text-xs text-primary font-semibold">FULL SUPREME COURT</span>
                       </div>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
@@ -369,16 +340,16 @@ export default function Sidebar({
             {/* Header with Close Button */}
             <div className="p-4 flex items-center justify-between border-b border-border">
               <div className="flex items-center gap-2">
-                <HaleyIcon size={24} className="text-primary" />
+                <HaleyCoreGlyph size={24} className="text-primary" />
                 <span className="text-lg font-bold text-gradient">Haley</span>
               </div>
-              <button
+              {/* Desktop: Haley Indicator shows down arrow when expanded */}
+              <HaleyIndicator 
+                isExpanded={true}
                 onClick={onToggle}
-                className="p-2 rounded-lg hover:bg-panel-light transition-colors md:block"
-                title="Collapse Sidebar"
-              >
-                <ChevronLeft size={20} className="text-gray-400" />
-              </button>
+                className="md:block hidden"
+              />
+              {/* Mobile: X button */}
               <button
                 onClick={onClose}
                 className="p-2 rounded-lg hover:bg-panel-light transition-colors md:hidden"
@@ -417,7 +388,7 @@ export default function Sidebar({
               </div>
             </div>
 
-            {/* AI Model Selector */}
+            {/* AI Model Selector - Using Core Glyph */}
             <div className="p-3 border-b border-border">
               <button
                 onClick={() => setTheSevenCollapsed(!theSevenCollapsed)}
@@ -426,7 +397,7 @@ export default function Sidebar({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <HaleyIcon size={20} className="text-primary" />
+                  <HaleyCoreGlyph size={20} className="text-primary" />
                   <span className="font-semibold text-sm">The Seven</span>
                 </div>
                 <ChevronDown size={18} className="text-gray-400" />
@@ -498,7 +469,8 @@ export default function Sidebar({
                             e.stopPropagation();
                             onDeleteConversation(conv.id);
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/20 rounded transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-error/20 transition-all"
+                          title="Delete conversation"
                         >
                           <Trash2 size={14} className="text-error" />
                         </button>
@@ -509,83 +481,22 @@ export default function Sidebar({
               </div>
             </div>
 
-            {/* Footer - User Profile */}
+            {/* Footer */}
             <div className="p-3 border-t border-border">
-              <div className="relative">
-                <button
-                  onClick={() => setShowAccountMenu(!showAccountMenu)}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
-                >
-                  {userPhotoURL ? (
-                    <img 
-                      src={userPhotoURL} 
-                      alt="User" 
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                      <User size={18} />
-                    </div>
-                  )}
-                  <div className="flex-1 text-left min-w-0">
-                    <div className="text-sm font-semibold truncate">
-                      {userName || 'User'}
-                    </div>
-                  </div>
-                  <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />
-                </button>
-
-                {showAccountMenu && (
-                  <div 
-                    className="absolute bottom-full left-0 right-0 mb-2 glass-strong rounded-lg border border-border p-2 space-y-1 shadow-lg z-[60]"
-                    style={{
-                      background: '#1a1e22',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
-                    }}
-                  >
-                    <button
-                      onClick={() => {
-                        console.log('Account clicked');
-                        setShowAccountMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
-                    >
-                      <User size={18} />
-                      <span className="text-sm">Account</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowSettings(true);
-                        setShowAccountMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
-                    >
-                      <Settings size={18} />
-                      <span className="text-sm">Settings</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('Help clicked');
-                        setShowAccountMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
-                    >
-                      <HelpCircle size={18} />
-                      <span className="text-sm">Help</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        onSignOut();
-                        setShowAccountMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors text-left"
-                    >
-                      <LogOut size={18} />
-                      <span className="text-sm">Log out</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
+              >
+                <Settings size={18} />
+                <span className="text-sm">Settings</span>
+              </button>
+              <button
+                onClick={onSignOut}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-error/20 text-error transition-colors"
+              >
+                <LogOut size={18} />
+                <span className="text-sm">Log out</span>
+              </button>
             </div>
           </div>
         )}
@@ -593,162 +504,25 @@ export default function Sidebar({
 
       {/* Settings Modal */}
       {showSettings && (
-        <SettingsModal onClose={() => setShowSettings(false)} />
-      )}
-      
-      {/* Overlay for Menus - click outside to close */}
-      {(showAccountMenu || showHaleyMenu) && (
-        <div
-          className="fixed inset-0 z-[55]"
-          onClick={() => {
-            setShowAccountMenu(false);
-            setShowHaleyMenu(false);
-          }}
-        />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+          <div className="glass-strong rounded-xl border border-border max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Settings</h2>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="p-2 rounded-lg hover:bg-panel-light transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="text-sm text-secondary">
+                Settings coming soon...
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
-}
-
-function SettingsModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div
-        className="glass-strong rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gradient">Settings</h2>
-            <button onClick={onClose} className="icon-btn">
-              <X size={24} />
-            </button>
-          </div>
-
-          <div className="space-y-6">
-            {/* General */}
-            <section>
-              <h3 className="text-lg font-semibold mb-3">General</h3>
-              <div className="space-y-3">
-                <SettingRow label="Auto-scroll" type="toggle" />
-                <SettingRow label="Sound effects" type="toggle" />
-                <SettingRow label="Haptic feedback" type="toggle" />
-              </div>
-            </section>
-
-            {/* Theme */}
-            <section>
-              <h3 className="text-lg font-semibold mb-3">Theme</h3>
-              <div className="space-y-3">
-                <SettingRow
-                  label="Wallpaper"
-                  type="select"
-                  options={['Space Default', 'Dark Nebula', 'Blue Horizon']}
-                />
-                <SettingRow
-                  label="Display mode"
-                  type="select"
-                  options={['Off', 'On', 'System']}
-                />
-              </div>
-            </section>
-
-            {/* Voice */}
-            <section>
-              <h3 className="text-lg font-semibold mb-3">Voice</h3>
-              <div className="space-y-3">
-                <SettingRow label="Voice input" type="toggle" />
-                <SettingRow label="Text-to-speech" type="toggle" />
-                <SettingRow label="Voice speed" type="slider" />
-              </div>
-            </section>
-
-            {/* Data Control */}
-            <section>
-              <h3 className="text-lg font-semibold mb-3">Data Control</h3>
-              <div className="space-y-3">
-                <button className="w-full btn-secondary text-left">
-                  Export conversations
-                </button>
-                <button className="w-full btn-secondary text-left text-error">
-                  Clear all data
-                </button>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SettingRow({
-  label,
-  type,
-  options,
-}: {
-  label: string;
-  type: 'toggle' | 'select' | 'slider';
-  options?: string[];
-}) {
-  const [value, setValue] = useState(type === 'toggle' ? false : options?.[0] || '');
-
-  if (type === 'toggle') {
-    return (
-      <div className="flex items-center justify-between p-3 bg-panel-dark rounded-lg">
-        <span className="text-sm">{label}</span>
-        <div
-          className={`toggle-switch ${value ? 'active' : ''}`}
-          onClick={() => setValue(!value)}
-        >
-          <div className="toggle-knob" />
-        </div>
-      </div>
-    );
-  }
-
-  if (type === 'select') {
-    return (
-      <div className="flex items-center justify-between p-3 bg-panel-dark rounded-lg">
-        <span className="text-sm">{label}</span>
-        <select
-          value={value as string}
-          onChange={(e) => setValue(e.target.value)}
-          className="bg-panel-medium border border-border rounded px-3 py-1 text-sm"
-        >
-          {options?.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-3 bg-panel-dark rounded-lg">
-      <span className="text-sm block mb-2">{label}</span>
-      <input type="range" className="w-full" min="0" max="100" />
-    </div>
-  );
-}
-
-function formatDate(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-  return date.toLocaleDateString();
 }
