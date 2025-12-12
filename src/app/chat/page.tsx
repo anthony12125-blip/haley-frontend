@@ -444,6 +444,7 @@ export default function ChatPage() {
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(!sidebarOpen)}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
         onSignOut={signOut}
         conversations={conversations}
         currentConversationId={currentConversationId}
@@ -455,6 +456,8 @@ export default function ChatPage() {
         userName={user.displayName || undefined}
         userEmail={user.email || undefined}
         userPhotoURL={user.photoURL || undefined}
+        onRecoverChat={() => console.log('Recover chat not yet implemented')}
+        onMigrateChat={() => console.log('Migrate chat not yet implemented')}
       />
 
       {/* Main Chat Area */}
