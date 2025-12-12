@@ -488,7 +488,7 @@ export default function Sidebar({
                       <div className="flex-1 min-w-0">
                         <div className="text-sm truncate">{conv.title}</div>
                         <div className="text-xs text-secondary">
-                          {formatDate(new Date(conv.updatedAt))}
+                          {formatDate(new Date(conv.lastActive))}
                         </div>
                       </div>
                       {onDeleteConversation && (
