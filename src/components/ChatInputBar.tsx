@@ -30,10 +30,32 @@ export default function ChatInputBar({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
+  const recordingBubbleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     adjustTextareaHeight();
   }, [input]);
+
+  // Handle click outside recording bubble to cancel
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (recordingBubbleRef.current && !recordingBubbleRef.current.contains(event.target as Node)) {
+        cancelRecording();
+      }
+    };
+
+    // Add a small delay before attaching the listener to avoid immediate cancellation
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isRecording]);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -134,7 +156,10 @@ export default function ChatInputBar({
         {/* Text Input with Plus Inside */}
         <div className="flex-1 relative min-w-0">
           {isRecording ? (
-            <div className="flex items-center justify-between bg-panel-dark border border-error rounded-xl px-4 py-3 w-full">
+            <div 
+              ref={recordingBubbleRef}
+              className="flex items-center justify-between bg-panel-dark border border-error rounded-xl px-4 py-3 w-full"
+            >
               <button
                 onClick={cancelRecording}
                 className="text-error hover:text-error/80 transition-colors flex items-center gap-2 flex-shrink-0"

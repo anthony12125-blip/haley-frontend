@@ -82,6 +82,9 @@ export default function ChatPage() {
     'mistral': [],
     'grok': [],
   });
+  
+  // New Chat Guard - prevents spam clicking
+  const [hasActiveNewChat, setHasActiveNewChat] = useState(false);
 
   // Available Justices and Agents (updated order)
   const availableJustices = [
@@ -159,6 +162,11 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    
+    // Clear new chat guard when user sends first message
+    if (hasActiveNewChat) {
+      setHasActiveNewChat(false);
+    }
 
     try {
       const response = await sendMessage(textToSend);
@@ -330,6 +338,12 @@ export default function ChatPage() {
   };
 
   const handleNewConversation = async () => {
+    // NEW CHAT GUARD: Ignore if there's already an active fresh/empty chat
+    if (hasActiveNewChat) {
+      console.log('New chat already active - ignoring additional clicks');
+      return;
+    }
+    
     // TEMP FIX v1: Create new chat without Firestore persistence
     // Full persistence will be handled in Module 1.5
     
@@ -356,6 +370,9 @@ export default function ChatPage() {
     // Initialize with system message
     initializeChat();
     
+    // Set guard to prevent additional new chats
+    setHasActiveNewChat(true);
+    
     // Close sidebar on mobile
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
@@ -371,6 +388,11 @@ export default function ChatPage() {
     }
     
     setCurrentConversationId(id);
+    
+    // Clear new chat guard when switching to existing conversation
+    if (hasActiveNewChat) {
+      setHasActiveNewChat(false);
+    }
     
     // Load the selected conversation
     if (user?.uid) {

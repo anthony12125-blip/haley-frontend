@@ -42,12 +42,15 @@ interface SidebarProps {
   onMigrateChat?: () => void;
 }
 
-// Updated AI list with only display names
+// THE SEVEN JUSTICES - Order is locked and must not be changed
 const THE_SEVEN = [
-  { id: 'claude', name: 'Claude', color: 'hue-orange' },
-  { id: 'gpt', name: 'GPT', color: 'hue-blue' },
   { id: 'gemini', name: 'Gemini', color: 'hue-teal' },
+  { id: 'gpt', name: 'GPT', color: 'hue-blue' },
+  { id: 'claude', name: 'Claude', color: 'hue-orange' },
+  { id: 'llama', name: 'Meta', color: 'hue-pink' },
   { id: 'perplexity', name: 'Perplexity', color: 'hue-purple' },
+  { id: 'mistral', name: 'Mistral', color: 'hue-yellow' },
+  { id: 'grok', name: 'Grok', color: 'hue-cyan' },
 ];
 
 // Custom Haley icon component
@@ -418,17 +421,15 @@ export default function Sidebar({
             <div className="p-3 border-b border-border">
               <button
                 onClick={() => setTheSevenCollapsed(!theSevenCollapsed)}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                  !theSevenCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
+                }`}
               >
                 <div className="flex items-center gap-2">
                   <HaleyIcon size={20} className="text-primary" />
                   <span className="font-semibold text-sm">AI Models</span>
                 </div>
-                {theSevenCollapsed ? (
-                  <ChevronDown size={18} className="text-gray-400" />
-                ) : (
-                  <ChevronUp size={18} className="text-gray-400" />
-                )}
+                <ChevronDown size={18} className="text-gray-400" />
               </button>
 
               {!theSevenCollapsed && (
