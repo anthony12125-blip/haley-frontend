@@ -493,9 +493,6 @@ export default function Sidebar({
                     <div className="text-sm font-medium truncate">
                       {userName || 'User'}
                     </div>
-                    <div className="text-xs text-secondary truncate">
-                      {userEmail}
-                    </div>
                   </div>
                   <MoreVertical size={18} className="text-gray-400 flex-shrink-0" />
                 </button>
