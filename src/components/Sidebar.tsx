@@ -237,11 +237,11 @@ export default function Sidebar({
               <button
                 onClick={() => setShowHaleyMenu(!showHaleyMenu)}
                 className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
-                title="AI Models"
+                title="The Seven"
               >
                 <HaleyIcon size={22} className="text-gray-400 group-hover:text-gray-200" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  AI Models
+                  The Seven
                 </div>
               </button>
             </div>
@@ -329,7 +329,7 @@ export default function Sidebar({
                   }}
                 >
                   <div className="px-3 py-2 text-xs text-secondary font-semibold">
-                    SELECT AI MODEL
+                    THE SEVEN
                   </div>
                   {THE_SEVEN.map((justice) => (
                     <button
@@ -427,7 +427,7 @@ export default function Sidebar({
               >
                 <div className="flex items-center gap-2">
                   <HaleyIcon size={20} className="text-primary" />
-                  <span className="font-semibold text-sm">AI Models</span>
+                  <span className="font-semibold text-sm">The Seven</span>
                 </div>
                 <ChevronDown size={18} className="text-gray-400" />
               </button>
@@ -531,10 +531,8 @@ export default function Sidebar({
                     <div className="text-sm font-semibold truncate">
                       {userName || 'User'}
                     </div>
-                    <div className="text-xs text-secondary truncate">
-                      {userEmail}
-                    </div>
                   </div>
+                  <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />
                 </button>
 
                 {showAccountMenu && (
