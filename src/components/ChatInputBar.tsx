@@ -132,9 +132,9 @@ export default function ChatInputBar({
       {/* Centered container with max-width to match messages */}
       <div className="mx-auto max-w-3xl px-4">
         {/* Main Input Area */}
-        <div className="flex items-end gap-2 py-4 w-full">
-          {/* Text Input with Plus Inside */}
-          <div className="flex-1 relative min-w-0">
+        <div className="py-4 w-full">
+          {/* All controls inside a single chat bubble */}
+          <div className="relative w-full">
             {isRecording ? (
               <div className="flex items-center justify-between bg-panel-dark border border-error rounded-xl px-4 py-3 w-full">
                 <button
@@ -157,7 +157,7 @@ export default function ChatInputBar({
                 </button>
               </div>
             ) : (
-              <div className="relative w-full">
+              <>
                 {/* Plus Menu Dropdown */}
                 {showPlusMenu && (
                   <div className="absolute bottom-full left-0 mb-2 glass-strong rounded-xl border border-border p-2 space-y-1 min-w-[160px] z-50">
@@ -193,8 +193,9 @@ export default function ChatInputBar({
                   </div>
                 )}
                 
+                {/* Single bubble containing all controls */}
                 <div className="flex items-end gap-2 bg-panel-dark border border-border rounded-xl px-2 py-2 focus-within:border-primary transition-colors w-full">
-                  {/* Plus icon inside bubble */}
+                  {/* Plus icon */}
                   <button
                     onClick={() => setShowPlusMenu(!showPlusMenu)}
                     className={`icon-btn !w-8 !h-8 flex-shrink-0 ${showPlusMenu ? 'bg-primary text-white' : ''}`}
@@ -204,6 +205,7 @@ export default function ChatInputBar({
                     {showPlusMenu ? <X size={18} /> : <Plus size={18} />}
                   </button>
                   
+                  {/* Text input */}
                   <textarea
                     ref={textareaRef}
                     value={input}
@@ -214,36 +216,32 @@ export default function ChatInputBar({
                     disabled={isLoading}
                     rows={1}
                   />
+                  
+                  {/* Microphone button */}
+                  <button
+                    onClick={startRecording}
+                    className="icon-btn !w-8 !h-8 flex-shrink-0"
+                    title="Voice input"
+                    disabled={isLoading}
+                  >
+                    <Mic size={20} />
+                  </button>
+                  
+                  {/* Send button */}
+                  <button
+                    onClick={handleSend}
+                    disabled={isLoading || !input.trim()}
+                    className={`icon-btn !w-8 !h-8 flex-shrink-0 ${
+                      input.trim() && !isLoading
+                        ? 'bg-primary text-white hover:bg-accent'
+                        : 'opacity-50 cursor-not-allowed'
+                    }`}
+                    title="Send message"
+                  >
+                    <Send size={20} />
+                  </button>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {!isRecording && (
-              <button
-                onClick={startRecording}
-                className="icon-btn"
-                title="Voice input"
-                disabled={isLoading}
-              >
-                <Mic size={20} />
-              </button>
-            )}
-            {!isRecording && (
-              <button
-                onClick={handleSend}
-                disabled={isLoading || !input.trim()}
-                className={`icon-btn ${
-                  input.trim() && !isLoading
-                    ? 'bg-primary text-white hover:bg-accent'
-                    : 'opacity-50 cursor-not-allowed'
-                }`}
-                title="Send message"
-              >
-                <Send size={20} />
-              </button>
+              </>
             )}
           </div>
         </div>
