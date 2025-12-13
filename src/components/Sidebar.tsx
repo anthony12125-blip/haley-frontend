@@ -209,7 +209,7 @@ export default function Sidebar({
               {/* New Chat */}
               <button
                 onClick={onNewConversation}
-                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
                 title="New Chat"
               >
                 <Plus size={22} className="text-gray-400 group-hover:text-gray-200" />
@@ -371,30 +371,31 @@ export default function Sidebar({
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="p-3 space-y-2 border-b border-border">
+            <div className="p-3 space-y-3 border-b border-border">
+              {/* Smaller New Chat button - similar to Claude/ChatGPT */}
               <button
                 onClick={onNewConversation}
-                className="w-full btn-secondary flex items-center justify-center gap-2 py-2.5"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
               >
-                <Plus size={20} />
-                <span>New Chat</span>
+                <Plus size={18} />
+                <span>New chat</span>
               </button>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={onRecoverChat}
-                  className="btn-secondary flex items-center justify-center gap-2 py-2"
+                  className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
                 >
-                  <RotateCcw size={18} />
-                  <span className="text-sm">Recover</span>
+                  <RotateCcw size={16} />
+                  <span>Recover</span>
                 </button>
 
                 <button
                   onClick={onMigrateChat}
-                  className="btn-secondary flex items-center justify-center gap-2 py-2"
+                  className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
                 >
-                  <MigrateIcon size={18} showAI={true} />
-                  <span className="text-sm">Migrate</span>
+                  <MigrateIcon size={16} showAI={true} />
+                  <span>Migrate</span>
                 </button>
               </div>
             </div>
@@ -444,6 +445,18 @@ export default function Sidebar({
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Projects Section */}
+            <div className="p-3 border-b border-border">
+              <div className="text-xs text-secondary font-semibold mb-2 px-2">
+                PROJECTS
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm text-secondary text-center py-4 px-2">
+                  No projects yet
+                </div>
+              </div>
             </div>
 
             {/* Conversation History */}
