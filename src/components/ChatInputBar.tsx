@@ -30,32 +30,10 @@ export default function ChatInputBar({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
-  const recordingBubbleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     adjustTextareaHeight();
   }, [input]);
-
-  // Handle click outside recording bubble to cancel
-  useEffect(() => {
-    if (!isRecording) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (recordingBubbleRef.current && !recordingBubbleRef.current.contains(event.target as Node)) {
-        cancelRecording();
-      }
-    };
-
-    // Add a small delay before attaching the listener to avoid immediate cancellation
-    const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isRecording]);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -151,123 +129,123 @@ export default function ChatInputBar({
         sidebarOpen ? 'md:left-80' : 'md:left-[60px]'
       }`}
     >
-      {/* Main Input Area */}
-      <div className="flex items-end gap-2 p-4 w-full max-w-full">
-        {/* Text Input with Plus Inside */}
-        <div className="flex-1 relative min-w-0">
-          {isRecording ? (
-            <div 
-              ref={recordingBubbleRef}
-              className="flex items-center justify-between bg-panel-dark border border-error rounded-xl px-4 py-3 w-full"
-            >
-              <button
-                onClick={cancelRecording}
-                className="text-error hover:text-error/80 transition-colors flex items-center gap-2 flex-shrink-0"
-              >
-                <X size={20} />
-                <span className="text-sm font-medium">Cancel</span>
-              </button>
-              <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
-                <div className="w-3 h-3 bg-error rounded-full animate-pulse flex-shrink-0" />
-                <span className="text-secondary text-sm whitespace-nowrap">{formatTime(recordingTime)}</span>
+      {/* Centered container with max-width to match messages */}
+      <div className="mx-auto max-w-3xl px-4">
+        {/* Main Input Area */}
+        <div className="flex items-end gap-2 py-4 w-full">
+          {/* Text Input with Plus Inside */}
+          <div className="flex-1 relative min-w-0">
+            {isRecording ? (
+              <div className="flex items-center justify-between bg-panel-dark border border-error rounded-xl px-4 py-3 w-full">
+                <button
+                  onClick={cancelRecording}
+                  className="text-error hover:text-error/80 transition-colors flex items-center gap-2 flex-shrink-0"
+                >
+                  <X size={20} />
+                  <span className="text-sm font-medium">Cancel</span>
+                </button>
+                <div className="flex items-center gap-3 flex-1 justify-center min-w-0">
+                  <div className="w-3 h-3 bg-error rounded-full animate-pulse flex-shrink-0" />
+                  <span className="text-secondary text-sm whitespace-nowrap">{formatTime(recordingTime)}</span>
+                </div>
+                <button
+                  onClick={stopRecording}
+                  className="text-success hover:text-success/80 transition-colors flex items-center gap-2 flex-shrink-0"
+                >
+                  <Send size={20} />
+                  <span className="text-sm font-medium">Send</span>
+                </button>
               </div>
-              <button
-                onClick={stopRecording}
-                className="text-success hover:text-success/80 transition-colors flex items-center gap-2 flex-shrink-0"
-              >
-                <Send size={20} />
-                <span className="text-sm font-medium">Send</span>
-              </button>
-            </div>
-          ) : (
-            <div className="relative w-full">
-              {/* Plus Menu Dropdown */}
-              {showPlusMenu && (
-                <div className="absolute bottom-full left-0 mb-2 glass-strong rounded-xl border border-border p-2 space-y-1 min-w-[160px] z-50">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    accept="*/*"
-                  />
-                  <button
-                    onClick={() => {
-                      fileInputRef.current?.click();
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
-                  >
-                    <Paperclip size={18} />
-                    <span className="text-sm">Attach file</span>
-                  </button>
-                  {onGallerySelect && (
+            ) : (
+              <div className="relative w-full">
+                {/* Plus Menu Dropdown */}
+                {showPlusMenu && (
+                  <div className="absolute bottom-full left-0 mb-2 glass-strong rounded-xl border border-border p-2 space-y-1 min-w-[160px] z-50">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      accept="*/*"
+                    />
                     <button
                       onClick={() => {
-                        onGallerySelect();
-                        setShowPlusMenu(false);
+                        fileInputRef.current?.click();
                       }}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
                     >
-                      <ImageIcon size={18} />
-                      <span className="text-sm">Gallery</span>
+                      <Paperclip size={18} />
+                      <span className="text-sm">Attach file</span>
                     </button>
-                  )}
-                </div>
-              )}
-              
-              <div className="flex items-end gap-2 bg-panel-dark border border-border rounded-xl px-2 py-2 focus-within:border-primary transition-colors w-full">
-                {/* Plus icon inside bubble */}
-                <button
-                  onClick={() => setShowPlusMenu(!showPlusMenu)}
-                  className={`icon-btn !w-8 !h-8 flex-shrink-0 ${showPlusMenu ? 'bg-primary text-white' : ''}`}
-                  title="More options"
-                  disabled={isLoading}
-                >
-                  {showPlusMenu ? <X size={18} /> : <Plus size={18} />}
-                </button>
+                    {onGallerySelect && (
+                      <button
+                        onClick={() => {
+                          onGallerySelect();
+                          setShowPlusMenu(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                      >
+                        <ImageIcon size={18} />
+                        <span className="text-sm">Gallery</span>
+                      </button>
+                    )}
+                  </div>
+                )}
                 
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Message HaleyOS..."
-                  className="flex-1 bg-transparent border-none outline-none resize-none min-h-[36px] max-h-[200px] text-primary placeholder:text-secondary py-1 min-w-0"
-                  disabled={isLoading}
-                  rows={1}
-                />
+                <div className="flex items-end gap-2 bg-panel-dark border border-border rounded-xl px-2 py-2 focus-within:border-primary transition-colors w-full">
+                  {/* Plus icon inside bubble */}
+                  <button
+                    onClick={() => setShowPlusMenu(!showPlusMenu)}
+                    className={`icon-btn !w-8 !h-8 flex-shrink-0 ${showPlusMenu ? 'bg-primary text-white' : ''}`}
+                    title="More options"
+                    disabled={isLoading}
+                  >
+                    {showPlusMenu ? <X size={18} /> : <Plus size={18} />}
+                  </button>
+                  
+                  <textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Message HaleyOS..."
+                    className="flex-1 bg-transparent border-none outline-none resize-none min-h-[36px] max-h-[200px] text-primary placeholder:text-secondary py-1 min-w-0"
+                    disabled={isLoading}
+                    rows={1}
+                  />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {!isRecording && (
-            <button
-              onClick={startRecording}
-              className="icon-btn"
-              title="Voice input"
-              disabled={isLoading}
-            >
-              <Mic size={20} />
-            </button>
-          )}
-          {!isRecording && (
-            <button
-              onClick={handleSend}
-              disabled={isLoading || !input.trim()}
-              className={`icon-btn ${
-                input.trim() && !isLoading
-                  ? 'bg-primary text-white hover:bg-accent'
-                  : 'opacity-50 cursor-not-allowed'
-              }`}
-              title="Send message"
-            >
-              <Send size={20} />
-            </button>
-          )}
+          {/* Right Actions */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {!isRecording && (
+              <button
+                onClick={startRecording}
+                className="icon-btn"
+                title="Voice input"
+                disabled={isLoading}
+              >
+                <Mic size={20} />
+              </button>
+            )}
+            {!isRecording && (
+              <button
+                onClick={handleSend}
+                disabled={isLoading || !input.trim()}
+                className={`icon-btn ${
+                  input.trim() && !isLoading
+                    ? 'bg-primary text-white hover:bg-accent'
+                    : 'opacity-50 cursor-not-allowed'
+                }`}
+                title="Send message"
+              >
+                <Send size={20} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
