@@ -374,7 +374,7 @@ export default function Sidebar({
             <div className="p-3 space-y-2 border-b border-border">
               <button
                 onClick={onNewConversation}
-                className="w-full btn-primary flex items-center justify-center gap-2 py-2.5"
+                className="w-full btn-secondary flex items-center justify-center gap-2 py-2.5"
               >
                 <Plus size={20} />
                 <span>New Chat</span>
