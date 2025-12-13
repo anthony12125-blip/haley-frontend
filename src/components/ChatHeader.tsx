@@ -1,6 +1,6 @@
 'use client';
 
-import { Microscope, Ruler, Menu } from 'lucide-react';
+import { Microscope, Puzzle, Menu } from 'lucide-react';
 import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
 
@@ -78,23 +78,21 @@ export default function ChatHeader({
           <h1 className="text-xl font-bold text-gradient">{getDisplayName()}</h1>
         </div>
 
-        {/* Right: Microscope and Protractor */}
+        {/* Right: Microscope and Puzzle Piece */}
         <div className="flex items-center gap-2">
           <button
             onClick={onToggleResearch}
-            className={`icon-btn flex items-center ${researchEnabled ? 'bg-primary/20 text-primary' : ''}`}
+            className={`icon-btn ${researchEnabled ? 'bg-primary/20 text-primary' : ''}`}
             title="Toggle Research Mode"
           >
             <Microscope size={24} />
-            <span className="hidden md:inline ml-2 text-sm font-medium whitespace-nowrap">Research Mode</span>
           </button>
           <button
             onClick={onToggleLogicEngine}
-            className={`icon-btn flex items-center ${logicEngineEnabled ? 'bg-primary/20 text-primary' : ''}`}
-            title="Toggle Project Mode"
+            className={`icon-btn ${logicEngineEnabled ? 'bg-primary/20 text-primary' : ''}`}
+            title="Toggle Logic Engine"
           >
-            <Ruler size={24} />
-            <span className="hidden md:inline ml-2 text-sm font-medium whitespace-nowrap">Project Mode</span>
+            <Puzzle size={24} />
           </button>
         </div>
       </div>
