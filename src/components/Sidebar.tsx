@@ -141,12 +141,31 @@ export default function Sidebar({
     return false;
   });
 
+  // Initialize projectsCollapsed from localStorage (default to collapsed = true)
+  const [projectsCollapsed, setProjectsCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('haley_projectsExpanded');
+      if (savedState !== null) {
+        const isExpanded = JSON.parse(savedState);
+        return !isExpanded;
+      }
+    }
+    return true; // Default to collapsed
+  });
+
   // Save theSevenCollapsed state to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('haley_justicesExpanded', JSON.stringify(!theSevenCollapsed));
     }
   }, [theSevenCollapsed]);
+
+  // Save projectsCollapsed state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('haley_projectsExpanded', JSON.stringify(!projectsCollapsed));
+    }
+  }, [projectsCollapsed]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -449,14 +468,30 @@ export default function Sidebar({
 
             {/* Projects Section */}
             <div className="p-3 border-b border-border">
-              <div className="text-xs text-secondary font-semibold mb-2 px-2">
-                PROJECTS
-              </div>
-              <div className="space-y-1">
-                <div className="text-sm text-secondary text-center py-4 px-2">
-                  No projects yet
+              <button
+                onClick={() => setProjectsCollapsed(!projectsCollapsed)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                  !projectsCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-secondary font-semibold">PROJECTS</span>
                 </div>
-              </div>
+                <ChevronDown 
+                  size={18} 
+                  className={`text-gray-400 transition-transform ${
+                    projectsCollapsed ? '' : 'rotate-180'
+                  }`} 
+                />
+              </button>
+
+              {!projectsCollapsed && (
+                <div className="mt-2 space-y-1">
+                  <div className="text-sm text-secondary text-center py-4 px-2">
+                    No projects yet
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Conversation History */}
