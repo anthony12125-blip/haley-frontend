@@ -20,6 +20,7 @@ export interface MessageMetadata {
   llm_sources?: string[];
   confidence?: number;
   supreme_court?: boolean;
+  selectedModel?: string | null; // Track which model was selected when message was created
 }
 
 export interface SystemStatus {

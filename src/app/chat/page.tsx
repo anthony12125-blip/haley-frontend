@@ -115,6 +115,13 @@ export default function ChatPage() {
     }
   }, [user, authLoading, router]);
 
+  // Monitor activeModel changes for debugging
+  useEffect(() => {
+    console.log('[CHAT] ===== activeModel STATE CHANGED =====');
+    console.log('[CHAT] New activeModel value:', activeModel);
+    console.log('[CHAT] ======================================');
+  }, [activeModel]);
+
   const loadConversationsFromStorage = async () => {
     if (!user?.uid) return;
     
@@ -169,9 +176,15 @@ export default function ChatPage() {
     }
 
     try {
-      console.log('[CHAT] Sending message to provider:', activeModel || 'default');
+      // CRITICAL LOGGING: Track exactly what we're sending
+      console.log('[CHAT] ========== SENDING MESSAGE ==========');
+      console.log('[CHAT] activeModel state:', activeModel);
+      console.log('[CHAT] Sending message to provider:', activeModel || 'NULL/UNDEFINED');
+      
       const response = await sendMessage(textToSend, activeModel);
-      console.log('[CHAT] Response from:', response.model_used);
+      
+      console.log('[CHAT] Response received from:', response.model_used);
+      console.log('[CHAT] ========================================');
 
       if (response.status === 'success' || response.status === 'completed') {
         const assistantMessage: Message = {
@@ -292,21 +305,24 @@ export default function ChatPage() {
   const handleModelSelect = (justice: string | null) => {
     const modelKey = justice || 'haley';
     
-    console.log('[CHAT] Switching from', activeModel || 'haley', 'to', modelKey);
+    console.log('[CHAT] ========== MODEL SELECTION ==========');
+    console.log('[CHAT] Switching from:', activeModel || 'haley');
+    console.log('[CHAT] Switching to:', modelKey);
+    console.log('[CHAT] Parameter received (justice):', justice);
     
-    // Save current messages to current justice
+    // Save current messages to current model
     const currentModelKey = activeModel || 'haley';
     setConversationsByJustice(prev => ({
       ...prev,
       [currentModelKey]: messages
     }));
     
-    // Load messages for selected justice
+    // Load messages for selected model
     const loadedMessages = conversationsByModel[modelKey];
     if (loadedMessages && loadedMessages.length > 0) {
       setMessages(loadedMessages);
     } else {
-      // Initialize with system message for new justice
+      // Initialize with system message for new model
       const systemMessage: Message = {
         id: generateId(),
         role: 'system',
@@ -316,15 +332,30 @@ export default function ChatPage() {
         timestamp: new Date(),
         metadata: {
           operation: 'system_init',
+          selectedModel: justice,
         },
       };
       setMessages([systemMessage]);
     }
     
+    // CRITICAL: Set the model state
     setActiveModel(justice);
+    
+    // Force update the current conversation's modelMode
+    if (currentConversationId) {
+      setConversations(prev => prev.map(conv => 
+        conv.id === currentConversationId 
+          ? { ...conv, modelMode: justice }
+          : conv
+      ));
+    }
+    
     setAiMode('single');
     
-    console.log(`[CHAT] Model switched to ${modelKey} - loaded ${loadedMessages?.length || 0} messages`);
+    console.log(`[CHAT] Model switched to: ${modelKey}`);
+    console.log('[CHAT] Loaded messages:', loadedMessages?.length || 0);
+    console.log('[CHAT] activeModel should now be:', justice);
+    console.log('[CHAT] ========================================');
   };
 
   const handleRetryMessage = (messageId: string) => {

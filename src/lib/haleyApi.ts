@@ -59,16 +59,26 @@ export interface OSOperationResponse {
  */
 export async function sendMessage(message: string, provider?: string | null): Promise<OSOperationResponse> {
   try {
+    // CRITICAL FIX: If provider is null/undefined, default to claude
+    // This prevents defaulting to gemini on the backend
+    const actualProvider = provider || 'claude';
+    
+    console.log('[API] sendMessage called');
+    console.log('[API] Received provider:', provider);
+    console.log('[API] Using provider:', actualProvider);
+    
     const requestPayload: ProcessRequest = {
       intent: 'chat.message',
       user_id: 'user',
       payload: {
         message: message,
-        ...(provider && { provider: provider })
+        provider: actualProvider  // ALWAYS include provider, never skip it
       },
       permissions: ['user'],
       mode: 'auto'
     };
+    
+    console.log('[API] Full request payload:', JSON.stringify(requestPayload, null, 2));
     
     const response = await fetch(`${BACKEND_URL}/logic/process`, {
       method: 'POST',
