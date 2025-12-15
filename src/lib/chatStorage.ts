@@ -74,7 +74,7 @@ export async function saveChat(
 /**
  * Load a specific chat
  */
-export async function loadChat(userId: string, chatId: string): Promise<Message[] | null> {
+export async function loadChat(userId: string, chatId: string): Promise<{ messages: Message[], modelMode: string | null } | null> {
   if (!db || !userId) return null;
   
   try {
@@ -83,10 +83,13 @@ export async function loadChat(userId: string, chatId: string): Promise<Message[
     
     if (chatDoc.exists()) {
       const data = chatDoc.data() as ChatDocument;
-      return data.messages.map(msg => ({
-        ...msg,
-        timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
-      }));
+      return {
+        messages: data.messages.map(msg => ({
+          ...msg,
+          timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
+        })),
+        modelMode: data.modelMode || null
+      };
     }
     return null;
   } catch (error) {

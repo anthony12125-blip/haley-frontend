@@ -169,7 +169,9 @@ export default function ChatPage() {
     }
 
     try {
+      console.log('[CHAT] Sending message to provider:', activeModel || 'default');
       const response = await sendMessage(textToSend, activeModel);
+      console.log('[CHAT] Response from:', response.model_used);
 
       if (response.status === 'success' || response.status === 'completed') {
         const assistantMessage: Message = {
@@ -290,6 +292,8 @@ export default function ChatPage() {
   const handleModelSelect = (justice: string | null) => {
     const modelKey = justice || 'haley';
     
+    console.log('[CHAT] Switching from', activeModel || 'haley', 'to', modelKey);
+    
     // Save current messages to current justice
     const currentModelKey = activeModel || 'haley';
     setConversationsByJustice(prev => ({
@@ -320,7 +324,7 @@ export default function ChatPage() {
     setActiveModel(justice);
     setAiMode('single');
     
-    console.log(`Switched to ${modelKey} - loaded ${loadedMessages?.length || 0} messages`);
+    console.log(`[CHAT] Model switched to ${modelKey} - loaded ${loadedMessages?.length || 0} messages`);
   };
 
   const handleRetryMessage = (messageId: string) => {
@@ -396,9 +400,11 @@ export default function ChatPage() {
     
     // Load the selected conversation
     if (user?.uid) {
-      const loadedMessages = await loadChat(user.uid, id);
-      if (loadedMessages && loadedMessages.length > 0) {
-        setMessages(loadedMessages);
+      const loadedChat = await loadChat(user.uid, id);
+      if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
+        setMessages(loadedChat.messages);
+        // CRITICAL FIX: Restore the activeModel from the loaded conversation
+        setActiveModel(loadedChat.modelMode);
       } else {
         initializeChat();
       }
