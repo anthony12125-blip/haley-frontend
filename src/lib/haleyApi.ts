@@ -54,25 +54,89 @@ export interface OSOperationResponse {
 // API FUNCTIONS
 // ============================================================================
 
+// src/lib/haleyApi.ts
+// HaleyOS Backend API Integration
+// FIXED: Removed Claude hard default - model selection now enforced
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+
+// ============================================================================
+// BACKEND API TYPES
+// ============================================================================
+
+export interface ProcessRequest {
+  intent: string;
+  user_id: string;
+  payload?: {
+    [key: string]: any;
+  };
+  permissions?: string[];
+  mode?: string;
+}
+
+export interface ProcessResponse {
+  status: 'success' | 'error' | 'completed';
+  result?: any;
+  error?: string;
+  module_generated?: boolean;
+  execution_path?: string[];
+}
+
+export interface SystemStatusResponse {
+  os: string;
+  kernel_status: {
+    kernel: string;
+    syscalls: number;
+    processes: number;
+    modules: number;
+    memory_keys: number;
+  };
+  baby_pid: number;
+  note: string;
+}
+
+export interface OSOperationResponse {
+  status: 'success' | 'error' | 'completed';
+  result?: any;
+  state_changed?: boolean;
+  error_code?: number;
+  error_msg?: string;
+  baby_invoked?: boolean;
+  model_used?: string;
+  task?: string;
+  operation?: string;
+}
+
+// ============================================================================
+// API FUNCTIONS
+// ============================================================================
+
 /**
- * Send user message - Routes to specified AI provider or Baby Haley
+ * Send user message - Routes to specified AI provider
+ * 
+ * CRITICAL FIX: No default provider fallback
+ * - Provider MUST be specified by caller
+ * - This ensures UI model selection is always respected
+ * - Throws error if provider is missing
  */
 export async function sendMessage(message: string, provider?: string | null): Promise<OSOperationResponse> {
   try {
-    // CRITICAL FIX: If provider is null/undefined, default to claude
-    // This prevents defaulting to gemini on the backend
-    const actualProvider = provider || 'claude';
+    // CRITICAL: Validate provider is specified
+    if (!provider) {
+      console.error('[API] ❌ FATAL: No provider specified');
+      throw new Error('Provider must be specified - no model selected');
+    }
     
-    console.log('[API] sendMessage called');
-    console.log('[API] Received provider:', provider);
-    console.log('[API] Using provider:', actualProvider);
+    console.log('[API] ====== SEND MESSAGE ======');
+    console.log('[API] Provider:', provider);
+    console.log('[API] Message length:', message.length);
     
     const requestPayload: ProcessRequest = {
       intent: 'chat.message',
       user_id: 'user',
       payload: {
         message: message,
-        provider: actualProvider  // ALWAYS include provider, never skip it
+        provider: provider  // ALWAYS include provider, validated above
       },
       permissions: ['user'],
       mode: 'auto'
@@ -94,13 +158,16 @@ export async function sendMessage(message: string, provider?: string | null): Pr
 
     const data: ProcessResponse = await response.json();
     
+    console.log('[API] Response received from:', data.result?.model_used || provider);
+    console.log('[API] ============================');
+    
     return {
       status: data.status,
       result: data.result,
       state_changed: false,
       error_msg: data.error,
       baby_invoked: data.result?.baby_invoked || false,
-      model_used: data.result?.model_used || provider || 'unknown',
+      model_used: data.result?.model_used || provider,
       task: data.result?.task || 'general',
       operation: 'chat'
     };

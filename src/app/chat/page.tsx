@@ -52,7 +52,8 @@ export default function ChatPage() {
 
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
-  const [activeModel, setActiveModel] = useState<string | null>(null);
+  // FIX #3: Initialize with default model (Gemini, first in list)
+  const [activeModel, setActiveModel] = useState<string | null>('gemini');
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -158,6 +159,16 @@ export default function ChatPage() {
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
     const textToSend = messageText || input;
     if ((!textToSend.trim() && !audioBlob) || isLoading) return;
+
+    // FIX #2: CRITICAL - Enforce model selection before sending
+    if (!activeModel) {
+      console.error('[CHAT] ❌ CRITICAL: No model selected');
+      // Auto-select first model (Gemini) as fallback
+      setActiveModel('gemini');
+      // Show error to user (you could also use a toast notification)
+      alert('Please select an AI model first. Defaulting to Gemini.');
+      return;
+    }
 
     const userMessage: Message = {
       id: generateId(),
