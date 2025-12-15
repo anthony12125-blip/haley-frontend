@@ -59,16 +59,22 @@ export interface OSOperationResponse {
  */
 export async function sendMessage(message: string, provider?: string | null): Promise<OSOperationResponse> {
   try {
+    // Safety: Log what we're sending and ensure we never send null
+    const actualProvider = provider || null;
+    console.log('[API] sendMessage called with provider:', actualProvider);
+    
     const requestPayload: ProcessRequest = {
       intent: 'chat.message',
       user_id: 'user',
       payload: {
         message: message,
-        ...(provider && { provider: provider })
+        ...(actualProvider && { provider: actualProvider })
       },
       permissions: ['user'],
       mode: 'auto'
     };
+    
+    console.log('[API] Request payload provider:', requestPayload.payload.provider);
     
     const response = await fetch(`${BACKEND_URL}/logic/process`, {
       method: 'POST',
