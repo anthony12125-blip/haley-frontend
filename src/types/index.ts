@@ -93,4 +93,5 @@ export interface ConversationHistory {
   lastActive: Date;
   messageCount: number;
   modelMode?: string | null;  // Active AI model for this conversation
+  provider?: string;  // Provider for this conversation (haley, gemini, gpt, etc.)
 }
