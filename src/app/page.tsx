@@ -52,7 +52,7 @@ export default function ChatPage() {
 
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
-  const [activeJustice, setActiveJustice] = useState<string | null>(null);
+  const [activeModel, setActiveModel] = useState<string | null>(null);
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -69,10 +69,10 @@ export default function ChatPage() {
   // System State
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   
-  // Conversation History - Per Justice
+  // Conversation History - Per Model
   const [conversations, setConversations] = useState<ConversationHistory[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('default');
-  const [conversationsByJustice, setConversationsByJustice] = useState<Record<string, Message[]>>({
+  const [conversationsByModel, setConversationsByJustice] = useState<Record<string, Message[]>>({
     'haley': [],
     'gemini': [],
     'gpt': [],
@@ -87,7 +87,7 @@ export default function ChatPage() {
   const [hasActiveNewChat, setHasActiveNewChat] = useState(false);
 
   // Available Justices and Agents (updated order)
-  const availableJustices = [
+  const availableModels = [
     { id: 'gemini', name: 'Gemini', provider: 'Google' },
     { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
     { id: 'claude', name: 'Claude', provider: 'Anthropic' },
@@ -175,7 +175,7 @@ export default function ChatPage() {
             baby_invoked: response.baby_invoked,
             task: response.task,
             supreme_court: aiMode === 'supreme-court',
-            llm_sources: activeJustice ? [activeJustice] : undefined,
+            llm_sources: activeModel ? [activeModel] : undefined,
           },
         };
         setMessages((prev) => [...prev, assistantMessage]);
@@ -213,7 +213,7 @@ export default function ChatPage() {
       if (user?.uid) {
         // Use a callback to get the latest messages state
         setMessages((currentMessages) => {
-          saveChat(user.uid!, currentConversationId, currentMessages, activeJustice)
+          saveChat(user.uid!, currentConversationId, currentMessages, activeModel)
             .then(() => loadConversationsFromStorage())
             .catch((error) => console.error('Error saving chat:', error));
           return currentMessages;
@@ -275,22 +275,22 @@ export default function ChatPage() {
 
   const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
     if (mode === 'haley') {
-      handleJusticeSelect(null);
+      handleModelSelect(null);
     }
   };
 
-  const handleJusticeSelect = (justice: string | null) => {
-    const justiceKey = justice || 'haley';
+  const handleModelSelect = (justice: string | null) => {
+    const modelKey = justice || 'haley';
     
     // Save current messages to current justice
-    const currentJusticeKey = activeJustice || 'haley';
+    const currentModelKey = activeModel || 'haley';
     setConversationsByJustice(prev => ({
       ...prev,
-      [currentJusticeKey]: messages
+      [currentModelKey]: messages
     }));
     
     // Load messages for selected justice
-    const loadedMessages = conversationsByJustice[justiceKey];
+    const loadedMessages = conversationsByModel[modelKey];
     if (loadedMessages && loadedMessages.length > 0) {
       setMessages(loadedMessages);
     } else {
@@ -298,10 +298,10 @@ export default function ChatPage() {
       setMessages([]);
     }
     
-    setActiveJustice(justice);
+    setActiveModel(justice);
     setAiMode('single');
     
-    console.log(`Switched to ${justiceKey} - loaded ${loadedMessages?.length || 0} messages`);
+    console.log(`Switched to ${modelKey} - loaded ${loadedMessages?.length || 0} messages`);
   };
 
   const handleRetryMessage = (messageId: string) => {
@@ -339,7 +339,7 @@ export default function ChatPage() {
       timestamp: new Date(),
       lastActive: new Date(),
       messageCount: 0,
-      justice: activeJustice || undefined,
+      justice: activeModel || undefined,
     };
     
     // Add to conversations list (in-memory only, not saved to Firestore)
@@ -365,7 +365,7 @@ export default function ChatPage() {
   const handleSelectConversation = async (id: string) => {
     // Save current chat before switching
     if (user?.uid && messages.length > 1 && id !== currentConversationId) {
-      await saveChat(user.uid, currentConversationId, messages, activeJustice);
+      await saveChat(user.uid, currentConversationId, messages, activeModel);
     }
     
     setCurrentConversationId(id);
@@ -454,8 +454,8 @@ export default function ChatPage() {
         onNewConversation={handleNewConversation}
         onSelectConversation={handleSelectConversation}
         onDeleteConversation={handleDeleteConversation}
-        activeJustice={activeJustice}
-        onSelectJustice={handleJusticeSelect}
+        activeModel={activeModel}
+        onSelectModel={handleModelSelect}
         userName={user.displayName || undefined}
         userEmail={user.email || undefined}
         userPhotoURL={user.photoURL || undefined}
@@ -472,8 +472,8 @@ export default function ChatPage() {
         {/* Header with hamburger menu */}
         <ChatHeader
           aiMode={aiMode}
-          activeModels={activeJustice ? [activeJustice] : ['Haley']}
-          activeJustice={activeJustice}
+          activeModels={activeModel ? [activeModel] : ['Haley']}
+          activeModel={activeModel}
           onToggleResearch={() => setResearchEnabled(!researchEnabled)}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
@@ -515,11 +515,11 @@ export default function ChatPage() {
         <ModeSelector
           isOpen={modeSelectorOpen}
           currentMode={aiMode}
-          activeJustice={activeJustice}
+          activeModel={activeModel}
           onClose={() => setModeSelectorOpen(false)}
           onSelectMode={handleModeSelect}
-          onSelectJustice={handleJusticeSelect}
-          availableJustices={availableJustices}
+          onSelectModel={handleModelSelect}
+          availableModels={availableModels}
           availableAgents={availableAgents}
         />
       </div>

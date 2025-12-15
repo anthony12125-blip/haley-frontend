@@ -91,5 +91,5 @@ export interface ConversationHistory {
   timestamp: Date;
   lastActive: Date;
   messageCount: number;
-  justice?: string | null;  // Active justice for this conversation
+  modelMode?: string | null;  // Active AI model for this conversation
 }

@@ -7,15 +7,15 @@ import type { AIMode } from '@/types';
 interface ModeSelectorProps {
   isOpen: boolean;
   currentMode: AIMode;
-  activeJustice: string | null;
+  activeModel: string | null;
   onClose: () => void;
   onSelectMode: (mode: 'haley' | 'ais' | 'agents') => void;
-  onSelectJustice: (justice: string) => void;
-  availableJustices: Array<{ id: string; name: string; provider: string }>;
+  onSelectModel: (model: string) => void;
+  availableModels: Array<{ id: string; name: string; provider: string }>;
   availableAgents: Array<{ id: string; name: string; description: string }>;
 }
 
-const THE_SEVEN_JUSTICES = [
+const AVAILABLE_AI_MODELS = [
   { id: 'gemini', name: 'Gemini', provider: 'Google', color: 'bg-yellow-500/20 border-yellow-500' },
   { id: 'gpt', name: 'GPT-4', provider: 'OpenAI', color: 'bg-green-500/20 border-green-500' },
   { id: 'claude', name: 'Claude', provider: 'Anthropic', color: 'bg-red-500/20 border-red-500' },
@@ -28,11 +28,11 @@ const THE_SEVEN_JUSTICES = [
 export default function ModeSelector({
   isOpen,
   currentMode,
-  activeJustice,
+  activeModel,
   onClose,
   onSelectMode,
-  onSelectJustice,
-  availableJustices,
+  onSelectModel,
+  availableModels,
   availableAgents,
 }: ModeSelectorProps) {
   const [selectedTab, setSelectedTab] = useState<'haley' | 'ais' | 'agents'>('haley');
@@ -47,8 +47,8 @@ export default function ModeSelector({
     }
   };
 
-  const handleJusticeSelect = (justiceId: string) => {
-    onSelectJustice(justiceId);
+  const handleModelSelect = (modelId: string) => {
+    onSelectModel(modelId);
     onClose();
   };
 
@@ -119,23 +119,23 @@ export default function ModeSelector({
 
           {selectedTab === 'ais' && (
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-secondary mb-3">The Seven</h4>
-              {THE_SEVEN_JUSTICES.map((justice) => (
+              <h4 className="text-sm font-semibold text-secondary mb-3">AI Models</h4>
+              {AVAILABLE_AI_MODELS.map((model) => (
                 <button
-                  key={justice.id}
-                  onClick={() => handleJusticeSelect(justice.id)}
+                  key={model.id}
+                  onClick={() => handleModelSelect(model.id)}
                   className={`w-full p-4 rounded-xl border transition-all text-left ${
-                    activeJustice === justice.id
-                      ? justice.color
+                    activeModel === model.id
+                      ? model.color
                       : 'bg-panel-medium border-border hover:border-accent'
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-primary">{justice.name}</div>
-                      <div className="text-xs text-secondary mt-1">{justice.provider}</div>
+                      <div className="font-semibold text-primary">{model.name}</div>
+                      <div className="text-xs text-secondary mt-1">{model.provider}</div>
                     </div>
-                    {activeJustice === justice.id && (
+                    {activeModel === model.id && (
                       <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
                     )}
                   </div>

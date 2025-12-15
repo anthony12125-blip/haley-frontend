@@ -3,13 +3,13 @@
 /**
  * HaleyCoreGlyph - Abstract Seven-Segment Radial Symbol
  * 
- * Usage: AI, The Seven, Haley
+ * Usage: AI, AI Models, Haley
  * Shape: Locked - Cannot be modified
  * Text: false - Pure symbolic representation
  * 
  * This is the core identity symbol that represents:
  * - AI consciousness
- * - The Seven Justices
+ * - AI Models selection
  * - Haley system intelligence
  */
 

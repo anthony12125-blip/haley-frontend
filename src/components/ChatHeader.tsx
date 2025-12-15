@@ -7,7 +7,7 @@ import type { SystemStatus, AIMode } from '@/types';
 interface ChatHeaderProps {
   aiMode: AIMode;
   activeModels: string[];
-  activeJustice: string | null;
+  activeModel: string | null;
   onToggleResearch: () => void;
   onToggleSidebar: () => void;
   onOpenMagicWindow: () => void;
@@ -20,7 +20,7 @@ interface ChatHeaderProps {
 export default function ChatHeader({
   aiMode,
   activeModels,
-  activeJustice,
+  activeModel,
   onToggleResearch,
   onToggleSidebar,
   onOpenMagicWindow,
@@ -31,20 +31,20 @@ export default function ChatHeader({
 }: ChatHeaderProps) {
   // Get AI mode color hue
   const getAIHue = () => {
-    if (activeJustice === 'gemini') return 'hue-teal';
-    if (activeJustice === 'claude') return 'hue-orange';
-    if (activeJustice === 'gpt') return 'hue-blue';
-    if (activeJustice === 'perplexity') return 'hue-purple';
-    if (activeJustice === 'llama') return 'hue-gold';
-    if (activeJustice === 'grok') return 'hue-red';
+    if (activeModel === 'gemini') return 'hue-teal';
+    if (activeModel === 'claude') return 'hue-orange';
+    if (activeModel === 'gpt') return 'hue-blue';
+    if (activeModel === 'perplexity') return 'hue-purple';
+    if (activeModel === 'llama') return 'hue-gold';
+    if (activeModel === 'grok') return 'hue-red';
     if (aiMode === 'supreme-court') return 'hue-purple';
     return '';
   };
 
   // Get display name for top bar
   const getDisplayName = () => {
-    if (activeJustice) {
-      const justice = {
+    if (activeModel) {
+      const modelName = {
         'gemini': 'Gemini',
         'gpt': 'GPT',
         'claude': 'Claude',
@@ -52,8 +52,8 @@ export default function ChatHeader({
         'perplexity': 'Perplexity',
         'mistral': 'Mistral',
         'grok': 'Grok',
-      }[activeJustice];
-      return justice || 'Haley';
+      }[activeModel];
+      return modelName || 'Haley';
     }
     return 'Haley';
   };

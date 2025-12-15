@@ -15,7 +15,7 @@ export interface ChatDocument {
   timestamp: Date;
   lastActive: Date;
   messageCount: number;
-  justiceMode: string | null;
+  modelMode: string | null;
   userId: string;
 }
 
@@ -26,7 +26,7 @@ export async function saveChat(
   userId: string,
   chatId: string,
   messages: Message[],
-  justiceMode: string | null = null
+  modelMode: string | null = null
 ): Promise<void> {
   if (!db) throw new Error('Firestore not initialized');
   if (!userId) throw new Error('User ID required');
@@ -64,7 +64,7 @@ export async function saveChat(
     timestamp,
     lastActive: new Date(),
     messageCount: messages.filter(m => m.role !== 'system').length,
-    justiceMode,
+    modelMode,
     userId,
   };
   
@@ -123,7 +123,7 @@ export async function loadAllChats(userId: string): Promise<ConversationHistory[
         timestamp: getDateValue(data.timestamp),
         lastActive: getDateValue(data.lastActive),
         messageCount: data.messageCount,
-        justiceMode: data.justiceMode,
+        modelMode: data.modelMode || data.justiceMode, // Support old field name for backwards compatibility
       };
     });
   } catch (error) {

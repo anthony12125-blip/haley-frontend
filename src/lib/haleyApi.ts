@@ -55,15 +55,16 @@ export interface OSOperationResponse {
 // ============================================================================
 
 /**
- * Send user message - Baby Haley automatically routes to appropriate LLM
+ * Send user message - Routes to specified AI provider or Baby Haley
  */
-export async function sendMessage(message: string): Promise<OSOperationResponse> {
+export async function sendMessage(message: string, provider?: string | null): Promise<OSOperationResponse> {
   try {
     const requestPayload: ProcessRequest = {
       intent: 'chat.message',
       user_id: 'user',
       payload: {
-        message: message
+        message: message,
+        ...(provider && { provider: provider })
       },
       permissions: ['user'],
       mode: 'auto'
@@ -89,7 +90,7 @@ export async function sendMessage(message: string): Promise<OSOperationResponse>
       state_changed: false,
       error_msg: data.error,
       baby_invoked: data.result?.baby_invoked || false,
-      model_used: data.result?.model_used || 'unknown',
+      model_used: data.result?.model_used || provider || 'unknown',
       task: data.result?.task || 'general',
       operation: 'chat'
     };

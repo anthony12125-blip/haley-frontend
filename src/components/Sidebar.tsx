@@ -33,8 +33,8 @@ interface SidebarProps {
   onNewConversation?: () => void;
   onSelectConversation?: (id: string) => void;
   onDeleteConversation?: (id: string) => void;
-  activeJustice?: string | null;
-  onSelectJustice?: (justice: string | null) => void;
+  activeModel?: string | null;
+  onSelectModel?: (model: string | null) => void;
   userName?: string;
   userEmail?: string;
   userPhotoURL?: string;
@@ -42,8 +42,8 @@ interface SidebarProps {
   onMigrateChat?: () => void;
 }
 
-// THE SEVEN JUSTICES - Order is locked and must not be changed
-const THE_SEVEN = [
+// AI Models
+const AI_MODELS = [
   { id: 'gemini', name: 'Gemini', color: 'hue-teal' },
   { id: 'gpt', name: 'GPT', color: 'hue-blue' },
   { id: 'claude', name: 'Claude', color: 'hue-orange' },
@@ -116,8 +116,8 @@ export default function Sidebar({
   onNewConversation,
   onSelectConversation,
   onDeleteConversation,
-  activeJustice,
-  onSelectJustice,
+  activeModel,
+  onSelectModel,
   userName,
   userEmail = 'user@example.com',
   userPhotoURL,
@@ -129,10 +129,10 @@ export default function Sidebar({
   const [showHaleyMenu, setShowHaleyMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   
-  // Initialize theSevenCollapsed from localStorage (default to expanded = false for collapsed)
-  const [theSevenCollapsed, setTheSevenCollapsed] = useState(() => {
+  // Initialize aiModelsCollapsed from localStorage (default to expanded = false for collapsed)
+  const [aiModelsCollapsed, setAiModelsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
-      const savedState = localStorage.getItem('haley_justicesExpanded');
+      const savedState = localStorage.getItem('haley_aiModelsExpanded');
       if (savedState !== null) {
         const isExpanded = JSON.parse(savedState);
         return !isExpanded;
@@ -153,12 +153,12 @@ export default function Sidebar({
     return true; // Default to collapsed
   });
 
-  // Save theSevenCollapsed state to localStorage whenever it changes
+  // Save aiModelsCollapsed state to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('haley_justicesExpanded', JSON.stringify(!theSevenCollapsed));
+      localStorage.setItem('haley_aiModelsExpanded', JSON.stringify(!aiModelsCollapsed));
     }
-  }, [theSevenCollapsed]);
+  }, [aiModelsCollapsed]);
 
   // Save projectsCollapsed state to localStorage whenever it changes
   useEffect(() => {
@@ -182,15 +182,15 @@ export default function Sidebar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showUserMenu]);
 
-  const handleJusticeSelect = (justiceId: string) => {
-    if (onSelectJustice) {
-      onSelectJustice(justiceId);
+  const handleModelSelect = (modelId: string) => {
+    if (onSelectModel) {
+      onSelectModel(modelId);
     }
     setShowHaleyMenu(false);
   };
 
   // Check if we're in Supreme Court mode
-  const isSupremeCourtMode = activeJustice === 'supreme-court';
+  const isSupremeCourtMode = activeModel === 'supreme-court';
 
   return (
     <>
@@ -283,21 +283,21 @@ export default function Sidebar({
                   }}
                 >
                   <div className="px-3 py-2 text-xs text-secondary font-semibold">
-                    THE SEVEN
+                    AI MODELS
                   </div>
-                  {THE_SEVEN.map((justice) => (
+                  {AI_MODELS.map((model) => (
                     <button
-                      key={justice.id}
-                      onClick={() => handleJusticeSelect(justice.id)}
+                      key={model.id}
+                      onClick={() => handleModelSelect(model.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                        activeJustice === justice.id
+                        activeModel === model.id
                           ? 'bg-primary/20 text-primary'
                           : 'hover:bg-panel-light'
                       }`}
                     >
-                      <div className={`w-2 h-2 rounded-full ${justice.color}`} />
-                      <span className="text-sm">{justice.name}</span>
-                      {activeJustice === justice.id && (
+                      <div className={`w-2 h-2 rounded-full ${model.color}`} />
+                      <span className="text-sm">{model.name}</span>
+                      {activeModel === model.id && (
                         <div className="ml-auto w-2 h-2 rounded-full bg-success animate-pulse" />
                       )}
                     </button>
@@ -422,33 +422,33 @@ export default function Sidebar({
             {/* AI Model Selector - Using Core Glyph */}
             <div className="p-3 border-b border-border">
               <button
-                onClick={() => setTheSevenCollapsed(!theSevenCollapsed)}
+                onClick={() => setAiModelsCollapsed(!aiModelsCollapsed)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                  !theSevenCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
+                  !aiModelsCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   <HaleyCoreGlyph size={20} className="text-primary" />
-                  <span className="font-semibold text-sm">The Seven</span>
+                  <span className="font-semibold text-sm">AI Models</span>
                 </div>
                 <ChevronDown size={18} className="text-gray-400" />
               </button>
 
-              {!theSevenCollapsed && (
+              {!aiModelsCollapsed && (
                 <div className="mt-2 space-y-1">
-                  {THE_SEVEN.map((justice) => (
+                  {AI_MODELS.map((model) => (
                     <button
-                      key={justice.id}
-                      onClick={() => handleJusticeSelect(justice.id)}
+                      key={model.id}
+                      onClick={() => handleModelSelect(model.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                        activeJustice === justice.id
+                        activeModel === model.id
                           ? 'bg-primary/20 text-primary'
                           : 'hover:bg-panel-light'
                       }`}
                     >
-                      <div className={`w-2 h-2 rounded-full ${justice.color}`} />
-                      <span className="text-sm">{justice.name}</span>
-                      {activeJustice === justice.id && (
+                      <div className={`w-2 h-2 rounded-full ${model.color}`} />
+                      <span className="text-sm">{model.name}</span>
+                      {activeModel === model.id && (
                         <div className="ml-auto w-2 h-2 rounded-full bg-success animate-pulse" />
                       )}
                     </button>
