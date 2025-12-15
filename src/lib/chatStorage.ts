@@ -16,6 +16,7 @@ export interface ChatDocument {
   lastActive: Date;
   messageCount: number;
   modelMode: string | null;
+  justiceMode?: string | null; // Legacy field for backwards compatibility
   userId: string;
 }
 

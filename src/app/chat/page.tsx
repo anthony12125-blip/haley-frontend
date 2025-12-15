@@ -362,7 +362,7 @@ export default function ChatPage() {
       timestamp: new Date(),
       lastActive: new Date(),
       messageCount: 0,
-      justice: activeModel || undefined,
+      modelMode: activeModel || undefined,
     };
     
     // Add to conversations list (in-memory only, not saved to Firestore)

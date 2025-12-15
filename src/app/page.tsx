@@ -339,7 +339,7 @@ export default function ChatPage() {
       timestamp: new Date(),
       lastActive: new Date(),
       messageCount: 0,
-      justice: activeModel || undefined,
+      modelMode: activeModel || undefined,
     };
     
     // Add to conversations list (in-memory only, not saved to Firestore)
@@ -377,9 +377,10 @@ export default function ChatPage() {
     
     // Load the selected conversation
     if (user?.uid) {
-      const loadedMessages = await loadChat(user.uid, id);
-      if (loadedMessages && loadedMessages.length > 0) {
-        setMessages(loadedMessages);
+      const loadedChat = await loadChat(user.uid, id);
+      if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
+        setMessages(loadedChat.messages);
+        setActiveModel(loadedChat.modelMode);
       } else {
         initializeChat();
       }
