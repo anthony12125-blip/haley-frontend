@@ -182,7 +182,7 @@ export default function Sidebar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showUserMenu]);
 
-  const handleModelSelect = (modelId: string) => {
+  const handleModelSelect = (modelId: string | null) => {
     if (onSelectModel) {
       onSelectModel(modelId);
     }
@@ -436,6 +436,23 @@ export default function Sidebar({
 
               {!aiModelsCollapsed && (
                 <div className="mt-2 space-y-1">
+                  {/* Haley option - default mode */}
+                  <button
+                    onClick={() => handleModelSelect(null as any)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                      activeModel === null
+                        ? 'bg-primary/20 text-primary'
+                        : 'hover:bg-panel-light'
+                    }`}
+                  >
+                    <HaleyCoreGlyph size={16} className={activeModel === null ? 'text-primary' : ''} />
+                    <span className="text-sm font-semibold">Haley</span>
+                    {activeModel === null && (
+                      <div className="ml-auto w-2 h-2 rounded-full bg-success animate-pulse" />
+                    )}
+                  </button>
+                  
+                  {/* Other AI Models */}
                   {AI_MODELS.map((model) => (
                     <button
                       key={model.id}
