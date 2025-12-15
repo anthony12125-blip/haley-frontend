@@ -169,7 +169,7 @@ export default function ChatPage() {
     }
 
     try {
-      const response = await sendMessage(textToSend);
+      const response = await sendMessage(textToSend, activeJustice);
 
       if (response.status === 'success' || response.status === 'completed') {
         const assistantMessage: Message = {
