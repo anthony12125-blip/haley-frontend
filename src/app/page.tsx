@@ -53,6 +53,7 @@ export default function ChatPage() {
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
   const [activeModel, setActiveModel] = useState<string | null>(null);
+  const [activeProvider, setActiveProvider] = useState<string>('haley'); // DEFAULT: Always start with Haley
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -161,7 +162,13 @@ export default function ChatPage() {
     }
 
     try {
-      const response = await sendMessage(textToSend);
+      // CRITICAL FIX: Resolve provider with proper precedence
+      // Priority: conversation.provider -> activeProvider -> 'haley' (fallback)
+      const resolvedProvider = activeProvider || 'haley';
+      
+      console.log('[SEND] Using provider:', resolvedProvider);
+      
+      const response = await sendMessage(textToSend, resolvedProvider);
 
       if (response.status === 'success' || response.status === 'completed') {
         const assistantMessage: Message = {
@@ -213,7 +220,7 @@ export default function ChatPage() {
       if (user?.uid) {
         // Use a callback to get the latest messages state
         setMessages((currentMessages) => {
-          saveChat(user.uid!, currentConversationId, currentMessages, activeModel)
+          saveChat(user.uid!, currentConversationId, currentMessages, activeModel, activeProvider)
             .then(() => loadConversationsFromStorage())
             .catch((error) => console.error('Error saving chat:', error));
           return currentMessages;
@@ -299,6 +306,7 @@ export default function ChatPage() {
     }
     
     setActiveModel(justice);
+    setActiveProvider(modelKey); // CRITICAL: Set provider when model changes
     setAiMode('single');
     
     console.log(`Switched to ${modelKey} - loaded ${loadedMessages?.length || 0} messages`);
@@ -340,6 +348,7 @@ export default function ChatPage() {
       lastActive: new Date(),
       messageCount: 0,
       modelMode: activeModel || undefined,
+      provider: activeProvider || 'haley', // CRITICAL: Persist provider for new chats
     };
     
     // Add to conversations list (in-memory only, not saved to Firestore)
@@ -365,7 +374,7 @@ export default function ChatPage() {
   const handleSelectConversation = async (id: string) => {
     // Save current chat before switching
     if (user?.uid && messages.length > 1 && id !== currentConversationId) {
-      await saveChat(user.uid, currentConversationId, messages, activeModel);
+      await saveChat(user.uid, currentConversationId, messages, activeModel, activeProvider);
     }
     
     setCurrentConversationId(id);
@@ -381,6 +390,8 @@ export default function ChatPage() {
       if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
         setMessages(loadedChat.messages);
         setActiveModel(loadedChat.modelMode);
+        // CRITICAL: Restore provider from conversation, fallback to haley
+        setActiveProvider(loadedChat.provider || loadedChat.modelMode || 'haley');
       } else {
         initializeChat();
       }
