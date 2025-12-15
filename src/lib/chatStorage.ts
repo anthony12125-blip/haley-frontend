@@ -16,6 +16,7 @@ export interface ChatDocument {
   lastActive: Date;
   messageCount: number;
   modelMode: string | null;
+  provider?: string | null; // Provider for this conversation (haley, gemini, gpt, etc.)
   justiceMode?: string | null; // Legacy field for backwards compatibility
   userId: string;
 }
@@ -27,7 +28,8 @@ export async function saveChat(
   userId: string,
   chatId: string,
   messages: Message[],
-  modelMode: string | null = null
+  modelMode: string | null = null,
+  provider: string | null = null
 ): Promise<void> {
   if (!db) throw new Error('Firestore not initialized');
   if (!userId) throw new Error('User ID required');
@@ -66,6 +68,7 @@ export async function saveChat(
     lastActive: new Date(),
     messageCount: messages.filter(m => m.role !== 'system').length,
     modelMode,
+    provider: provider || modelMode || 'haley', // CRITICAL: Always save provider
     userId,
   };
   
@@ -75,7 +78,7 @@ export async function saveChat(
 /**
  * Load a specific chat
  */
-export async function loadChat(userId: string, chatId: string): Promise<{ messages: Message[], modelMode: string | null } | null> {
+export async function loadChat(userId: string, chatId: string): Promise<{ messages: Message[], modelMode: string | null, provider?: string | null } | null> {
   if (!db || !userId) return null;
   
   try {
@@ -89,7 +92,8 @@ export async function loadChat(userId: string, chatId: string): Promise<{ messag
           ...msg,
           timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
         })),
-        modelMode: data.modelMode || null
+        modelMode: data.modelMode || null,
+        provider: data.provider || data.modelMode || 'haley' // CRITICAL: Return provider
       };
     }
     return null;
@@ -128,6 +132,7 @@ export async function loadAllChats(userId: string): Promise<ConversationHistory[
         lastActive: getDateValue(data.lastActive),
         messageCount: data.messageCount,
         modelMode: data.modelMode || data.justiceMode, // Support old field name for backwards compatibility
+        provider: data.provider || data.modelMode || data.justiceMode || 'haley', // CRITICAL: Return provider
       };
     });
   } catch (error) {
