@@ -23,6 +23,7 @@ import {
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 import { HaleyIndicator } from './HaleyIndicator';
+import ThemeSelector from './ThemeSelector';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -705,8 +706,12 @@ export default function Sidebar({
               </button>
             </div>
             <div className="space-y-4">
-              <div className="text-sm text-secondary">
-                Settings coming soon...
+              <ThemeSelector />
+              
+              <div className="pt-4 border-t border-border">
+                <div className="text-sm text-secondary">
+                  More settings coming soon...
+                </div>
               </div>
             </div>
           </div>
