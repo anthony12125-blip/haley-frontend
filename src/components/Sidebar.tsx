@@ -428,7 +428,7 @@ export default function Sidebar({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-secondary font-semibold">RESEARCH AND DEVELOPMENT</span>
+                  <span className="text-xs text-secondary font-semibold">RnD</span>
                 </div>
                 <ChevronDown 
                   size={18} 
