@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Send,
   MoreVertical,
+  Flask,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -153,6 +154,17 @@ export default function Sidebar({
     return true; // Default to collapsed
   });
 
+  // Initialize R&D expanded state from localStorage (default to EXPANDED)
+  const [rndExpanded, setRndExpanded] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedState = localStorage.getItem('haley_rndExpanded');
+      if (savedState !== null) {
+        return JSON.parse(savedState);
+      }
+    }
+    return true; // Default to EXPANDED - R&D is always visible
+  });
+
   // Save aiModelsCollapsed state to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -166,6 +178,13 @@ export default function Sidebar({
       localStorage.setItem('haley_projectsExpanded', JSON.stringify(!projectsCollapsed));
     }
   }, [projectsCollapsed]);
+
+  // Save R&D expanded state to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('haley_rndExpanded', JSON.stringify(rndExpanded));
+    }
+  }, [rndExpanded]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -389,6 +408,90 @@ export default function Sidebar({
               </button>
             </div>
 
+            {/* R&D - Research & Development Section - TOP PRIORITY */}
+            <div className="relative group" style={{ marginTop: '12px', marginBottom: '12px' }}>
+              <button
+                onClick={() => setRndExpanded(!rndExpanded)}
+                className="w-full relative overflow-hidden rounded-lg transition-all duration-180 ease-out"
+                style={{
+                  paddingTop: '10px',
+                  paddingBottom: '10px',
+                  paddingLeft: '14px',
+                  paddingRight: '14px',
+                }}
+              >
+                {/* Hover glow effect */}
+                <div 
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-180"
+                  style={{
+                    background: 'rgba(80, 160, 255, 0.08)',
+                    boxShadow: '0 0 8px rgba(80, 160, 255, 0.25)',
+                  }}
+                />
+                
+                {/* Active state indicator - left accent bar */}
+                {rndExpanded && (
+                  <div 
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
+                    style={{ background: 'rgba(80, 160, 255, 0.8)' }}
+                  />
+                )}
+                
+                {/* Content */}
+                <div className="relative flex items-center gap-3">
+                  <Flask 
+                    size={20} 
+                    strokeWidth={1.5}
+                    className="flex-shrink-0 transition-transform group-hover:scale-105"
+                    style={{ opacity: 0.9 }} 
+                  />
+                  <div className="flex-1 text-left">
+                    <div 
+                      className="font-semibold tracking-tight"
+                      style={{ 
+                        fontSize: '1.3em',
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      R&D
+                    </div>
+                    {/* Hover subtitle */}
+                    <div 
+                      className="text-xs uppercase tracking-wider opacity-0 group-hover:opacity-70 transition-opacity duration-180"
+                      style={{ 
+                        fontVariant: 'small-caps',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      Lab / Sandbox
+                    </div>
+                  </div>
+                  <ChevronDown 
+                    size={18} 
+                    className={`text-gray-400 transition-transform duration-180 ${
+                      rndExpanded ? 'rotate-180' : ''
+                    }`} 
+                  />
+                </div>
+              </button>
+
+              {/* R&D Content - Expanded by default */}
+              {rndExpanded && (
+                <div className="mt-3 px-4 space-y-1">
+                  <div className="text-sm text-secondary text-center py-4 px-2 rounded-lg bg-panel-light/50">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Sparkles size={16} className="text-primary/60" />
+                      <span className="font-medium text-primary/80">Experimentation Zone</span>
+                    </div>
+                    <p className="text-xs text-secondary/70 mt-1">
+                      Your safe space for testing new features
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Primary Action Buttons */}
             <div className="p-3 space-y-3 border-b border-border">
               {/* Smaller New Chat button - similar to Claude/ChatGPT */}
@@ -417,34 +520,6 @@ export default function Sidebar({
                   <span>Migrate</span>
                 </button>
               </div>
-            </div>
-
-            {/* Research and Development Section */}
-            <div className="p-3 border-b border-border">
-              <button
-                onClick={() => setProjectsCollapsed(!projectsCollapsed)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                  !projectsCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-secondary font-semibold">RnD</span>
-                </div>
-                <ChevronDown 
-                  size={18} 
-                  className={`text-gray-400 transition-transform ${
-                    projectsCollapsed ? '' : 'rotate-180'
-                  }`} 
-                />
-              </button>
-
-              {!projectsCollapsed && (
-                <div className="mt-2 space-y-1">
-                  <div className="text-sm text-secondary text-center py-4 px-2">
-                    No projects yet
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* AI Model Selector - Using Core Glyph */}
