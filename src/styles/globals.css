@@ -24,21 +24,26 @@
   --magic-rotation: 0deg;
 }
 
-/* Light Mode Theme */
+/* Light Mode Theme - Day Theme Overhaul */
 :root.light {
-  --primary: #2563eb;
-  --accent: #3b82f6;
-  --panel-dark: #f8fafc;
-  --panel-medium: #f1f5f9;
-  --panel-light: #e2e8f0;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --border: #cbd5e1;
+  --primary: #4B6CFF;
+  --accent: #4B6CFF;
+  --panel-dark: #FFFFFF;
+  --panel-medium: #FFFFFF;
+  --panel-light: #F6F8FB;
+  --text-primary: #1F2A44;
+  --text-secondary: #5A6782;
+  --text-muted: #8A94AB;
+  --border: rgba(0, 0, 0, 0.06);
   --error: #ef4444;
   --success: #10b981;
-  --background: #ffffff;
-  --space-bg-start: #e0f2fe;
-  --space-bg-end: #bae6fd;
+  --background: #F6F8FB;
+  --space-bg-start: #FFFFFF;
+  --space-bg-end: #F2F5FA;
+  
+  /* Animation - standardized for day theme */
+  --animation-speed: 0.18s;
+  --easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Ensure dark mode variables are explicitly set */
@@ -91,6 +96,21 @@ body {
   transition: background 0.3s ease;
 }
 
+/* Add subtle noise texture to day mode background */
+:root.light .space-bg {
+  background: 
+    radial-gradient(ellipse at top center, var(--space-bg-start) 0%, var(--space-bg-end) 100%);
+}
+
+:root.light .space-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+}
+
 .stars {
   position: absolute;
   inset: 0;
@@ -106,15 +126,16 @@ body {
   transition: opacity 0.3s ease;
 }
 
-/* Adjust stars visibility in light mode */
+/* Replace stars with ambient particles in light mode */
 :root.light .stars {
-  opacity: 0.4;
+  opacity: 0.25;
   background-image: 
-    radial-gradient(2px 2px at 20px 30px, #0ea5e9, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 60px 70px, #3b82f6, rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 50px 50px, #2563eb, rgba(0,0,0,0)),
-    radial-gradient(1px 1px at 130px 80px, #60a5fa, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 90px 10px, #0284c7, rgba(0,0,0,0));
+    radial-gradient(1px 1px at 20px 30px, #9AA7C7, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 80px 90px, #9AA7C7, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 140px 50px, #9AA7C7, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 180px 120px, #9AA7C7, rgba(0,0,0,0));
+  background-size: 240px 240px;
+  animation: none; /* Near-static particles */
 }
 
 @keyframes twinkle {
@@ -213,9 +234,72 @@ body {
   border: 1px solid var(--border);
 }
 
+/* Day theme glass overrides */
+:root.light .glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:root.light .glass-light {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:root.light .glass-strong {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
 /* ============================================================================
    SCROLLBAR STYLING
    ============================================================================ */
+
+/* Day theme sidebar enhancements */
+:root.light .glass-strong.border-r {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Day theme header styling */
+:root.light .glass-strong.border-b {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Day theme header title color */
+:root.light .text-gradient {
+  background: linear-gradient(135deg, #2B3A67, #4B6CFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Active item styling for light mode with left bar indicator */
+:root.light .bg-primary\/20 {
+  background: rgba(75, 108, 255, 0.08) !important;
+  position: relative;
+}
+
+:root.light .bg-primary\/20::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #4B6CFF;
+  border-radius: 0 2px 2px 0;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -247,7 +331,7 @@ body {
   padding: 0.75rem 1.5rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
   box-shadow: 0 0 20px rgba(45, 107, 168, 0.3);
 }
 
@@ -269,7 +353,7 @@ body {
   padding: 0.75rem 1.5rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
 }
 
 .btn-secondary:hover {
@@ -288,7 +372,7 @@ body {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
 }
 
 .icon-btn:hover {
@@ -310,7 +394,7 @@ body {
   padding: 0.75rem 1rem;
   color: var(--text-primary);
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
   width: 100%;
 }
 
@@ -318,6 +402,12 @@ body {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(45, 107, 168, 0.15);
+}
+
+/* Day theme focus glow */
+:root.light .input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(75, 108, 255, 0.25);
 }
 
 .input-field::placeholder {
@@ -348,6 +438,11 @@ body {
   }
 }
 
+/* Use standardized timing for animations */
+.message-bubble {
+  animation: slideIn var(--animation-speed, 0.3s) var(--easing, ease);
+}
+
 .message-user {
   background: var(--primary);
   color: white;
@@ -355,11 +450,24 @@ body {
   border-bottom-right-radius: 4px;
 }
 
+/* Day theme - user message stays blue */
+:root.light .message-user {
+  background: #4B6CFF;
+  color: #FFFFFF;
+}
+
 .message-assistant {
   background: var(--panel-medium);
   color: var(--text-primary);
   border: 1px solid var(--border);
   border-bottom-left-radius: 4px;
+}
+
+/* Day theme - assistant message with white background and subtle border */
+:root.light .message-assistant {
+  background: #FFFFFF;
+  color: #1F2A44;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .message-system {

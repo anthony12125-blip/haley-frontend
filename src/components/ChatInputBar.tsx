@@ -194,7 +194,22 @@ export default function ChatInputBar({
                 )}
                 
                 {/* Single bubble containing all controls */}
-                <div className="flex items-end gap-2 bg-panel-dark border border-border rounded-xl px-2 py-2 focus-within:border-primary transition-colors w-full">
+                <div className="flex items-end gap-2 bg-panel-dark border border-border rounded-xl px-2 py-2 focus-within:border-primary transition-all duration-180 w-full" 
+                     style={{ 
+                       boxShadow: 'var(--input-focus-glow, none)',
+                       transitionProperty: 'border-color, box-shadow'
+                     }}
+                     onFocus={(e) => {
+                       if (e.currentTarget.contains(e.target)) {
+                         e.currentTarget.style.setProperty('--input-focus-glow', '0 0 0 2px rgba(75, 108, 255, 0.25)');
+                       }
+                     }}
+                     onBlur={(e) => {
+                       if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                         e.currentTarget.style.setProperty('--input-focus-glow', 'none');
+                       }
+                     }}
+                >
                   {/* Plus icon */}
                   <button
                     onClick={() => setShowPlusMenu(!showPlusMenu)}
