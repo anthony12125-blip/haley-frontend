@@ -92,6 +92,24 @@ export default function MessageBubble({ message, onReadAloud, onShare, onRetry, 
     return `${baseClass} message-assistant`;
   };
 
+  const getBubbleHeader = () => {
+    if (message.role === 'user') {
+      return (
+        <div className="message-header user-header">
+          You
+        </div>
+      );
+    }
+    if (message.role === 'assistant') {
+      return (
+        <div className="message-header haley-header">
+          Haley
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div
       className="relative group"
@@ -99,6 +117,8 @@ export default function MessageBubble({ message, onReadAloud, onShare, onRetry, 
       onMouseLeave={handleMouseLeave}
     >
       <div className={getBubbleClass()}>
+        {/* Message Header */}
+        {getBubbleHeader()}
         {/* Supreme Court Indicator */}
         {message.metadata?.supreme_court && message.metadata?.llm_sources && (
           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
