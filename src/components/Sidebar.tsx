@@ -224,18 +224,15 @@ export default function Sidebar({
 
       {/* Sidebar - Full width on mobile, Mini/Full on desktop */}
       <div
-        className={`fixed left-0 top-0 bottom-0 glass-strong border-r border-border z-50 transition-all duration-300 ${
+        className={`sidebar-container fixed left-0 top-0 bottom-0 glass-strong border-r border-border z-50 transition-all duration-300 ${
           isOpen 
             ? 'translate-x-0 w-80' 
             : '-translate-x-full w-80 md:translate-x-0 md:w-[60px]'
         }`}
-        style={{
-          background: isOpen ? undefined : '#111418'
-        }}
       >
         {/* Mini Sidebar - Desktop only, when collapsed */}
         {!isOpen && (
-          <div className="hidden md:flex flex-col h-full items-center py-3">
+          <div className="sidebar-mini hidden md:flex flex-col h-full items-center py-3">
             {/* Top: Haley Indicator - Shows comet when collapsed */}
             <HaleyIndicator 
               isExpanded={false}
@@ -248,10 +245,10 @@ export default function Sidebar({
               {/* New Chat */}
               <button
                 onClick={onNewConversation}
-                className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                className="sidebar-mini-btn w-10 h-10 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
                 title="New Chat"
               >
-                <Plus size={22} className="text-gray-400 group-hover:text-gray-200" />
+                <Plus size={22} className="sidebar-mini-icon" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
                   New Chat
                 </div>
@@ -260,10 +257,10 @@ export default function Sidebar({
               {/* Recover Chat */}
               <button
                 onClick={onRecoverChat}
-                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                className="sidebar-mini-btn w-12 h-12 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
                 title="Recover Chat"
               >
-                <RotateCcw size={22} className="text-gray-400 group-hover:text-gray-200" />
+                <RotateCcw size={22} className="sidebar-mini-icon" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
                   Recover Chat
                 </div>
@@ -272,7 +269,7 @@ export default function Sidebar({
               {/* Migrate Chat */}
               <button
                 onClick={onMigrateChat}
-                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                className="sidebar-mini-btn w-12 h-12 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
                 title="Migrate Chat"
               >
                 <MigrateIcon size={22} showAI={false} />
@@ -284,10 +281,10 @@ export default function Sidebar({
               {/* Haley Menu - Using Core Glyph */}
               <button
                 onClick={() => setShowHaleyMenu(!showHaleyMenu)}
-                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative"
+                className="sidebar-mini-btn w-12 h-12 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
                 title="The Seven"
               >
-                <HaleyCoreGlyph size={22} className="text-gray-400 group-hover:text-gray-200" />
+                <HaleyCoreGlyph size={22} className="sidebar-mini-icon" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
                   The Seven
                 </div>
@@ -339,7 +336,7 @@ export default function Sidebar({
             <div className="relative user-menu-container">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="w-12 h-12 flex items-center justify-center rounded-lg hover:bg-gray-800/50 transition-colors group relative mb-3"
+                className="sidebar-mini-btn w-12 h-12 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative mb-3"
                 title={userName || userEmail}
               >
                 {userPhotoURL ? (
@@ -349,7 +346,7 @@ export default function Sidebar({
                     className="w-8 h-8 rounded-full"
                   />
                 ) : (
-                  <User size={22} className="text-gray-400 group-hover:text-gray-200" />
+                  <User size={22} className="sidebar-mini-icon" />
                 )}
               </button>
 
@@ -397,12 +394,12 @@ export default function Sidebar({
               <HaleyIndicator 
                 isExpanded={true}
                 onClick={onToggle}
-                className="md:block hidden"
+                className="sidebar-back-button md:block hidden"
               />
               {/* Mobile: X button */}
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-panel-light transition-colors md:hidden"
+                className="sidebar-back-button p-2 rounded-lg hover:bg-panel-light transition-colors md:hidden"
                 title="Close Sidebar"
               >
                 <X size={20} />
@@ -413,7 +410,7 @@ export default function Sidebar({
             <div className="relative group" style={{ marginTop: '12px', marginBottom: '12px' }}>
               <button
                 onClick={() => setRndExpanded(!rndExpanded)}
-                className="w-full relative overflow-hidden rounded-lg transition-all duration-180 ease-out"
+                className="sidebar-menu-header w-full relative overflow-hidden rounded-lg transition-all duration-180 ease-out"
                 style={{
                   paddingTop: '10px',
                   paddingBottom: '10px',
@@ -423,7 +420,7 @@ export default function Sidebar({
               >
                 {/* Hover glow effect */}
                 <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-180"
+                  className="sidebar-hover-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-180"
                   style={{
                     background: 'rgba(80, 160, 255, 0.08)',
                     boxShadow: '0 0 8px rgba(80, 160, 255, 0.25)',
@@ -527,8 +524,8 @@ export default function Sidebar({
             <div className="p-3 border-b border-border">
               <button
                 onClick={() => setAiModelsCollapsed(!aiModelsCollapsed)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                  !aiModelsCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
+                className={`sidebar-menu-header w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                  !aiModelsCollapsed ? 'sidebar-menu-header-active' : 'hover:bg-panel-light'
                 }`}
               >
                 <div className="flex items-center gap-2">
