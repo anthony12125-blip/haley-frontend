@@ -419,6 +419,34 @@ export default function Sidebar({
               </div>
             </div>
 
+            {/* Research and Development Section */}
+            <div className="p-3 border-b border-border">
+              <button
+                onClick={() => setProjectsCollapsed(!projectsCollapsed)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                  !projectsCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-secondary font-semibold">RESEARCH AND DEVELOPMENT</span>
+                </div>
+                <ChevronDown 
+                  size={18} 
+                  className={`text-gray-400 transition-transform ${
+                    projectsCollapsed ? '' : 'rotate-180'
+                  }`} 
+                />
+              </button>
+
+              {!projectsCollapsed && (
+                <div className="mt-2 space-y-1">
+                  <div className="text-sm text-secondary text-center py-4 px-2">
+                    No projects yet
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* AI Model Selector - Using Core Glyph */}
             <div className="p-3 border-b border-border">
               <button
@@ -479,34 +507,6 @@ export default function Sidebar({
                       </div>
                     </div>
                   )}
-                </div>
-              )}
-            </div>
-
-            {/* Projects Section */}
-            <div className="p-3 border-b border-border">
-              <button
-                onClick={() => setProjectsCollapsed(!projectsCollapsed)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                  !projectsCollapsed ? 'bg-panel-medium' : 'hover:bg-panel-light'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-secondary font-semibold">PROJECTS</span>
-                </div>
-                <ChevronDown 
-                  size={18} 
-                  className={`text-gray-400 transition-transform ${
-                    projectsCollapsed ? '' : 'rotate-180'
-                  }`} 
-                />
-              </button>
-
-              {!projectsCollapsed && (
-                <div className="mt-2 space-y-1">
-                  <div className="text-sm text-secondary text-center py-4 px-2">
-                    No projects yet
-                  </div>
                 </div>
               )}
             </div>
