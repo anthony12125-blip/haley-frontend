@@ -1021,3 +1021,67 @@ body {
   transition-duration: 0.16s !important;
   transition-timing-function: ease-out !important;
 }
+
+/* ============================================================================
+   DAY MODE - SIDEBAR COLOR CONSISTENCY FIX
+   ============================================================================ */
+
+/* Collapsed Mini Sidebar - Pure white background */
+:root.light .sidebar-container {
+  background: #FFFFFF !important;
+}
+
+:root.light .sidebar-mini {
+  background: #FFFFFF !important;
+}
+
+/* Mini sidebar buttons - white hover in day mode */
+:root.light .sidebar-mini-btn {
+  background: transparent;
+}
+
+:root.light .sidebar-mini-btn:hover {
+  background: #FAFAFA !important;
+}
+
+/* Mini sidebar icons - black in day mode */
+:root.light .sidebar-mini-icon {
+  color: #000000 !important;
+}
+
+:root.light .sidebar-mini-btn:hover .sidebar-mini-icon {
+  color: #000000 !important;
+}
+
+/* Expanded sidebar menu headers - white background in day mode */
+:root.light .sidebar-menu-header {
+  background: #FFFFFF !important;
+}
+
+:root.light .sidebar-menu-header:hover {
+  background: #FAFAFA !important;
+}
+
+/* Active/expanded menu header - white background, no gray */
+:root.light .sidebar-menu-header-active {
+  background: #FFFFFF !important;
+}
+
+/* R&D hover glow - remove in day mode */
+:root.light .sidebar-hover-glow {
+  display: none;
+}
+
+/* Back button - white background */
+:root.light .sidebar-back-button {
+  background: transparent !important;
+}
+
+:root.light .sidebar-back-button:hover {
+  background: #FAFAFA !important;
+}
+
+/* Sidebar borders in day mode */
+:root.light .sidebar-container.border-r {
+  border-right-color: #EDEDED !important;
+}
