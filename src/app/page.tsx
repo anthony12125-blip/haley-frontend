@@ -15,6 +15,7 @@ import ChatInputBar from '@/components/ChatInputBar';
 import MagicWindow from '@/components/MagicWindow';
 import ModeSelector from '@/components/ModeSelector';
 import Sidebar from '@/components/Sidebar';
+import LoginPage from '@/components/LoginPage';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
 
 export default function ChatPage() {
@@ -102,11 +103,6 @@ export default function ChatPage() {
 
   // Initialize
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/');
-      return;
-    }
-
     if (user) {
       initializeChat();
       loadConversationsFromStorage();
@@ -434,7 +430,7 @@ export default function ChatPage() {
   }
 
   if (!user) {
-    return null;
+    return <LoginPage />;
   }
 
   return (
