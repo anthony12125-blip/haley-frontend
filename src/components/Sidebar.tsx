@@ -477,7 +477,7 @@ export default function Sidebar({
               {/* R&D Content - Expanded by default */}
               {rndExpanded && (
                 <div className="mt-3 px-4 space-y-1">
-                  <div className="text-sm text-secondary text-center py-4 px-2 rounded-lg bg-panel-light/50">
+                  <div className="text-sm text-secondary text-center py-4 px-2 rounded-lg">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Sparkles size={16} className="text-primary/60" />
                       <span className="font-medium text-primary/80">Experimentation Zone</span>
