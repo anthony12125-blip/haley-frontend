@@ -18,7 +18,7 @@ import {
   RotateCcw,
   Send,
   MoreVertical,
-  Flask,
+  Beaker,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -439,7 +439,7 @@ export default function Sidebar({
                 
                 {/* Content */}
                 <div className="relative flex items-center gap-3">
-                  <Flask 
+                  <Beaker 
                     size={20} 
                     strokeWidth={1.5}
                     className="flex-shrink-0 transition-transform group-hover:scale-105"
