@@ -24,6 +24,7 @@ import {
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 import { HaleyIndicator } from './HaleyIndicator';
+import { MultiLLMToggle } from './MultiLLMToggle';
 import ThemeSelector from './ThemeSelector';
 import IconSoundboard from './icons/IconSoundboard';
 
@@ -134,6 +135,10 @@ export default function Sidebar({
   const [showHaleyMenu, setShowHaleyMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   
+  // Multi-LLM Query state (default OFF, no persistence)
+  const [multiLLMEnabled, setMultiLLMEnabled] = useState(false);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  
   // Initialize aiModelsCollapsed from localStorage (default to expanded = false for collapsed)
   const [aiModelsCollapsed, setAiModelsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -206,10 +211,29 @@ export default function Sidebar({
   }, [showUserMenu]);
 
   const handleModelSelect = (modelId: string | null) => {
-    if (onSelectModel) {
-      onSelectModel(modelId);
+    if (multiLLMEnabled) {
+      // Multi-select mode
+      if (modelId === null) {
+        // Haley cannot be selected in multi-LLM mode
+        return;
+      }
+      
+      setSelectedModels(prev => {
+        if (prev.includes(modelId)) {
+          // Deselect if already selected
+          return prev.filter(id => id !== modelId);
+        } else {
+          // Add to selection
+          return [...prev, modelId];
+        }
+      });
+    } else {
+      // Single-select mode (original behavior)
+      if (onSelectModel) {
+        onSelectModel(modelId);
+      }
+      setShowHaleyMenu(false);
     }
-    setShowHaleyMenu(false);
   };
 
   // Check if we're in Supreme Court mode
@@ -552,40 +576,86 @@ export default function Sidebar({
 
               {!aiModelsCollapsed && (
                 <div className="mt-2 space-y-1">
-                  {/* Haley option - default mode */}
+                  {/* Multi-LLM Toggle - Always visible */}
+                  <div className="px-3 py-2 mb-2 border-b border-border">
+                    <MultiLLMToggle 
+                      enabled={multiLLMEnabled}
+                      onChange={(enabled) => {
+                        setMultiLLMEnabled(enabled);
+                        if (!enabled) {
+                          // Reset to single-select mode
+                          setSelectedModels([]);
+                          // Restore active model if there was one before multi-mode
+                          if (activeModel) {
+                            onSelectModel?.(activeModel);
+                          }
+                        } else {
+                          // When enabling multi-LLM, clear single selection
+                          onSelectModel?.(null);
+                        }
+                      }}
+                    />
+                    {multiLLMEnabled && (
+                      <div className="text-xs text-secondary mt-2">
+                        Select 2+ models to query in parallel
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Haley option - default mode (disabled in multi-LLM) */}
                   <button
                     onClick={() => handleModelSelect(null as any)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                      activeModel === null
+                      multiLLMEnabled 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : activeModel === null
                         ? 'bg-primary/20 text-primary'
                         : 'hover:bg-panel-light'
                     }`}
+                    disabled={multiLLMEnabled}
+                    title={multiLLMEnabled ? 'Haley unavailable in Multi-LLM mode' : 'Select Haley (routing layer)'}
                   >
-                    <HaleyCoreGlyph size={16} className={activeModel === null ? 'text-primary' : ''} />
+                    <HaleyCoreGlyph size={16} className={activeModel === null && !multiLLMEnabled ? 'text-primary' : ''} />
                     <span className="text-sm font-semibold">Haley</span>
-                    {activeModel === null && (
+                    {activeModel === null && !multiLLMEnabled && (
                       <div className="ml-auto w-2 h-2 rounded-full bg-success animate-pulse" />
                     )}
                   </button>
                   
                   {/* Other AI Models */}
-                  {AI_MODELS.map((model) => (
-                    <button
-                      key={model.id}
-                      onClick={() => handleModelSelect(model.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                        activeModel === model.id
-                          ? 'bg-primary/20 text-primary'
-                          : 'hover:bg-panel-light'
-                      }`}
-                    >
-                      <div className={`w-2 h-2 rounded-full ${model.color}`} />
-                      <span className="text-sm">{model.name}</span>
-                      {activeModel === model.id && (
-                        <div className="ml-auto w-2 h-2 rounded-full bg-success animate-pulse" />
-                      )}
-                    </button>
-                  ))}
+                  {AI_MODELS.map((model) => {
+                    const isSelected = multiLLMEnabled 
+                      ? selectedModels.includes(model.id)
+                      : activeModel === model.id;
+                    
+                    return (
+                      <button
+                        key={model.id}
+                        onClick={() => handleModelSelect(model.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                          isSelected
+                            ? 'bg-primary/20 text-primary'
+                            : 'hover:bg-panel-light'
+                        }`}
+                      >
+                        <div className={`w-2 h-2 rounded-full ${model.color}`} />
+                        <span className="text-sm">{model.name}</span>
+                        {isSelected && (
+                          <div className="ml-auto flex items-center gap-2">
+                            {multiLLMEnabled ? (
+                              <div className="w-4 h-4 rounded bg-primary flex items-center justify-center">
+                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                            )}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                   
                   {isSupremeCourtMode && (
                     <div className="mt-2 pt-2 border-t border-border">
