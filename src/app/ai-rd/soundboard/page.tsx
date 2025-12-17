@@ -15,8 +15,8 @@ export default function AiRDSoundboardPage() {
   const router = useRouter();
   
   // Phase A: Input state
-  const [concept, setConcept] = useState('');
-  const [omega, setOmega] = useState('');
+  const [userIdea, setUserIdea] = useState('');
+  const [successCriteria, setSuccessCriteria] = useState('');
   
   // Phase B: Claims state
   const [claims, setClaims] = useState<Claim[]>([]);
@@ -32,10 +32,16 @@ export default function AiRDSoundboardPage() {
 
   const handleGenerateClaims = () => {
     setError(null);
+    
+    // Use user idea as concept, success criteria as omega
+    // If no success criteria, use a sensible default
+    const concept = userIdea.trim();
+    const omega = successCriteria.trim() || 'viable and user-friendly implementation';
+    
     const generatedClaims = generateClaims(concept, omega);
     
     if (generatedClaims.length === 0) {
-      setError('Please enter both concept and omega to generate claims.');
+      setError('Tell me what you want to build first.');
       return;
     }
     
@@ -86,8 +92,8 @@ export default function AiRDSoundboardPage() {
     
     // Store in sessionStorage for persistence
     sessionStorage.setItem('rd_soundboard_answers', JSON.stringify({
-      concept,
-      omega,
+      userIdea,
+      successCriteria,
       claims,
       questions,
       answers,
@@ -98,8 +104,8 @@ export default function AiRDSoundboardPage() {
   };
 
   const handleReset = () => {
-    setConcept('');
-    setOmega('');
+    setUserIdea('');
+    setSuccessCriteria('');
     setClaims([]);
     setQuestions([]);
     setAnswers({});
@@ -161,7 +167,7 @@ export default function AiRDSoundboardPage() {
                 AI R&D Soundboard
               </h1>
               <p className="text-secondary">
-                Claims → Minimal User Questions
+                Tell me your idea, I'll figure out what questions to ask
               </p>
             </div>
 
@@ -173,42 +179,47 @@ export default function AiRDSoundboardPage() {
               </div>
             )}
 
-            {/* Phase A: Input */}
+            {/* Phase A: Conversational R&D Intake */}
             {phase === 'input' && (
               <div className="glass rounded-xl border border-border p-6">
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Main Question */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Concept
+                    <label className="block text-lg font-medium mb-3">
+                      What do you want to build?
                     </label>
-                    <input
-                      type="text"
-                      value={concept}
-                      onChange={(e) => setConcept(e.target.value)}
-                      placeholder="e.g., Real-time voice translation app"
-                      className="w-full px-4 py-2 rounded-lg bg-panel-dark border border-border focus:border-primary focus:outline-none transition-colors"
+                    <textarea
+                      value={userIdea}
+                      onChange={(e) => setUserIdea(e.target.value)}
+                      placeholder="Describe your idea naturally... e.g., 'A mobile app that translates conversations in real-time' or 'An internal tool to automate our customer onboarding workflow'"
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-lg bg-panel-dark border border-border focus:border-primary focus:outline-none transition-colors resize-none text-sm"
                     />
                   </div>
                   
+                  {/* Optional Success Criteria */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Omega (Goal/Constraint)
+                    <label className="block text-sm font-medium mb-2 text-secondary">
+                      Success criteria <span className="text-xs opacity-60">(optional)</span>
                     </label>
                     <input
                       type="text"
-                      value={omega}
-                      onChange={(e) => setOmega(e.target.value)}
-                      placeholder="e.g., Sub-500ms latency with 95% accuracy"
-                      className="w-full px-4 py-2 rounded-lg bg-panel-dark border border-border focus:border-primary focus:outline-none transition-colors"
+                      value={successCriteria}
+                      onChange={(e) => setSuccessCriteria(e.target.value)}
+                      placeholder="e.g., 'Under 500ms latency' or 'Works offline' or 'Handles 10k concurrent users'"
+                      className="w-full px-4 py-2 rounded-lg bg-panel-dark border border-border focus:border-primary focus:outline-none transition-colors text-sm"
                     />
+                    <p className="text-xs text-secondary mt-2 opacity-70">
+                      Leave blank and I'll infer sensible constraints
+                    </p>
                   </div>
                   
                   <button
                     onClick={handleGenerateClaims}
-                    disabled={!concept.trim() || !omega.trim()}
+                    disabled={!userIdea.trim()}
                     className="w-full px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium text-primary"
                   >
-                    Generate Claims
+                    Start R&D Analysis
                   </button>
                 </div>
               </div>
