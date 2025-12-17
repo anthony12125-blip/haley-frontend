@@ -622,6 +622,39 @@ export default function Sidebar({
                     )}
                   </button>
                   
+                  {/* Select All Toggle - only visible in Multi-LLM mode */}
+                  {multiLLMEnabled && (
+                    <div className="py-2 border-t border-b border-border my-2">
+                      <button
+                        onClick={() => {
+                          const allModelIds = AI_MODELS.map(m => m.id);
+                          if (selectedModels.length === AI_MODELS.length) {
+                            // Deselect all
+                            setSelectedModels([]);
+                          } else {
+                            // Select all
+                            setSelectedModels(allModelIds);
+                          }
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                      >
+                        <div className="w-4 h-4 rounded border-2 border-current flex items-center justify-center">
+                          {selectedModels.length === AI_MODELS.length && (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm font-semibold">
+                          {selectedModels.length === AI_MODELS.length ? 'Deselect All' : 'Select All'}
+                        </span>
+                        <span className="text-xs text-secondary ml-auto">
+                          {selectedModels.length}/{AI_MODELS.length}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                  
                   {/* Other AI Models */}
                   {AI_MODELS.map((model) => {
                     const isSelected = multiLLMEnabled 
