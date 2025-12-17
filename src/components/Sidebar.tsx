@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   X,
   Plus,
@@ -24,6 +25,7 @@ import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 import { HaleyIndicator } from './HaleyIndicator';
 import ThemeSelector from './ThemeSelector';
+import IconSoundboard from './icons/IconSoundboard';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -126,6 +128,7 @@ export default function Sidebar({
   onRecoverChat,
   onMigrateChat,
 }: SidebarProps) {
+  const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showHaleyMenu, setShowHaleyMenu] = useState(false);
@@ -452,7 +455,7 @@ export default function Sidebar({
                         lineHeight: 1.2,
                       }}
                     >
-                      R&D
+                      AI R&D
                     </div>
                     {/* Hover subtitle */}
                     <div 
@@ -476,7 +479,7 @@ export default function Sidebar({
 
               {/* R&D Content - Expanded by default */}
               {rndExpanded && (
-                <div className="mt-3 px-4 space-y-1">
+                <div className="mt-3 px-4 space-y-3">
                   <div className="text-sm text-secondary text-center py-4 px-2 rounded-lg">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Sparkles size={16} className="text-primary/60" />
@@ -486,6 +489,13 @@ export default function Sidebar({
                       Your safe space for testing new features
                     </p>
                   </div>
+                  <button
+                    onClick={() => router.push('/ai-rd/soundboard')}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors text-sm font-medium text-primary"
+                  >
+                    <IconSoundboard className="flex-shrink-0" />
+                    <span>Launch Soundboard</span>
+                  </button>
                 </div>
               )}
             </div>
