@@ -470,8 +470,8 @@ export default function Sidebar({
                   </div>
                   <ChevronDown 
                     size={18} 
-                    className={`transition-transform duration-200 ${
-                      rndExpanded ? 'rotate-180 text-primary/70' : 'text-gray-400'
+                    className={`transition-colors duration-200 ${
+                      rndExpanded ? 'text-primary' : 'text-gray-400'
                     }`}
                   />
                 </div>
@@ -544,8 +544,8 @@ export default function Sidebar({
                 </div>
                 <ChevronDown 
                   size={18} 
-                  className={`transition-transform duration-200 ${
-                    !aiModelsCollapsed ? 'rotate-180 text-primary/70' : 'text-gray-400'
+                  className={`transition-colors duration-200 ${
+                    !aiModelsCollapsed ? 'text-primary' : 'text-gray-400'
                   }`}
                 />
               </button>
