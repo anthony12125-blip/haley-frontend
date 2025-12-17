@@ -470,7 +470,9 @@ export default function Sidebar({
                   </div>
                   <ChevronDown 
                     size={18} 
-                    className="text-gray-400"
+                    className={`transition-transform duration-200 ${
+                      rndExpanded ? 'rotate-180 text-primary/70' : 'text-gray-400'
+                    }`}
                   />
                 </div>
               </button>
@@ -540,7 +542,12 @@ export default function Sidebar({
                   <HaleyCoreGlyph size={20} className="text-primary" />
                   <span className="font-semibold text-sm">AI Models</span>
                 </div>
-                <ChevronDown size={18} className="text-gray-400" />
+                <ChevronDown 
+                  size={18} 
+                  className={`transition-transform duration-200 ${
+                    !aiModelsCollapsed ? 'rotate-180 text-primary/70' : 'text-gray-400'
+                  }`}
+                />
               </button>
 
               {!aiModelsCollapsed && (
