@@ -470,9 +470,7 @@ export default function Sidebar({
                   </div>
                   <ChevronDown 
                     size={18} 
-                    className={`text-gray-400 transition-transform duration-180 ${
-                      rndExpanded ? 'rotate-180' : ''
-                    }`} 
+                    className="text-gray-400"
                   />
                 </div>
               </button>
