@@ -474,23 +474,26 @@ export default function Sidebar({
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="p-3 space-y-3 border-b border-border">
-              {/* Smaller New Chat button - similar to Claude/ChatGPT */}
-              <button
-                onClick={onNewConversation}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
-              >
-                <Plus size={18} />
-                <span>New chat</span>
-              </button>
+            <div className="p-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                {/* New Chat button */}
+                <button
+                  onClick={onNewConversation}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                >
+                  <Plus size={18} />
+                  <span>New chat</span>
+                </button>
 
-              <button
-                onClick={onRecoverChat}
-                className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
-              >
-                <RotateCcw size={16} />
-                <span>Recover</span>
-              </button>
+                {/* Recover button */}
+                <button
+                  onClick={onRecoverChat}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                >
+                  <RotateCcw size={16} />
+                  <span>Recover</span>
+                </button>
+              </div>
             </div>
 
             {/* AI Model Selector - Using Core Glyph */}
