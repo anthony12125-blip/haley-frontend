@@ -479,7 +479,7 @@ export default function Sidebar({
                 {/* New Chat button */}
                 <button
                   onClick={onNewConversation}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
                 >
                   <Plus size={18} />
                   <span>New chat</span>
@@ -488,7 +488,7 @@ export default function Sidebar({
                 {/* Recover button */}
                 <button
                   onClick={onRecoverChat}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-sm"
                 >
                   <RotateCcw size={16} />
                   <span>Recover</span>
