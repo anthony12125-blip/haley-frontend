@@ -548,6 +548,7 @@ export default function ChatPage() {
           researchEnabled={researchEnabled}
           logicEngineEnabled={logicEngineEnabled}
           onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
+          onMigrateChat={() => console.log('Migrate chat not yet implemented')}
         />
 
         {/* Messages */}
