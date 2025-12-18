@@ -1,6 +1,6 @@
 'use client';
 
-import { Microscope, Puzzle, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
 
@@ -78,23 +78,8 @@ export default function ChatHeader({
           <h1 className="text-xl font-bold text-gradient">{getDisplayName()}</h1>
         </div>
 
-        {/* Right: Microscope and Puzzle Piece */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onToggleResearch}
-            className={`icon-btn ${researchEnabled ? 'bg-primary/20 text-primary' : ''}`}
-            title="Toggle Research Mode"
-          >
-            <Microscope size={24} />
-          </button>
-          <button
-            onClick={onToggleLogicEngine}
-            className={`icon-btn ${logicEngineEnabled ? 'bg-primary/20 text-primary' : ''}`}
-            title="Toggle Logic Engine"
-          >
-            <Puzzle size={24} />
-          </button>
-        </div>
+        {/* Right: Empty space for alignment */}
+        <div className="w-10" />
       </div>
     </header>
   );
