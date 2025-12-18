@@ -1,7 +1,6 @@
 'use client';
 
 import { Menu } from 'lucide-react';
-import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
 
 // Custom Migrate icon component (envelope with wings)
