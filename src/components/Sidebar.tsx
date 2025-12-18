@@ -58,45 +58,6 @@ const AI_MODELS = [
   { id: 'grok', name: 'Grok', color: 'hue-cyan' },
 ];
 
-// Custom Migrate icon component (envelope with wings)
-function MigrateIcon({ size = 24, showAI = true }: { size?: number; showAI?: boolean }) {
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg 
-        width={size} 
-        height={size} 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="1.5"
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-      >
-        {/* Left wing */}
-        <path d="M2 10 C2 8, 3 7, 4 8 C5 9, 6 10, 6 11 L6 13 C6 14, 5 15, 4 14 C3 13, 2 12, 2 10 Z" />
-        
-        {/* Right wing */}
-        <path d="M22 10 C22 8, 21 7, 20 8 C19 9, 18 10, 18 11 L18 13 C18 14, 19 15, 20 14 C21 13, 22 12, 22 10 Z" />
-        
-        {/* Envelope body - rectangle */}
-        <rect x="7" y="8" width="10" height="8" rx="0.5" />
-        
-        {/* Envelope flap - triangle on top */}
-        <path d="M7 8 L12 12 L17 8" />
-      </svg>
-      {showAI && (
-        <span 
-          className="absolute -top-1 -right-1 text-[8px] font-bold text-primary"
-          style={{ fontSize: size * 0.3 }}
-        >
-          AI
-        </span>
-      )}
-    </div>
-  );
-}
-
 // Helper function to format dates
 function formatDate(date: Date): string {
   const now = new Date();
@@ -290,18 +251,6 @@ export default function Sidebar({
                 <RotateCcw size={22} className="sidebar-mini-icon" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
                   Recover Chat
-                </div>
-              </button>
-
-              {/* Migrate Chat */}
-              <button
-                onClick={onMigrateChat}
-                className="sidebar-mini-btn w-12 h-12 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
-                title="Migrate Chat"
-              >
-                <MigrateIcon size={22} showAI={false} />
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  Migrate Chat
                 </div>
               </button>
 
@@ -535,23 +484,13 @@ export default function Sidebar({
                 <span>New chat</span>
               </button>
 
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={onRecoverChat}
-                  className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
-                >
-                  <RotateCcw size={16} />
-                  <span>Recover</span>
-                </button>
-
-                <button
-                  onClick={onMigrateChat}
-                  className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
-                >
-                  <MigrateIcon size={16} showAI={true} />
-                  <span>Migrate</span>
-                </button>
-              </div>
+              <button
+                onClick={onRecoverChat}
+                className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
+              >
+                <RotateCcw size={16} />
+                <span>Recover</span>
+              </button>
             </div>
 
             {/* AI Model Selector - Using Core Glyph */}
