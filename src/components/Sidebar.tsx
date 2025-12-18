@@ -474,7 +474,7 @@ export default function Sidebar({
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="p-3 border-b border-border">
+            <div className="p-3 border-t border-b border-border">
               <div className="flex items-center gap-2">
                 {/* New Chat button */}
                 <button
