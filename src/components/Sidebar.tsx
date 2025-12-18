@@ -293,18 +293,6 @@ export default function Sidebar({
                 </div>
               </button>
 
-              {/* Migrate Chat */}
-              <button
-                onClick={onMigrateChat}
-                className="sidebar-mini-btn w-12 h-12 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
-                title="Migrate Chat"
-              >
-                <MigrateIcon size={22} showAI={false} />
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  Migrate Chat
-                </div>
-              </button>
-
               {/* Haley Menu - Using Core Glyph */}
               <button
                 onClick={() => setShowHaleyMenu(!showHaleyMenu)}
@@ -535,23 +523,14 @@ export default function Sidebar({
                 <span>New chat</span>
               </button>
 
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={onRecoverChat}
-                  className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
-                >
-                  <RotateCcw size={16} />
-                  <span>Recover</span>
-                </button>
-
-                <button
-                  onClick={onMigrateChat}
-                  className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
-                >
-                  <MigrateIcon size={16} showAI={true} />
-                  <span>Migrate</span>
-                </button>
-              </div>
+              {/* Recover button - single button, full width */}
+              <button
+                onClick={onRecoverChat}
+                className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-xs"
+              >
+                <RotateCcw size={16} />
+                <span>Recover</span>
+              </button>
             </div>
 
             {/* AI Model Selector - Using Core Glyph */}
