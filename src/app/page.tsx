@@ -237,57 +237,72 @@ export default function ChatPage() {
   };
 
   const formatResponse = (result: any): string => {
+    if (!result) return 'Operation completed';
     if (typeof result === 'string') return result;
-    if (result?.response) return result.response;
-    if (result?.answer) return result.answer;
+    if (result.response) return result.response;
+    if (result.computation) {
+      return `${result.computation}\n\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
+    }
+    if (result.result !== undefined) {
+      return `Result: ${JSON.stringify(result.result)}`;
+    }
     return JSON.stringify(result, null, 2);
   };
 
   const speakResponse = (text: string) => {
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
     }
   };
 
-  const handleFileUpload = async (file: File) => {
-    console.log('File upload:', file.name);
+  const handleFileUpload = (files: FileList) => {
+    console.log('Files uploaded:', files);
+    setMagicWindowContent({
+      type: 'data',
+      content: {
+        files: files.length,
+        names: Array.from(files).map(f => f.name).join(', '),
+      },
+      title: 'Uploaded Files',
+    });
+    setMagicWindowOpen(true);
   };
 
-  const handleGallerySelect = (imageUrl: string) => {
-    console.log('Gallery select:', imageUrl);
+  const handleGallerySelect = () => {
+    console.log('Gallery selection');
   };
 
-  const handleModeSelect = (mode: AIMode) => {
-    setAiMode(mode);
+  const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
+    if (mode === 'haley') {
+      handleModelSelect(null);
+    }
+  };
+
+  const handleModelSelect = (justice: string | null) => {
+    const modelKey = justice || 'haley';
     
-    // Load messages for Supreme Court mode
-    if (mode === 'supreme-court') {
-      setActiveModel('supreme-court');
+    // Save current messages to current justice
+    const currentModelKey = activeModel || 'haley';
+    setConversationsByJustice(prev => ({
+      ...prev,
+      [currentModelKey]: messages
+    }));
+    
+    // Load messages for selected justice
+    const loadedMessages = conversationsByModel[modelKey];
+    if (loadedMessages && loadedMessages.length > 0) {
+      setMessages(loadedMessages);
+    } else {
+      // Initialize with empty messages - no notification bubble
+      setMessages([]);
     }
     
-    // Close the mode selector
-    setModeSelectorOpen(false);
-  };
-
-  const handleModelSelect = async (justice: string | null) => {
-    console.log('[CHAT] ========== handleModelSelect CALLED ==========');
-    console.log('[CHAT] Selected justice:', justice);
-    console.log('[CHAT] Previous activeModel:', activeModel);
-    
-    // CRITICAL: Set the active model and provider
     setActiveModel(justice);
-    setActiveProvider(justice || 'haley');
-    
-    console.log('[CHAT] New activeModel should be:', justice);
-    console.log('[CHAT] New activeProvider should be:', justice || 'haley');
-    
-    // Load messages for this model from localStorage
-    const modelKey = justice || 'haley';
-    const loadedMessages = conversationsByModel[modelKey] || [];
-    
-    setMessages(loadedMessages.length > 0 ? loadedMessages : []);
-    
+    setActiveProvider(modelKey); // CRITICAL: Set provider when model changes
     setAiMode('single');
     
     console.log(`Switched to ${modelKey} - loaded ${loadedMessages?.length || 0} messages`);
@@ -474,7 +489,6 @@ export default function ChatPage() {
           researchEnabled={researchEnabled}
           logicEngineEnabled={logicEngineEnabled}
           onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
-          onMigrateChat={() => console.log('Migrate chat not yet implemented')}
         />
 
         {/* Messages */}

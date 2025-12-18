@@ -1,35 +1,8 @@
 'use client';
 
-import { Menu } from 'lucide-react';
+import { Microscope, Puzzle, Menu } from 'lucide-react';
+import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
-
-// Custom Migrate icon component (envelope with wings)
-function MigrateIcon({ size = 24 }: { size?: number }) {
-  return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="1.5"
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      {/* Left wing */}
-      <path d="M2 10 C2 8, 3 7, 4 8 C5 9, 6 10, 6 11 L6 13 C6 14, 5 15, 4 14 C3 13, 2 12, 2 10 Z" />
-      
-      {/* Right wing */}
-      <path d="M22 10 C22 8, 21 7, 20 8 C19 9, 18 10, 18 11 L18 13 C18 14, 19 15, 20 14 C21 13, 22 12, 22 10 Z" />
-      
-      {/* Envelope body - rectangle */}
-      <rect x="7" y="8" width="10" height="8" rx="0.5" />
-      
-      {/* Envelope flap - triangle on top */}
-      <path d="M7 8 L12 12 L17 8" />
-    </svg>
-  );
-}
 
 interface ChatHeaderProps {
   aiMode: AIMode;
@@ -42,7 +15,6 @@ interface ChatHeaderProps {
   researchEnabled: boolean;
   logicEngineEnabled: boolean;
   onToggleLogicEngine: () => void;
-  onMigrateChat: () => void;
 }
 
 export default function ChatHeader({
@@ -56,7 +28,6 @@ export default function ChatHeader({
   researchEnabled,
   logicEngineEnabled,
   onToggleLogicEngine,
-  onMigrateChat,
 }: ChatHeaderProps) {
   // Get AI mode color hue
   const getAIHue = () => {
@@ -107,14 +78,21 @@ export default function ChatHeader({
           <h1 className="text-xl font-bold text-gradient">{getDisplayName()}</h1>
         </div>
 
-        {/* Right: Migrate Chat Button */}
+        {/* Right: Microscope and Puzzle Piece */}
         <div className="flex items-center gap-2">
           <button
-            onClick={onMigrateChat}
-            className="icon-btn hover:bg-primary/20 transition-colors"
-            title="Migrate Chat"
+            onClick={onToggleResearch}
+            className={`icon-btn ${researchEnabled ? 'bg-primary/20 text-primary' : ''}`}
+            title="Toggle Research Mode"
           >
-            <MigrateIcon size={24} />
+            <Microscope size={24} />
+          </button>
+          <button
+            onClick={onToggleLogicEngine}
+            className={`icon-btn ${logicEngineEnabled ? 'bg-primary/20 text-primary' : ''}`}
+            title="Toggle Logic Engine"
+          >
+            <Puzzle size={24} />
           </button>
         </div>
       </div>
