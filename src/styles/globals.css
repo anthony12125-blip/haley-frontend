@@ -920,53 +920,29 @@ body {
 }
 
 /* ============================================================================
-   DAY THEME - BLACK HALEYOS BAR
+   DAY THEME - INPUT BAR STYLING
    ============================================================================ */
 :root.light .input-container {
-  background: #000000 !important;
-  border-top: none !important;
+  background: transparent;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 :root.light .input-container .glass-strong {
-  background: #000000 !important;
-  border: none !important;
-}
-
-:root.light .input-container textarea {
-  color: #FFFFFF !important;
-  caret-color: #FFFFFF !important;
-}
-
-:root.light .input-container textarea::placeholder {
-  color: rgba(255, 255, 255, 0.45) !important;
-}
-
-:root.light .input-container .icon-btn {
-  color: #FFFFFF !important;
-}
-
-:root.light .input-container .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
-  color: #FFFFFF !important;
-}
-
-:root.light .input-container .icon-btn.bg-primary {
-  background: #FFFFFF !important;
-  color: #000000 !important;
-}
-
-:root.light .input-container .icon-btn.bg-primary:hover {
-  background: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 /* Input bubble styling in day mode */
-:root.light .input-container > div > div > div {
-  background: #000000 !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+:root.light .input-container .bg-panel-dark {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
-:root.light .input-container > div > div > div:focus-within {
-  border-color: rgba(255, 255, 255, 0.3) !important;
+:root.light .input-container .bg-panel-dark:focus-within {
+  border-color: #4B6CFF !important;
+  box-shadow: 0 0 0 3px rgba(75, 108, 255, 0.1) !important;
 }
 
 /* ============================================================================
