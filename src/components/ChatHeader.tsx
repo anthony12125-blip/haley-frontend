@@ -122,14 +122,23 @@ export default function ChatHeader({
         {/* Right: Migrate Button */}
         <div className="flex items-center gap-2">
           {onMigrateChat && (
-            <button
-              onClick={onMigrateChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-panel-light transition-colors text-sm group"
-              title="Migrate Chat"
-            >
-              <MigrateIcon size={18} showAI={true} />
-              <span className="hidden sm:inline">Migrate</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Non-clickable text */}
+              <span className="hidden sm:inline text-sm text-text-secondary">
+                AI chat migration
+              </span>
+              
+              {/* Clickable envelope button */}
+              <button
+                onClick={onMigrateChat}
+                className="p-2 rounded-lg hover:bg-panel-light active:bg-primary/20 transition-all group"
+                title="AI chat migration"
+              >
+                <div className="group-active:scale-95 group-active:text-primary transition-all">
+                  <MigrateIcon size={28} showAI={true} />
+                </div>
+              </button>
+            </div>
           )}
         </div>
       </div>
