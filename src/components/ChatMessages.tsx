@@ -57,32 +57,34 @@ export default function ChatMessages({
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
+      className="flex-1 overflow-y-auto py-6"
     >
-      {messages.map((message) => (
-        <MessageBubble
-          key={message.id}
-          message={message}
-          onReadAloud={() => handleReadAloud(message.content)}
-          onShare={() => handleShare(message)}
-          onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
-          onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
-        />
-      ))}
+      <div className="max-w-3xl mx-auto px-4 md:px-6 lg:px-8 space-y-4">
+        {messages.map((message) => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            onReadAloud={() => handleReadAloud(message.content)}
+            onShare={() => handleShare(message)}
+            onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
+            onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
+          />
+        ))}
 
-      {isLoading && (
-        <div className="flex justify-start">
-          <div className="message-bubble message-assistant">
-            <div className="typing-indicator">
-              <div className="typing-dot" />
-              <div className="typing-dot" />
-              <div className="typing-dot" />
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="message-bubble message-assistant">
+              <div className="typing-indicator">
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+                <div className="typing-dot" />
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} />
+      </div>
     </div>
   );
 }
