@@ -120,7 +120,7 @@ export default function ChatHeader({
         </div>
 
         {/* Right: Migrate Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mr-4">
           {onMigrateChat && (
             <div className="flex items-center gap-2">
               {/* Non-clickable text */}
@@ -135,7 +135,7 @@ export default function ChatHeader({
                 title="AI chat migration"
               >
                 <div className="group-active:scale-95 group-active:text-primary transition-all">
-                  <MigrateIcon size={28} showAI={true} />
+                  <MigrateIcon size={36} showAI={true} />
                 </div>
               </button>
             </div>
