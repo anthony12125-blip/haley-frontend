@@ -130,7 +130,7 @@ export default function ChatInputBar({
       }`}
     >
       {/* Centered container with max-width to match messages */}
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="mx-auto max-w-3xl px-4 md:px-6 lg:px-8">
         {/* Main Input Area */}
         <div className="py-4 w-full">
           {/* All controls inside a single chat bubble */}
