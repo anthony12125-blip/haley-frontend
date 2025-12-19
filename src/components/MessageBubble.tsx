@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Copy, Share2, RotateCcw, GitBranch, CheckCircle } from 'lucide-react';
 import type { Message } from '@/types';
 
@@ -13,52 +13,7 @@ interface MessageBubbleProps {
 }
 
 export default function MessageBubble({ message, onReadAloud, onShare, onRetry, onBranch }: MessageBubbleProps) {
-  const [showActions, setShowActions] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout>();
-  const hideTimeoutRef = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
-    };
-  }, []);
-
-  const handleMouseEnter = () => {
-    // Clear any pending hide timeout
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-    }
-    setIsHovering(true);
-    setShowActions(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-    // Delay hiding to allow cursor to reach menu
-    hideTimeoutRef.current = setTimeout(() => {
-      if (!isHovering) {
-        setShowActions(false);
-      }
-    }, 300);
-  };
-
-  const handleActionMouseEnter = () => {
-    // Keep menu visible when hovering over it
-    if (hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-    }
-    setShowActions(true);
-  };
-
-  const handleActionMouseLeave = () => {
-    // Hide menu when leaving action area
-    hideTimeoutRef.current = setTimeout(() => {
-      setShowActions(false);
-    }, 300);
-  };
 
   const handleCopy = async () => {
     try {
@@ -111,11 +66,7 @@ export default function MessageBubble({ message, onReadAloud, onShare, onRetry, 
   };
 
   return (
-    <div
-      className="relative group"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className="relative group">
       <div className={getBubbleClass()}>
         {/* Message Header */}
         {getBubbleHeader()}
@@ -147,20 +98,12 @@ export default function MessageBubble({ message, onReadAloud, onShare, onRetry, 
         )}
       </div>
 
-      {/* Action Menu with Extended Hover Zone */}
+      {/* Action Menu - Fixed at bottom */}
       {message.role !== 'system' && (
         <div
           className={`absolute ${
             message.role === 'user' ? 'right-0' : 'left-0'
-          } top-0 transition-all duration-200 ${
-            showActions ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
-          }`}
-          style={{
-            marginTop: '-12px',
-            padding: '12px', // Extended interaction zone
-          }}
-          onMouseEnter={handleActionMouseEnter}
-          onMouseLeave={handleActionMouseLeave}
+          } bottom-0 mb-[-40px]`}
         >
           <div className="glass-strong rounded-lg border border-border p-1 flex items-center gap-1 shadow-lg">
             <button
