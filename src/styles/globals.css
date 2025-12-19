@@ -419,6 +419,7 @@ body {
    ============================================================================ */
 .message-bubble {
   max-width: 75%;
+  width: fit-content;
   border-radius: 14px;
   padding: 12px 16px;
   margin: 6px 0;
