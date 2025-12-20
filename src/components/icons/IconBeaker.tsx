@@ -27,7 +27,7 @@ const IconBeaker: React.FC<IconBeakerProps> = ({
       {/* Erlenmeyer Flask Shape */}
       {/* Top neck opening */}
       <line x1="9" y1="2" x2="9" y2="8" />
-      <line x1="15" y1="2" x2="15" y1="8" />
+      <line x1="15" y1="2" x2="15" y2="8" />
       <line x1="9" y1="2" x2="15" y2="2" />
       
       {/* Flask body - tapered from neck to wide base */}
