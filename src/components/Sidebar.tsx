@@ -19,7 +19,6 @@ import {
   RotateCcw,
   Send,
   MoreVertical,
-  Beaker,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -27,6 +26,7 @@ import { HaleyIndicator } from './HaleyIndicator';
 import { MultiLLMToggle } from './MultiLLMToggle';
 import ThemeSelector from './ThemeSelector';
 import IconSoundboard from './icons/IconSoundboard';
+import IconBeaker from './icons/IconBeaker';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -413,11 +413,10 @@ export default function Sidebar({
                 
                 {/* Content */}
                 <div className="relative flex items-center gap-3">
-                  <Beaker 
+                  <IconBeaker 
                     size={20} 
                     strokeWidth={1.5}
                     className="flex-shrink-0 transition-transform group-hover:scale-105"
-                    style={{ opacity: 0.9 }} 
                   />
                   <div className="flex-1 text-left">
                     <div 
