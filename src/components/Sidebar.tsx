@@ -383,7 +383,7 @@ export default function Sidebar({
             </div>
 
             {/* R&D - Research & Development Section - TOP PRIORITY */}
-            <div className="relative group" style={{ marginTop: '12px', marginBottom: '12px' }}>
+            <div className="relative group p-3">
               <button
                 onClick={() => setRndExpanded(!rndExpanded)}
                 className="sidebar-menu-header w-full relative overflow-hidden rounded-lg transition-all duration-180 ease-out"
@@ -465,7 +465,7 @@ export default function Sidebar({
             </div>
 
             {/* Primary Action Buttons */}
-            <div className="p-3 border-t border-b border-border">
+            <div className="p-3 border-t border-border">
               <div className="flex items-center gap-2">
                 {/* New Chat button */}
                 <button
@@ -488,7 +488,7 @@ export default function Sidebar({
             </div>
 
             {/* AI Model Selector - Using Core Glyph */}
-            <div className="p-3 border-b border-border">
+            <div className="p-3 border-t border-b border-border">
               <button
                 onClick={() => setAiModelsCollapsed(!aiModelsCollapsed)}
                 className={`sidebar-menu-header w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
