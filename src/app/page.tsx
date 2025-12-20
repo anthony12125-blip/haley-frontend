@@ -418,7 +418,7 @@ export default function ChatPage() {
     return (
       <div className="full-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-2xl font-bold text-gradient mb-4">HaleyOS</div>
+          <div className="text-2xl font-bold text-gradient mb-4">Haley OS</div>
           <div className="typing-indicator">
             <div className="typing-dot" />
             <div className="typing-dot" />

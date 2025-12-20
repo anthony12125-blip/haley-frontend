@@ -4,8 +4,8 @@ import { ThemeProvider } from '@/lib/themeContext';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
-  title: 'HaleyOS - Multi-LLM AI Assistant',
-  description: 'HaleyOS: Advanced AI assistant with multi-model support and supreme court mode',
+  title: 'Haley OS - Multi-LLM AI Assistant',
+  description: 'Haley OS: Advanced AI assistant with multi-model support and supreme court mode',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover',
 };
 

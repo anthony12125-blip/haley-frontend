@@ -138,7 +138,7 @@ export default function ChatPage() {
     const systemMessage: Message = {
       id: generateId(),
       role: 'system',
-      content: 'HaleyOS initialized. Multi-LLM router active. Ready to assist.',
+      content: 'Haley OS initialized. Multi-LLM router active. Ready to assist.',
       timestamp: new Date(),
       metadata: {
         operation: 'system_init',
@@ -339,7 +339,7 @@ export default function ChatPage() {
         role: 'system',
         content: justice 
           ? `Switched to ${justice.charAt(0).toUpperCase() + justice.slice(1)}. Ready to assist.`
-          : 'HaleyOS initialized. Multi-LLM router active. Ready to assist.',
+          : 'Haley OS initialized. Multi-LLM router active. Ready to assist.',
         timestamp: new Date(),
         metadata: {
           operation: 'system_init',
@@ -477,7 +477,7 @@ export default function ChatPage() {
     return (
       <div className="full-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-2xl font-bold text-gradient mb-4">HaleyOS</div>
+          <div className="text-2xl font-bold text-gradient mb-4">Haley OS</div>
           <div className="typing-indicator">
             <div className="typing-dot" />
             <div className="typing-dot" />

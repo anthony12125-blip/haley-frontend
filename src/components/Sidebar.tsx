@@ -364,7 +364,7 @@ export default function Sidebar({
             <div className="p-4 flex items-center justify-between border-b border-border">
               <div className="flex items-center gap-2">
                 <HaleyCoreGlyph size={24} className="text-primary" />
-                <span className="text-lg font-bold text-gradient">HaleyOS</span>
+                <span className="text-lg font-bold text-gradient">Haley OS</span>
               </div>
               {/* Desktop: Haley Indicator shows down arrow when expanded */}
               <HaleyIndicator 

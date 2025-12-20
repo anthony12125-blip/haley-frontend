@@ -1,5 +1,5 @@
 // src/lib/haleyApi.ts
-// HaleyOS Backend API Integration
+// Haley OS Backend API Integration
 // FIXED: Removed Claude hard default - model selection now enforced
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
@@ -140,7 +140,7 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
     const data = await response.json();
     
     return {
-      os: 'HaleyOS',
+      os: 'Haley OS',
       kernel_status: {
         kernel: 'Logic Engine',
         syscalls: data.requests_processed || 0,
@@ -154,7 +154,7 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
   } catch (error) {
     console.error('[HaleyAPI] Status check error:', error);
     return {
-      os: 'HaleyOS',
+      os: 'Haley OS',
       kernel_status: {
         kernel: 'Logic Engine',
         syscalls: 0,

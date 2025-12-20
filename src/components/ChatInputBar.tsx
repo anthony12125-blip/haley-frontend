@@ -226,7 +226,7 @@ export default function ChatInputBar({
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Message HaleyOS..."
+                    placeholder="Message Haley OS..."
                     className="flex-1 bg-transparent border-none outline-none resize-none min-h-[36px] max-h-[200px] text-primary placeholder:text-secondary py-1 min-w-0"
                     disabled={isLoading}
                     rows={1}

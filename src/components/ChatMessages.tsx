@@ -43,7 +43,7 @@ export default function ChatMessages({
       try {
         await navigator.share({
           text: message.content,
-          title: 'HaleyOS Message',
+          title: 'Haley OS Message',
         });
       } catch (err) {
         console.log('Share cancelled');

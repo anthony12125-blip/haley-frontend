@@ -1,5 +1,5 @@
 // src/types/index.ts
-// Centralized type definitions for HaleyOS
+// Centralized type definitions for Haley OS
 
 export interface Message {
   id: string;

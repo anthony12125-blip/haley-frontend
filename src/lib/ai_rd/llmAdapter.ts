@@ -1,14 +1,14 @@
 /**
  * llmAdapter.ts
  * 
- * Adapter to convert HaleyOS backend API to LLMCall signature for rd_questionizer
+ * Adapter to convert Haley OS backend API to LLMCall signature for rd_questionizer
  */
 
 import { sendMessage } from '../haleyApi';
 import type { LLMCall } from './rd_questionizer';
 
 /**
- * Creates an LLM call adapter using the existing HaleyOS backend
+ * Creates an LLM call adapter using the existing Haley OS backend
  * 
  * @param provider - AI provider to use (claude, gemini, gpt, etc.)
  * @returns LLMCall function that can be used with rd_questionizer

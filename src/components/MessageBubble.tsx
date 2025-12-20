@@ -29,7 +29,7 @@ export default function MessageBubble({ message, onReadAloud, onShare, onRetry, 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'HaleyOS Message',
+          title: 'Haley OS Message',
           text: message.content,
         });
       } catch (error) {
