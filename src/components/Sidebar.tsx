@@ -429,9 +429,9 @@ export default function Sidebar({
                     >
                       AI Labs
                     </div>
-                    {/* Hover subtitle */}
+                    {/* Permanent subtitle */}
                     <div 
-                      className="text-xs uppercase tracking-wider opacity-0 group-hover:opacity-70 transition-opacity duration-180"
+                      className="text-xs uppercase tracking-wider opacity-70 transition-opacity duration-180"
                       style={{ 
                         fontVariant: 'small-caps',
                         letterSpacing: '0.05em',
