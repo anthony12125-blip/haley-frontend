@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Copy, Share2, RotateCcw, GitBranch, CheckCircle } from 'lucide-react';
+import { Copy, Share2, RotateCcw, GitBranch, CheckCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import type { Message } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 
@@ -204,21 +204,28 @@ export default function MessageBubble({
         }
 
         .action-buttons {
-          margin-top: 16px;
+          margin-top: 12px;
           display: flex;
-          gap: 8px;
+          flex-direction: column;
+          gap: 12px;
           opacity: 1;
           transition: opacity 0.2s ease;
         }
 
         .user-message .action-buttons {
-          justify-content: flex-end;
+          align-items: flex-end;
+        }
+
+        .icon-row {
+          display: flex;
+          gap: 4px;
+          align-items: center;
         }
 
         .action-column {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 12px;
           align-items: flex-start;
         }
 
@@ -230,55 +237,51 @@ export default function MessageBubble({
           height: 32px;
           border-radius: 6px;
           background: transparent;
-          border: 1px solid var(--border);
+          border: none;
           color: var(--accent);
           transition: all 0.15s ease;
           cursor: pointer;
         }
 
         :root.light .haley-symbol-wrapper {
-          border: 1px solid rgba(0, 0, 0, 0.15);
           color: #4B6CFF;
         }
 
         .haley-symbol-wrapper:hover {
           background: var(--panel-medium);
-          border-color: var(--accent);
         }
 
         :root.light .haley-symbol-wrapper:hover {
           background: rgba(0, 0, 0, 0.04);
-          border-color: #4B6CFF;
         }
 
         .action-btn {
-          padding: 6px 10px;
+          padding: 6px;
           border-radius: 6px;
           background: transparent;
-          border: 1px solid var(--border);
+          border: none;
           color: var(--text-secondary);
           font-size: 13px;
           cursor: pointer;
           transition: all 0.15s ease;
           display: flex;
           align-items: center;
-          gap: 6px;
+          justify-content: center;
+          min-width: 28px;
+          height: 28px;
         }
 
         :root.light .action-btn {
-          border: 1px solid rgba(0, 0, 0, 0.15);
           color: #6A6A6A;
         }
 
         .action-btn:hover {
           background: var(--panel-medium);
-          border-color: var(--accent);
           color: var(--text-primary);
         }
 
         :root.light .action-btn:hover {
           background: rgba(0, 0, 0, 0.04);
-          border-color: #4B6CFF;
           color: #000000;
         }
 
@@ -366,56 +369,51 @@ export default function MessageBubble({
           <div className="action-buttons">
             {message.role === 'assistant' && (
               <div className="action-column">
-                <button
-                  onClick={handleCopy}
-                  className="action-btn"
-                  title="Copy"
-                >
-                  {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
+                <div className="icon-row">
+                  <button
+                    onClick={handleCopy}
+                    className="action-btn"
+                    title={copied ? "Copied!" : "Copy"}
+                  >
+                    {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                  </button>
+                  <button
+                    className="action-btn"
+                    title="Good response"
+                  >
+                    <ThumbsUp size={16} />
+                  </button>
+                  <button
+                    className="action-btn"
+                    title="Bad response"
+                  >
+                    <ThumbsDown size={16} />
+                  </button>
+                  {onRetry && (
+                    <button
+                      onClick={onRetry}
+                      className="action-btn"
+                      title="Retry"
+                    >
+                      <RotateCcw size={16} />
+                    </button>
+                  )}
+                </div>
                 <div className="haley-symbol-wrapper" title="Haley AI">
                   <HaleyCoreGlyph size={20} />
                 </div>
               </div>
             )}
             {message.role === 'user' && (
-              <button
-                onClick={handleCopy}
-                className="action-btn"
-                title="Copy"
-              >
-                {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
-            )}
-            <button
-              onClick={handleShare}
-              className="action-btn"
-              title="Share"
-            >
-              <Share2 size={14} />
-              Share
-            </button>
-            {message.role === 'assistant' && onRetry && (
-              <button
-                onClick={onRetry}
-                className="action-btn"
-                title="Retry"
-              >
-                <RotateCcw size={14} />
-                Retry
-              </button>
-            )}
-            {onBranch && (
-              <button
-                onClick={onBranch}
-                className="action-btn"
-                title="Branch"
-              >
-                <GitBranch size={14} />
-                Branch
-              </button>
+              <div className="icon-row">
+                <button
+                  onClick={handleCopy}
+                  className="action-btn"
+                  title={copied ? "Copied!" : "Copy"}
+                >
+                  {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                </button>
+              </div>
             )}
           </div>
         )}
