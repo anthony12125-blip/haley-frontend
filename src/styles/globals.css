@@ -100,10 +100,10 @@
   --primary: #2B5AA8;
   --accent: #3B6ABA;
   
-  /* Surfaces - Light gray tones */
-  --panel-dark: #F8F9FA;
-  --panel-medium: #FFFFFF;
-  --panel-light: #F0F1F3;
+  /* Surfaces - Blue-tinted panels for sidebar and top bar */
+  --panel-dark: #F0F4FA;
+  --panel-medium: #F5F8FC;
+  --panel-light: #EFF4FB;
   
   /* Text hierarchy */
   --text-primary: #1A1A1A;
@@ -118,7 +118,7 @@
   --error: #dc2626;
   --success: #059669;
   
-  /* Background - White with subtle gradient */
+  /* Background - Keep white */
   --background: #FFFFFF;
   --space-bg-start: #E8EDF5;
   --space-bg-end: #F5F7FA;
@@ -1110,6 +1110,15 @@ body {
   background: #FFFFFF !important;
 }
 
+/* Inverse Space - Blue-tinted sidebar */
+:root.light.light-space-inverse .sidebar-container {
+  background: #F0F4FA !important;
+}
+
+:root.light.light-space-inverse .sidebar-mini {
+  background: #F0F4FA !important;
+}
+
 /* Mini sidebar buttons - white hover in day mode */
 :root.light .sidebar-mini-btn {
   background: transparent;
@@ -1117,6 +1126,10 @@ body {
 
 :root.light .sidebar-mini-btn:hover {
   background: #FAFAFA !important;
+}
+
+:root.light.light-space-inverse .sidebar-mini-btn:hover {
+  background: #E8EDF5 !important;
 }
 
 /* Mini sidebar icons - black in day mode */
@@ -1137,9 +1150,21 @@ body {
   background: #FAFAFA !important;
 }
 
+:root.light.light-space-inverse .sidebar-menu-header {
+  background: #F0F4FA !important;
+}
+
+:root.light.light-space-inverse .sidebar-menu-header:hover {
+  background: #E8EDF5 !important;
+}
+
 /* Active/expanded menu header - white background, no gray */
 :root.light .sidebar-menu-header-active {
   background: #FFFFFF !important;
+}
+
+:root.light.light-space-inverse .sidebar-menu-header-active {
+  background: #F0F4FA !important;
 }
 
 /* R&D hover glow - remove in day mode */
@@ -1156,7 +1181,15 @@ body {
   background: #FAFAFA !important;
 }
 
+:root.light.light-space-inverse .sidebar-back-button:hover {
+  background: #E8EDF5 !important;
+}
+
 /* Sidebar borders in day mode */
 :root.light .sidebar-container.border-r {
   border-right-color: #EDEDED !important;
+}
+
+:root.light.light-space-inverse .sidebar-container.border-r {
+  border-right-color: #D8E2F0 !important;
 }
