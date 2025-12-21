@@ -10,7 +10,7 @@ interface MessageBubbleProps {
   onShare?: () => Promise<void>;
   onRetry?: () => void;
   onBranch?: () => void;
-  isStreaming?: boolean; // New prop to enable streaming mode
+  isStreaming?: boolean;
 }
 
 export default function MessageBubble({ 
@@ -46,9 +46,9 @@ export default function MessageBubble({
     // Streaming animation - faster speed for more natural feel
     const interval = setInterval(() => {
       if (indexRef.current < message.content.length) {
-        // Add 1-3 characters at a time for smoother flow
+        // Add 2-4 characters at a time for smoother flow
         const charsToAdd = Math.min(
-          Math.floor(Math.random() * 2) + 1,
+          Math.floor(Math.random() * 3) + 2,
           message.content.length - indexRef.current
         );
         
@@ -58,7 +58,7 @@ export default function MessageBubble({
         setIsComplete(true);
         clearInterval(interval);
       }
-    }, 20); // 20ms = fast, natural streaming
+    }, 15); // 15ms = fast, natural streaming like ChatGPT/Claude
 
     return () => clearInterval(interval);
   }, [message.content, isStreaming, message.role]);
@@ -88,110 +88,206 @@ export default function MessageBubble({
     }
   };
 
-  const getBubbleClass = () => {
-    const baseClass = 'message-bubble';
-    if (message.role === 'user') return `${baseClass} message-user`;
-    if (message.role === 'system') return `${baseClass} message-system`;
-    return `${baseClass} message-assistant`;
-  };
-
-  const getBubbleHeader = () => {
-    if (message.role === 'user') {
-      return (
-        <div className="message-header user-header">
-          You
-        </div>
-      );
-    }
-    if (message.role === 'assistant') {
-      return (
-        <div className="message-header haley-header">
-          Haley
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div 
-      className="relative group animate-message-appear"
-      style={{
-        animation: 'messageAppear 0.4s ease-out forwards'
-      }}
+      className={`message-container ${message.role === 'user' ? 'message-container-user' : 'message-container-assistant'}`}
     >
       <style jsx>{`
+        .message-container {
+          padding: 24px 0;
+          position: relative;
+          animation: messageAppear 0.3s ease-out forwards;
+        }
+
+        .message-container-user {
+          background: transparent;
+        }
+
+        .message-container-assistant {
+          background: var(--panel-dark);
+          border-bottom: 1px solid var(--border);
+        }
+
+        :root.light .message-container-assistant {
+          background: #F7F7F7;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
         @keyframes messageAppear {
           from {
             opacity: 0;
-            transform: translateY(10px) scale(0.98);
+            transform: translateY(8px);
           }
           to {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateY(0);
           }
         }
 
-        @keyframes shimmer {
-          0% {
-            background-position: -200% center;
-          }
-          100% {
-            background-position: 200% center;
-          }
+        .message-content-wrapper {
+          max-width: 48rem;
+          margin: 0 auto;
+          padding: 0 1rem;
         }
 
-        .streaming-text {
-          background: linear-gradient(
-            90deg,
-            currentColor 0%,
-            currentColor 40%,
-            rgba(var(--primary-rgb), 0.6) 50%,
-            currentColor 60%,
-            currentColor 100%
-          );
-          background-size: 200% auto;
-          background-clip: text;
-          -webkit-background-clip: text;
-          animation: shimmer 2s linear infinite;
+        .message-header {
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          color: var(--text-secondary);
+          letter-spacing: 0.01em;
+        }
+
+        :root.light .message-header {
+          color: #6A6A6A;
+        }
+
+        .message-header.haley-header {
+          color: var(--accent);
+        }
+
+        :root.light .message-header.haley-header {
+          color: #4B6CFF;
+        }
+
+        .message-text {
+          font-size: 15px;
+          line-height: 1.7;
+          color: var(--text-primary);
+          white-space: pre-wrap;
+          word-wrap: break-word;
+        }
+
+        :root.light .message-text {
+          color: #000000;
         }
 
         .cursor-blink {
           display: inline-block;
-          width: 2px;
-          height: 1em;
-          background-color: currentColor;
-          margin-left: 2px;
+          width: 8px;
+          height: 20px;
+          background-color: var(--accent);
+          margin-left: 3px;
+          vertical-align: text-bottom;
           animation: blink 1s step-end infinite;
+          border-radius: 1px;
+        }
+
+        :root.light .cursor-blink {
+          background-color: #4B6CFF;
         }
 
         @keyframes blink {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
+          50% { opacity: 0.3; }
+        }
+
+        .action-buttons {
+          margin-top: 12px;
+          display: flex;
+          gap: 4px;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+
+        .message-container:hover .action-buttons {
+          opacity: 1;
+        }
+
+        .action-btn {
+          padding: 6px 10px;
+          border-radius: 6px;
+          background: var(--panel-medium);
+          border: 1px solid var(--border);
+          color: var(--text-secondary);
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        :root.light .action-btn {
+          background: #FFFFFF;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          color: #6A6A6A;
+        }
+
+        .action-btn:hover {
+          background: var(--panel-light);
+          border-color: var(--accent);
+          color: var(--text-primary);
+        }
+
+        :root.light .action-btn:hover {
+          background: #F7F7F7;
+          border-color: #4B6CFF;
+          color: #000000;
+        }
+
+        .metadata-section {
+          margin-top: 16px;
+          padding-top: 12px;
+          border-top: 1px solid var(--border);
+          font-size: 12px;
+          color: var(--text-secondary);
+        }
+
+        :root.light .metadata-section {
+          border-top: 1px solid rgba(0, 0, 0, 0.06);
+          color: #6A6A6A;
+        }
+
+        .supreme-indicator-wrapper {
+          margin-bottom: 12px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        :root.light .supreme-indicator-wrapper {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .supreme-badge {
+          background: var(--accent);
+          color: white;
+          padding: 4px 10px;
+          border-radius: 4px;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+
+        :root.light .supreme-badge {
+          background: #4B6CFF;
         }
       `}</style>
 
-      <div className={getBubbleClass()}>
+      <div className="message-content-wrapper">
         {/* Message Header */}
-        {getBubbleHeader()}
-        
+        <div className={`message-header ${message.role === 'assistant' ? 'haley-header' : ''}`}>
+          {message.role === 'user' ? 'You' : message.role === 'assistant' ? 'Haley' : 'System'}
+        </div>
+
         {/* Supreme Court Indicator */}
         {message.metadata?.supreme_court && message.metadata?.llm_sources && (
-          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-            <div className="supreme-indicator !text-xs !px-2 !py-1">
-              <span className="text-[10px]">SUPREME COURT</span>
+          <div className="supreme-indicator-wrapper">
+            <div className="supreme-badge">
+              SUPREME COURT
             </div>
-            <div className="text-xs text-secondary">
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
               {message.metadata.llm_sources.join(', ')}
             </div>
           </div>
         )}
 
         {/* Message Content with Streaming Effect */}
-        <div className="whitespace-pre-wrap">
-          <span className={!isComplete && message.role === 'assistant' ? 'streaming-text' : ''}>
-            {displayedContent}
-          </span>
+        <div className="message-text">
+          {displayedContent}
           {!isComplete && message.role === 'assistant' && (
             <span className="cursor-blink" />
           )}
@@ -199,7 +295,7 @@ export default function MessageBubble({
 
         {/* Metadata */}
         {message.metadata && isComplete && (
-          <div className="mt-2 pt-2 border-t border-border/50 text-xs text-secondary">
+          <div className="metadata-section">
             {message.metadata.model_used && (
               <div>Model: {message.metadata.model_used}</div>
             )}
@@ -208,51 +304,49 @@ export default function MessageBubble({
             )}
           </div>
         )}
-      </div>
 
-      {/* Action Menu - Fixed at bottom - Only show when complete */}
-      {message.role !== 'system' && isComplete && (
-        <div
-          className={`absolute ${
-            message.role === 'user' ? 'right-0' : 'left-0'
-          } bottom-0 mb-[-40px]`}
-        >
-          <div className="glass-strong rounded-lg border border-border p-1 flex items-center gap-1 shadow-lg">
+        {/* Action Buttons - Only show when complete */}
+        {message.role !== 'system' && isComplete && (
+          <div className="action-buttons">
             <button
               onClick={handleCopy}
-              className="icon-btn !w-8 !h-8"
+              className="action-btn"
               title="Copy"
             >
               {copied ? <CheckCircle size={14} className="text-success" /> : <Copy size={14} />}
+              {copied ? 'Copied' : 'Copy'}
             </button>
             <button
               onClick={handleShare}
-              className="icon-btn !w-8 !h-8"
+              className="action-btn"
               title="Share"
             >
               <Share2 size={14} />
+              Share
             </button>
             {message.role === 'assistant' && onRetry && (
               <button
                 onClick={onRetry}
-                className="icon-btn !w-8 !h-8"
+                className="action-btn"
                 title="Retry"
               >
                 <RotateCcw size={14} />
+                Retry
               </button>
             )}
             {onBranch && (
               <button
                 onClick={onBranch}
-                className="icon-btn !w-8 !h-8"
+                className="action-btn"
                 title="Branch"
               >
                 <GitBranch size={14} />
+                Branch
               </button>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
