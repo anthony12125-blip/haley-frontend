@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble';
+import { HaleyThinkingAnimation } from './HaleyThinkingAnimation';
 import type { Message } from '@/types';
 
 interface ChatMessagesProps {
@@ -160,47 +161,6 @@ export default function ChatMessages({
         :root.light .loading-header {
           color: #4B6CFF;
         }
-
-        .typing-indicator {
-          display: flex;
-          gap: 6px;
-          align-items: center;
-        }
-
-        .typing-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--accent);
-          animation: typingDot 1.4s ease-in-out infinite;
-        }
-
-        :root.light .typing-dot {
-          background: #4B6CFF;
-        }
-
-        .typing-dot:nth-child(1) {
-          animation-delay: 0s;
-        }
-
-        .typing-dot:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-
-        .typing-dot:nth-child(3) {
-          animation-delay: 0.4s;
-        }
-
-        @keyframes typingDot {
-          0%, 60%, 100% {
-            opacity: 0.3;
-            transform: scale(0.8);
-          }
-          30% {
-            opacity: 1;
-            transform: scale(1.2);
-          }
-        }
       `}</style>
 
       <div className="messages-container">
@@ -222,11 +182,7 @@ export default function ChatMessages({
               <div className="loading-header">
                 Haley
               </div>
-              <div className="typing-indicator">
-                <div className="typing-dot" />
-                <div className="typing-dot" />
-                <div className="typing-dot" />
-              </div>
+              <HaleyThinkingAnimation />
             </div>
           </div>
         )}
