@@ -233,8 +233,8 @@ export default function MessageBubble({
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
+          width: 48px;
+          height: 48px;
           border-radius: 6px;
           background: transparent;
           border: none;
@@ -400,7 +400,7 @@ export default function MessageBubble({
                   )}
                 </div>
                 <div className="haley-symbol-wrapper" title="Haley AI">
-                  <HaleyCoreGlyph size={20} />
+                  <HaleyCoreGlyph size={30} />
                 </div>
               </div>
             )}
