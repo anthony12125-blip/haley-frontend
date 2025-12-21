@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble';
 import type { Message } from '@/types';
 
@@ -21,10 +21,37 @@ export default function ChatMessages({
   const containerRef = useRef<HTMLDivElement>(null);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const prevMessagesLengthRef = useRef(0);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Improved scroll to bottom function with instant scrolling
+  const scrollToBottom = useCallback((force = false) => {
+    if (!containerRef.current || (!force && userScrolledUp)) return;
+    
+    // Use instant scroll for better reliability
+    containerRef.current.scrollTop = containerRef.current.scrollHeight;
+  }, [userScrolledUp]);
+
+  // Detect if user has scrolled up manually
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
+    
+    setUserScrolledUp(!isAtBottom);
+  }, []);
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    // Always scroll when new messages arrive (unless user scrolled up)
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // Scroll to bottom when loading state changes
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [isLoading, scrollToBottom]);
 
   // Detect new assistant messages for streaming
   useEffect(() => {
@@ -32,18 +59,29 @@ export default function ChatMessages({
       const newMessage = messages[messages.length - 1];
       if (newMessage.role === 'assistant') {
         setStreamingMessageId(newMessage.id);
+        // Force scroll to bottom on new assistant message
+        scrollToBottom(true);
+        
         // Clear streaming after message is complete
         setTimeout(() => {
           setStreamingMessageId(null);
-        }, newMessage.content.length * 15 + 500); // Based on streaming speed
+        }, newMessage.content.length * 15 + 500);
       }
     }
     prevMessagesLengthRef.current = messages.length;
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  // Continuous scrolling during streaming (simulates content updates)
+  useEffect(() => {
+    if (streamingMessageId) {
+      // Scroll to bottom repeatedly during streaming
+      const interval = setInterval(() => {
+        scrollToBottom(true);
+      }, 100); // Check every 100ms
+      
+      return () => clearInterval(interval);
+    }
+  }, [streamingMessageId, scrollToBottom]);
 
   const handleReadAloud = (content: string) => {
     if ('speechSynthesis' in window) {
@@ -71,10 +109,19 @@ export default function ChatMessages({
     }
   };
 
+  // Reset scroll tracking when user sends a message
+  useEffect(() => {
+    if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
+      setUserScrolledUp(false);
+      scrollToBottom(true);
+    }
+  }, [messages, scrollToBottom]);
+
   return (
     <div
       ref={containerRef}
       className="flex-1 overflow-y-auto"
+      onScroll={handleScroll}
       style={{
         scrollbarWidth: 'thin',
         scrollbarColor: 'var(--border) transparent'
