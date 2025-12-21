@@ -86,26 +86,20 @@ export default function ChatMessages({
         }
 
         .loading-container {
-          background: var(--panel-dark);
-          border-bottom: 1px solid var(--border);
-          padding: 24px 0;
-        }
-
-        :root.light .loading-container {
-          background: #F7F7F7;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          padding: 32px 0;
+          position: relative;
         }
 
         .loading-content {
           max-width: 48rem;
           margin: 0 auto;
-          padding: 0 1rem;
+          padding: 0 2rem;
         }
 
         .loading-header {
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
-          margin-bottom: 12px;
+          margin-bottom: 16px;
           color: var(--accent);
           letter-spacing: 0.01em;
         }
