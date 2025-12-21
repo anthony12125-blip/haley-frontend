@@ -63,6 +63,11 @@ export default function MessageBubble({
     return () => clearInterval(interval);
   }, [message.content, isStreaming, message.role]);
 
+  // Don't render until we have content to show (prevents black bar flash)
+  if (isStreaming && message.role === 'assistant' && !displayedContent) {
+    return null;
+  }
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(message.content);
