@@ -90,27 +90,13 @@ export default function MessageBubble({
 
   return (
     <div 
-      className={`message-container ${message.role === 'user' ? 'message-container-user' : 'message-container-assistant'}`}
+      className="message-container"
     >
       <style jsx>{`
         .message-container {
-          padding: 24px 0;
+          padding: 32px 0;
           position: relative;
           animation: messageAppear 0.3s ease-out forwards;
-        }
-
-        .message-container-user {
-          background: transparent;
-        }
-
-        .message-container-assistant {
-          background: var(--panel-dark);
-          border-bottom: 1px solid var(--border);
-        }
-
-        :root.light .message-container-assistant {
-          background: #F7F7F7;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
         }
 
         @keyframes messageAppear {
@@ -127,13 +113,13 @@ export default function MessageBubble({
         .message-content-wrapper {
           max-width: 48rem;
           margin: 0 auto;
-          padding: 0 1rem;
+          padding: 0 2rem;
         }
 
         .message-header {
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
-          margin-bottom: 12px;
+          margin-bottom: 16px;
           color: var(--text-secondary);
           letter-spacing: 0.01em;
         }
@@ -151,7 +137,7 @@ export default function MessageBubble({
         }
 
         .message-text {
-          font-size: 15px;
+          font-size: 16px;
           line-height: 1.7;
           color: var(--text-primary);
           white-space: pre-wrap;
@@ -159,31 +145,30 @@ export default function MessageBubble({
         }
 
         :root.light .message-text {
-          color: #000000;
+          color: #1a1a1a;
         }
 
         .cursor-blink {
           display: inline-block;
-          width: 8px;
-          height: 20px;
-          background-color: var(--accent);
-          margin-left: 3px;
+          width: 2px;
+          height: 1.2em;
+          background-color: var(--text-primary);
+          margin-left: 2px;
           vertical-align: text-bottom;
           animation: blink 1s step-end infinite;
-          border-radius: 1px;
         }
 
         :root.light .cursor-blink {
-          background-color: #4B6CFF;
+          background-color: #1a1a1a;
         }
 
         @keyframes blink {
           0%, 100% { opacity: 1; }
-          50% { opacity: 0.3; }
+          50% { opacity: 0; }
         }
 
         .action-buttons {
-          margin-top: 12px;
+          margin-top: 16px;
           display: flex;
           gap: 4px;
           opacity: 0;
@@ -197,7 +182,7 @@ export default function MessageBubble({
         .action-btn {
           padding: 6px 10px;
           border-radius: 6px;
-          background: var(--panel-medium);
+          background: transparent;
           border: 1px solid var(--border);
           color: var(--text-secondary);
           font-size: 13px;
@@ -209,19 +194,18 @@ export default function MessageBubble({
         }
 
         :root.light .action-btn {
-          background: #FFFFFF;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          border: 1px solid rgba(0, 0, 0, 0.15);
           color: #6A6A6A;
         }
 
         .action-btn:hover {
-          background: var(--panel-light);
+          background: var(--panel-medium);
           border-color: var(--accent);
           color: var(--text-primary);
         }
 
         :root.light .action-btn:hover {
-          background: #F7F7F7;
+          background: rgba(0, 0, 0, 0.04);
           border-color: #4B6CFF;
           color: #000000;
         }
@@ -235,7 +219,7 @@ export default function MessageBubble({
         }
 
         :root.light .metadata-section {
-          border-top: 1px solid rgba(0, 0, 0, 0.06);
+          border-top: 1px solid rgba(0, 0, 0, 0.1);
           color: #6A6A6A;
         }
 
@@ -249,7 +233,7 @@ export default function MessageBubble({
         }
 
         :root.light .supreme-indicator-wrapper {
-          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .supreme-badge {
@@ -285,7 +269,7 @@ export default function MessageBubble({
           </div>
         )}
 
-        {/* Message Content with Streaming Effect */}
+        {/* Message Content with Streaming Effect - NO BACKGROUND */}
         <div className="message-text">
           {displayedContent}
           {!isComplete && message.role === 'assistant' && (
@@ -313,7 +297,7 @@ export default function MessageBubble({
               className="action-btn"
               title="Copy"
             >
-              {copied ? <CheckCircle size={14} className="text-success" /> : <Copy size={14} />}
+              {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
               {copied ? 'Copied' : 'Copy'}
             </button>
             <button
