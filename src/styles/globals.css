@@ -59,6 +59,76 @@
   --portal-duration: 0s; /* Disable portal animation in day mode */
 }
 
+/* Light Mode Variant - Anthropic Style (Off-white with pure white bubbles) */
+:root.light.light-anthropic {
+  /* Primary colors */
+  --primary: #4B6CFF;
+  --accent: #4B6CFF;
+  
+  /* Surfaces - Off-white background, pure white panels */
+  --panel-dark: #FFFFFF;
+  --panel-medium: #FFFFFF;
+  --panel-light: #F9F9F9;
+  
+  /* Text hierarchy */
+  --text-primary: #000000;
+  --text-secondary: #3A3A3A;
+  --text-muted: #6A6A6A;
+  
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.06);
+  --border-strong: rgba(0, 0, 0, 0.08);
+  
+  /* Feedback colors */
+  --error: #ef4444;
+  --success: #10b981;
+  
+  /* Background - Off-white */
+  --background: #F5F5F0;
+  --space-bg-start: #F5F5F0;
+  --space-bg-end: #F5F5F0;
+  
+  /* Animation */
+  --animation-speed: 0.16s;
+  --easing: ease-out;
+  --portal-duration: 0s;
+}
+
+/* Light Mode Variant - Inverse Space (White sky with black stars) */
+:root.light.light-space-inverse {
+  /* Primary colors - darker blue for better contrast */
+  --primary: #2B5AA8;
+  --accent: #3B6ABA;
+  
+  /* Surfaces - Light gray tones */
+  --panel-dark: #F8F9FA;
+  --panel-medium: #FFFFFF;
+  --panel-light: #F0F1F3;
+  
+  /* Text hierarchy */
+  --text-primary: #1A1A1A;
+  --text-secondary: #4A4A4A;
+  --text-muted: #6A6A6A;
+  
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  
+  /* Feedback colors */
+  --error: #dc2626;
+  --success: #059669;
+  
+  /* Background - White with subtle gradient */
+  --background: #FFFFFF;
+  --space-bg-start: #E8EDF5;
+  --space-bg-end: #F5F7FA;
+  
+  /* Animation */
+  --animation-speed: 0.3s;
+  --easing: ease;
+  --portal-duration: 0.8s;
+}
+
 /* Ensure dark mode variables are explicitly set */
 :root.dark {
   --primary: #2d6ba8;
@@ -118,6 +188,16 @@ body {
   display: none; /* No noise texture */
 }
 
+/* Anthropic style - off-white background */
+:root.light.light-anthropic .space-bg {
+  background: #F5F5F0;
+}
+
+/* Inverse Space style - white background with gradient */
+:root.light.light-space-inverse .space-bg {
+  background: radial-gradient(ellipse at top, var(--space-bg-start) 0%, var(--space-bg-end) 100%);
+}
+
 .stars {
   position: absolute;
   inset: 0;
@@ -138,6 +218,18 @@ body {
   display: none; /* Disable background animation in day mode */
 }
 
+/* Inverse space - black stars on white background */
+:root.light.light-space-inverse .stars {
+  display: block;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #333, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 60px 70px, #222, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 50px 50px, #111, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 130px 80px, #000, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 90px 10px, #444, rgba(0,0,0,0));
+  opacity: 0.3;
+}
+
 @keyframes twinkle {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 1; }
@@ -153,6 +245,12 @@ body {
   box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
   animation: shoot 3s linear infinite;
   opacity: 0;
+}
+
+/* Inverse space - black shooting stars */
+:root.light.light-space-inverse .shooting-star {
+  background: black;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes shoot {
