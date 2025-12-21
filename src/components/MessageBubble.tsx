@@ -166,9 +166,11 @@ export default function MessageBubble({
 
         .user-message .message-text {
           background: #404040;
-          padding: 16px 20px;
+          padding: 12px 16px;
           border-radius: 18px;
           color: #ffffff;
+          display: inline-block;
+          max-width: fit-content;
         }
 
         :root.light .user-message .message-text {
