@@ -206,7 +206,7 @@ export default function MessageBubble({
         .action-buttons {
           margin-top: 16px;
           display: flex;
-          gap: 4px;
+          gap: 8px;
           opacity: 1;
           transition: opacity 0.2s ease;
         }
@@ -215,15 +215,25 @@ export default function MessageBubble({
           justify-content: flex-end;
         }
 
+        .action-column {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          align-items: flex-start;
+        }
+
         .haley-symbol-wrapper {
           display: flex;
           align-items: center;
-          padding: 6px 10px;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
           border-radius: 6px;
           background: transparent;
           border: 1px solid var(--border);
           color: var(--accent);
           transition: all 0.15s ease;
+          cursor: pointer;
         }
 
         :root.light .haley-symbol-wrapper {
@@ -354,14 +364,31 @@ export default function MessageBubble({
         {/* Action Buttons - Only show when complete */}
         {message.role !== 'system' && isComplete && (
           <div className="action-buttons">
-            <button
-              onClick={handleCopy}
-              className="action-btn"
-              title="Copy"
-            >
-              {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
-              {copied ? 'Copied' : 'Copy'}
-            </button>
+            {message.role === 'assistant' && (
+              <div className="action-column">
+                <button
+                  onClick={handleCopy}
+                  className="action-btn"
+                  title="Copy"
+                >
+                  {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
+                  {copied ? 'Copied' : 'Copy'}
+                </button>
+                <div className="haley-symbol-wrapper" title="Haley AI">
+                  <HaleyCoreGlyph size={20} />
+                </div>
+              </div>
+            )}
+            {message.role === 'user' && (
+              <button
+                onClick={handleCopy}
+                className="action-btn"
+                title="Copy"
+              >
+                {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            )}
             <button
               onClick={handleShare}
               className="action-btn"
@@ -389,11 +416,6 @@ export default function MessageBubble({
                 <GitBranch size={14} />
                 Branch
               </button>
-            )}
-            {message.role === 'assistant' && (
-              <div className="haley-symbol-wrapper" title="Haley AI">
-                <HaleyCoreGlyph size={16} />
-              </div>
             )}
           </div>
         )}
