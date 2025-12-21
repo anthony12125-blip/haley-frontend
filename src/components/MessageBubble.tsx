@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Copy, Share2, RotateCcw, GitBranch, CheckCircle } from 'lucide-react';
 import type { Message } from '@/types';
+import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 
 interface MessageBubbleProps {
   message: Message;
@@ -206,7 +207,7 @@ export default function MessageBubble({
           margin-top: 16px;
           display: flex;
           gap: 4px;
-          opacity: 0;
+          opacity: 1;
           transition: opacity 0.2s ease;
         }
 
@@ -214,8 +215,30 @@ export default function MessageBubble({
           justify-content: flex-end;
         }
 
-        .message-container:hover .action-buttons {
-          opacity: 1;
+        .haley-symbol-wrapper {
+          display: flex;
+          align-items: center;
+          padding: 6px 10px;
+          border-radius: 6px;
+          background: transparent;
+          border: 1px solid var(--border);
+          color: var(--accent);
+          transition: all 0.15s ease;
+        }
+
+        :root.light .haley-symbol-wrapper {
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          color: #4B6CFF;
+        }
+
+        .haley-symbol-wrapper:hover {
+          background: var(--panel-medium);
+          border-color: var(--accent);
+        }
+
+        :root.light .haley-symbol-wrapper:hover {
+          background: rgba(0, 0, 0, 0.04);
+          border-color: #4B6CFF;
         }
 
         .action-btn {
@@ -366,6 +389,11 @@ export default function MessageBubble({
                 <GitBranch size={14} />
                 Branch
               </button>
+            )}
+            {message.role === 'assistant' && (
+              <div className="haley-symbol-wrapper" title="Haley AI">
+                <HaleyCoreGlyph size={16} />
+              </div>
             )}
           </div>
         )}
