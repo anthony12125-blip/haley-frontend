@@ -35,7 +35,7 @@ export default function ChatMessages({
         // Clear streaming after message is complete
         setTimeout(() => {
           setStreamingMessageId(null);
-        }, newMessage.content.length * 20 + 500); // Based on streaming speed
+        }, newMessage.content.length * 15 + 500); // Based on streaming speed
       }
     }
     prevMessagesLengthRef.current = messages.length;
@@ -74,9 +74,89 @@ export default function ChatMessages({
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto py-6"
+      className="flex-1 overflow-y-auto"
+      style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--border) transparent'
+      }}
     >
-      <div className="max-w-3xl mx-auto px-4 md:px-6 lg:px-8 space-y-4">
+      <style jsx>{`
+        .messages-container {
+          width: 100%;
+        }
+
+        .loading-container {
+          background: var(--panel-dark);
+          border-bottom: 1px solid var(--border);
+          padding: 24px 0;
+        }
+
+        :root.light .loading-container {
+          background: #F7F7F7;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .loading-content {
+          max-width: 48rem;
+          margin: 0 auto;
+          padding: 0 1rem;
+        }
+
+        .loading-header {
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          color: var(--accent);
+          letter-spacing: 0.01em;
+        }
+
+        :root.light .loading-header {
+          color: #4B6CFF;
+        }
+
+        .typing-indicator {
+          display: flex;
+          gap: 6px;
+          align-items: center;
+        }
+
+        .typing-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: var(--accent);
+          animation: typingDot 1.4s ease-in-out infinite;
+        }
+
+        :root.light .typing-dot {
+          background: #4B6CFF;
+        }
+
+        .typing-dot:nth-child(1) {
+          animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+
+        @keyframes typingDot {
+          0%, 60%, 100% {
+            opacity: 0.3;
+            transform: scale(0.8);
+          }
+          30% {
+            opacity: 1;
+            transform: scale(1.2);
+          }
+        }
+      `}</style>
+
+      <div className="messages-container">
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
@@ -90,8 +170,11 @@ export default function ChatMessages({
         ))}
 
         {isLoading && (
-          <div className="flex justify-start">
-            <div className="message-bubble message-assistant">
+          <div className="loading-container">
+            <div className="loading-content">
+              <div className="loading-header">
+                Haley
+              </div>
               <div className="typing-indicator">
                 <div className="typing-dot" />
                 <div className="typing-dot" />
@@ -101,7 +184,7 @@ export default function ChatMessages({
           </div>
         )}
 
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} style={{ height: '1px' }} />
       </div>
     </div>
   );
