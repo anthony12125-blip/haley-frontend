@@ -452,13 +452,13 @@ export default function Sidebar({
               {/* R&D Content - Expanded by default */}
               {rndExpanded && (
                 <div className="mt-3 space-y-1">
-                  {/* AI R&D submenu item */}
+                  {/* R&D submenu item */}
                   <button
                     onClick={() => router.push('/ai-rd/soundboard')}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
                     <IconSoundboard className="flex-shrink-0" />
-                    <span>AI R&D</span>
+                    <span>R&D</span>
                   </button>
                 </div>
               )}
