@@ -198,35 +198,40 @@ export default function ChatPage() {
       console.log('[CHAT] ========================================');
 
       if (response.status === 'success' || response.status === 'completed') {
-        const assistantMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: formatResponse(response.result),
-          timestamp: new Date(),
-          metadata: {
-            operation: 'chat',
-            model_used: response.model_used,
-            baby_invoked: response.baby_invoked,
-            task: response.task,
-            supreme_court: aiMode === 'supreme-court',
-            llm_sources: activeModel ? [activeModel] : undefined,
-          },
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
+        const responseContent = formatResponse(response.result);
+        
+        // Only add the message if there's actual content to show
+        if (responseContent && responseContent.trim()) {
+          const assistantMessage: Message = {
+            id: generateId(),
+            role: 'assistant',
+            content: responseContent,
+            timestamp: new Date(),
+            metadata: {
+              operation: 'chat',
+              model_used: response.model_used,
+              baby_invoked: response.baby_invoked,
+              task: response.task,
+              supreme_court: aiMode === 'supreme-court',
+              llm_sources: activeModel ? [activeModel] : undefined,
+            },
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
 
-        // If audioBlob was used, speak the response
-        if (audioBlob) {
-          speakResponse(assistantMessage.content);
-        }
+          // If audioBlob was used, speak the response
+          if (audioBlob) {
+            speakResponse(assistantMessage.content);
+          }
 
-        // Check if response includes visualization data
-        if (response.result?.visualization) {
-          setMagicWindowContent({
-            type: 'visualization',
-            content: response.result.visualization,
-            title: 'Analysis Results',
-          });
-          setMagicWindowOpen(true);
+          // Check if response includes visualization data
+          if (response.result?.visualization) {
+            setMagicWindowContent({
+              type: 'visualization',
+              content: response.result.visualization,
+              title: 'Analysis Results',
+            });
+            setMagicWindowOpen(true);
+          }
         }
       } else {
         const errorMessage: Message = {
