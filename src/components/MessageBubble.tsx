@@ -95,13 +95,18 @@ export default function MessageBubble({
 
   return (
     <div 
-      className="message-container"
+      className={`message-container ${message.role === 'user' ? 'user-message' : ''}`}
     >
       <style jsx>{`
         .message-container {
           padding: 32px 0;
           position: relative;
           animation: messageAppear 0.3s ease-out forwards;
+        }
+
+        .message-container.user-message {
+          display: flex;
+          justify-content: flex-end;
         }
 
         @keyframes messageAppear {
@@ -119,6 +124,12 @@ export default function MessageBubble({
           max-width: 48rem;
           margin: 0 auto;
           padding: 0 2rem;
+        }
+
+        .user-message .message-content-wrapper {
+          max-width: 80%;
+          margin: 0 2rem 0 0;
+          padding: 0;
         }
 
         .message-header {
@@ -141,12 +152,29 @@ export default function MessageBubble({
           color: #4B6CFF;
         }
 
+        .user-message .message-header {
+          text-align: right;
+        }
+
         .message-text {
           font-size: 16px;
           line-height: 1.7;
           color: var(--text-primary);
           white-space: pre-wrap;
           word-wrap: break-word;
+        }
+
+        .user-message .message-text {
+          background: #404040;
+          padding: 16px 20px;
+          border-radius: 18px;
+          color: #ffffff;
+        }
+
+        :root.light .user-message .message-text {
+          background: #ffffff;
+          color: #1a1a1a;
+          border: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         :root.light .message-text {
@@ -178,6 +206,10 @@ export default function MessageBubble({
           gap: 4px;
           opacity: 0;
           transition: opacity 0.2s ease;
+        }
+
+        .user-message .action-buttons {
+          justify-content: flex-end;
         }
 
         .message-container:hover .action-buttons {
