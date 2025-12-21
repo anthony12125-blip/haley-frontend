@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import MessageBubble from './MessageBubble';
 import type { Message } from '@/types';
 
@@ -19,9 +19,26 @@ export default function ChatMessages({
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const prevMessagesLengthRef = useRef(0);
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  // Detect new assistant messages for streaming
+  useEffect(() => {
+    if (messages.length > prevMessagesLengthRef.current) {
+      const newMessage = messages[messages.length - 1];
+      if (newMessage.role === 'assistant') {
+        setStreamingMessageId(newMessage.id);
+        // Clear streaming after message is complete
+        setTimeout(() => {
+          setStreamingMessageId(null);
+        }, newMessage.content.length * 20 + 500); // Based on streaming speed
+      }
+    }
+    prevMessagesLengthRef.current = messages.length;
   }, [messages]);
 
   const scrollToBottom = () => {
@@ -64,6 +81,7 @@ export default function ChatMessages({
           <MessageBubble
             key={message.id}
             message={message}
+            isStreaming={message.id === streamingMessageId}
             onReadAloud={() => handleReadAloud(message.content)}
             onShare={() => handleShare(message)}
             onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
