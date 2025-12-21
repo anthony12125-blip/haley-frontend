@@ -28,8 +28,11 @@ export default function ChatMessages({
   const scrollToBottom = useCallback((force = false) => {
     if (!containerRef.current || (!force && userScrolledUp)) return;
     
-    // Use instant scroll for better reliability
-    containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    // Scroll to bottom but account for padding to keep content visible
+    // Subtract a small offset to ensure the last message and loading indicator are visible
+    const container = containerRef.current;
+    const scrollPosition = container.scrollHeight - container.clientHeight;
+    container.scrollTop = scrollPosition;
   }, [userScrolledUp]);
 
   // Detect if user has scrolled up manually
@@ -130,11 +133,14 @@ export default function ChatMessages({
       <style jsx>{`
         .messages-container {
           width: 100%;
+          padding-bottom: 120px;
+          min-height: 100%;
         }
 
         .loading-container {
           padding: 32px 0;
           position: relative;
+          margin-bottom: 20px;
         }
 
         .loading-content {
@@ -225,7 +231,8 @@ export default function ChatMessages({
           </div>
         )}
 
-        <div ref={messagesEndRef} style={{ height: '1px' }} />
+        {/* Scroll target - positioned to keep content visible */}
+        <div ref={messagesEndRef} style={{ height: '20px' }} />
       </div>
     </div>
   );
