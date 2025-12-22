@@ -267,9 +267,9 @@ export default function ChatPage() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only set false on error
     }
+    // Note: isLoading will be set to false by ChatMessages when streaming completes
   };
 
   const formatResponse = (result: any): string => {
@@ -562,6 +562,7 @@ export default function ChatPage() {
           isLoading={isLoading}
           onRetryMessage={handleRetryMessage}
           onBranchMessage={handleBranchMessage}
+          onStreamingComplete={() => setIsLoading(false)}
         />
 
         {/* Input Bar */}
