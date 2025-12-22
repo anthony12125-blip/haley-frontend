@@ -3,17 +3,27 @@
 /**
  * HaleyThinkingAnimation - Animated Haley logo for loading states
  * 
- * Clean animation cycle:
- * 1. Segments separate outward (keeping exact shape)
- * 2. Rotate while separated
- * 3. Contract back to center
- * 4. Expand outward again
- * 5. Rotate while separated
- * 6. Contract back
- * Repeat infinitely
+ * Animation states:
+ * 1. THINKING (mode='thinking'): Full expand/spin/contract cycle
+ *    - Segments separate outward
+ *    - Rotate while separated
+ *    - Contract back to center
+ *    - Repeat infinitely
+ * 
+ * 2. GENERATING (mode='generating'): Fast collapsed spin
+ *    - Segments stay collapsed (no expansion)
+ *    - Rotate twice as fast as thinking mode
+ *    - Indicates active token generation
+ * 
+ * 3. STATIC (mode='static'): No animation
+ *    - Just the static glyph
  */
 
-export function HaleyThinkingAnimation() {
+interface HaleyThinkingAnimationProps {
+  mode?: 'thinking' | 'generating' | 'static';
+}
+
+export function HaleyThinkingAnimation({ mode = 'thinking' }: HaleyThinkingAnimationProps) {
   const size = 64; // Larger container to prevent clipping during animation
   
   return (
@@ -46,21 +56,43 @@ export function HaleyThinkingAnimation() {
         /* Main animation container - handles rotation */
         .segments-group {
           transform-origin: 12px 12px;
-          animation: segmentsRotate 4s ease-in-out infinite;
         }
 
-        /* Each segment moves outward/inward */
-        .segment {
-          animation: segmentMove 4s ease-in-out infinite;
+        /* THINKING MODE: Full expand/spin/contract cycle */
+        .segments-group.mode-thinking {
+          animation: segmentsRotateThinking 4s ease-in-out infinite;
         }
 
-        /* Center core stays still */
+        .segments-group.mode-thinking .segment {
+          animation: segmentMoveThinking 4s ease-in-out infinite;
+        }
+
+        /* GENERATING MODE: Fast collapsed spin (2x speed) */
+        .segments-group.mode-generating {
+          animation: segmentsRotateGenerating 2s linear infinite;
+        }
+
+        .segments-group.mode-generating .segment {
+          /* No expansion animation - stays collapsed */
+          animation: none;
+        }
+
+        /* STATIC MODE: No animation */
+        .segments-group.mode-static {
+          animation: none;
+        }
+
+        .segments-group.mode-static .segment {
+          animation: none;
+        }
+
+        /* Center core stays still in all modes */
         .center-core {
           /* No animation - stays centered */
         }
 
-        /* Rotation animation */
-        @keyframes segmentsRotate {
+        /* THINKING MODE: Rotation with pauses for expansion/contraction */
+        @keyframes segmentsRotateThinking {
           0% { transform: rotate(0deg); }
           25% { transform: rotate(0deg); }
           37.5% { transform: rotate(90deg); }
@@ -71,12 +103,18 @@ export function HaleyThinkingAnimation() {
           100% { transform: rotate(180deg); }
         }
 
-        /* Expand/contract animation */
-        @keyframes segmentMove {
+        /* THINKING MODE: Expand/contract animation */
+        @keyframes segmentMoveThinking {
           0%, 100% { transform: translate(0, 0); }
           12.5%, 37.5% { transform: translate(var(--tx), var(--ty)); }
           50% { transform: translate(0, 0); }
           62.5%, 87.5% { transform: translate(var(--tx), var(--ty)); }
+        }
+
+        /* GENERATING MODE: Fast continuous spin (2x speed = 2s vs 4s) */
+        @keyframes segmentsRotateGenerating {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
       
@@ -89,7 +127,7 @@ export function HaleyThinkingAnimation() {
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* Seven segments - wrapped in group for rotation */}
-          <g className="segments-group">
+          <g className={`segments-group mode-${mode}`}>
             {Array.from({ length: 7 }).map((_, i) => {
               const angle = (i * 360) / 7;
               const startAngle = angle - 20;
