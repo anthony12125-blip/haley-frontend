@@ -86,16 +86,6 @@ export function HaleyThinkingAnimation() {
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Outer ring */}
-          <circle 
-            cx="12" 
-            cy="12" 
-            r="10" 
-            stroke="currentColor" 
-            strokeWidth="0.5"
-            opacity="0.3"
-          />
-          
           {/* Seven segments - wrapped in group for rotation */}
           <g className="segments-group">
             {Array.from({ length: 7 }).map((_, i) => {
