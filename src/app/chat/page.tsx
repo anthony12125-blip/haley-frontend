@@ -58,8 +58,7 @@ export default function ChatPage() {
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  
-  // REMOVED: Global isLoading state - now tracked per message
+  const [isLoading, setIsLoading] = useState(false);
   
   // Feature Toggles
   const [researchEnabled, setResearchEnabled] = useState(false);
@@ -159,9 +158,7 @@ export default function ChatPage() {
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
     const textToSend = messageText || input;
-    
-    // FIXED: Removed isLoading check - allow sending while streaming
-    if (!textToSend.trim() && !audioBlob) return;
+    if ((!textToSend.trim() && !audioBlob) || isLoading) return;
 
     // Validate model selection
     if (!activeModel) {
@@ -204,6 +201,7 @@ export default function ChatPage() {
     };
     
     setMessages((prev) => [...prev, assistantMessage]);
+    setIsLoading(true);
 
     try {
       console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
@@ -246,8 +244,14 @@ export default function ChatPage() {
                 : msg
             )
           );
+          setIsLoading(false);
           
-          // Save chat after successful completion
+          // If audioBlob was used, speak the response
+          if (audioBlob) {
+            speakResponse(streamingContent);
+          }
+          
+          // Auto-save after completion
           if (user?.uid) {
             setMessages((currentMessages) => {
               saveChat(user.uid!, currentConversationId, currentMessages, activeModel)
@@ -256,6 +260,8 @@ export default function ChatPage() {
               return currentMessages;
             });
           }
+          
+          loadSystemStatus();
         },
         // onError callback
         (error) => {
@@ -266,37 +272,55 @@ export default function ChatPage() {
                 ? {
                     ...msg,
                     content: `Error: ${error}`,
-                    metadata: {
-                      ...msg.metadata,
-                      streaming: false,
-                      error: true,
-                    },
+                    metadata: { ...msg.metadata, streaming: false, error: true },
                   }
                 : msg
             )
           );
+          setIsLoading(false);
         }
       );
       
-      await loadSystemStatus();
-      
+      console.log('[CHAT] Message submitted (non-blocking)');
+      console.log('[CHAT] ============================================');
+
     } catch (error) {
-      console.error('[CHAT] Error sending message:', error);
+      console.error('[CHAT] Fatal error:', error);
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessageId
             ? {
                 ...msg,
-                content: `System error: ${error instanceof Error ? error.message : 'Failed to process operation'}`,
-                metadata: {
-                  ...msg.metadata,
-                  streaming: false,
-                  error: true,
-                },
+                content: `Fatal error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                metadata: { ...msg.metadata, streaming: false, error: true },
               }
             : msg
         )
       );
+      setIsLoading(false);
+    }
+  };
+
+  const formatResponse = (result: any): string => {
+    if (!result) return 'Operation completed';
+    if (typeof result === 'string') return result;
+    if (result.response) return result.response;
+    if (result.computation) {
+      return `${result.computation}\n\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
+    }
+    if (result.result !== undefined) {
+      return `Result: ${JSON.stringify(result.result)}`;
+    }
+    return JSON.stringify(result, null, 2);
+  };
+
+  const speakResponse = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
     }
   };
 
@@ -319,49 +343,51 @@ export default function ChatPage() {
 
   const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
     if (mode === 'haley') {
-      setAiMode('single');
-      setActiveModel(null);
-    } else if (mode === 'ais') {
-      setAiMode('supreme-court');
-    } else if (mode === 'agents') {
-      setAiMode('agents');
+      handleModelSelect(null);
     }
-    setModeSelectorOpen(false);
   };
 
-  const handleModelSelect = async (justice: string | null) => {
-    if (!justice) return;
+  const handleModelSelect = (justice: string | null) => {
+    const modelKey = justice || 'haley';
     
-    console.log('[CHAT] ======== handleModelSelect CALLED ========');
-    console.log('[CHAT] Target model:', justice);
-    console.log('[CHAT] Current activeModel before:', activeModel);
-    console.log('[CHAT] Current messages count:', messages.length);
+    console.log('[CHAT] ========== MODEL SELECTION ==========');
+    console.log('[CHAT] Switching from:', activeModel || 'haley');
+    console.log('[CHAT] Switching to:', modelKey);
+    console.log('[CHAT] Parameter received (justice):', justice);
     
-    // Save current conversation if there are messages
-    if (user?.uid && messages.length > 1) {
-      console.log('[CHAT] Saving current conversation...');
-      await saveChat(user.uid, currentConversationId, messages, activeModel);
-    }
+    // Save current messages to current model
+    const currentModelKey = activeModel || 'haley';
+    setConversationsByJustice(prev => ({
+      ...prev,
+      [currentModelKey]: messages
+    }));
     
-    // Set the active model
-    setActiveModel(justice);
-    
-    // Map justice to modelKey and load that conversation
-    const modelKey = justice.toLowerCase();
-    console.log('[CHAT] Model key:', modelKey);
-    
-    const loadedMessages = conversationsByModel[modelKey] || [];
-    console.log('[CHAT] Loading messages for model:', loadedMessages.length);
-    
-    if (loadedMessages.length > 0) {
+    // Load messages for selected model
+    const loadedMessages = conversationsByModel[modelKey];
+    if (loadedMessages && loadedMessages.length > 0) {
       setMessages(loadedMessages);
     } else {
-      // Initialize new conversation for this model
-      initializeChat();
+      // Initialize with system message for new model
+      const systemMessage: Message = {
+        id: generateId(),
+        role: 'system',
+        content: justice 
+          ? `Switched to ${justice.charAt(0).toUpperCase() + justice.slice(1)}. Ready to assist.`
+          : 'Haley OS initialized. Multi-LLM router active. Ready to assist.',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'system_init',
+          selectedModel: justice,
+        },
+      };
+      setMessages([systemMessage]);
     }
     
-    // Update conversation list to mark this justice as active
-    if (user?.uid && currentConversationId) {
+    // CRITICAL: Set the model state
+    setActiveModel(justice);
+    
+    // Force update the current conversation's modelMode
+    if (currentConversationId) {
       setConversations(prev => prev.map(conv => 
         conv.id === currentConversationId 
           ? { ...conv, modelMode: justice }
@@ -500,9 +526,6 @@ export default function ChatPage() {
     return null;
   }
 
-  // Calculate if any message is currently streaming
-  const isAnyMessageStreaming = messages.some(msg => msg.metadata?.streaming === true);
-
   return (
     <div className="full-screen flex overflow-hidden">
       {/* Space Background */}
@@ -565,17 +588,17 @@ export default function ChatPage() {
         {/* Messages */}
         <ChatMessages
           messages={messages}
-          isLoading={isAnyMessageStreaming}
+          isLoading={isLoading}
           onRetryMessage={handleRetryMessage}
           onBranchMessage={handleBranchMessage}
-          onStreamingComplete={() => {}}
+          onStreamingComplete={() => setIsLoading(false)}
         />
 
-        {/* Input Bar - FIXED: No longer disabled while streaming */}
+        {/* Input Bar */}
         <ChatInputBar
           input={input}
           setInput={setInput}
-          isLoading={false}
+          isLoading={isLoading}
           onSend={handleSend}
           onFileUpload={handleFileUpload}
           onGallerySelect={handleGallerySelect}
