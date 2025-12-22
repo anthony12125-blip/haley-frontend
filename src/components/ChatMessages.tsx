@@ -234,7 +234,7 @@ export default function ChatMessages({
               <div className="loading-header">
                 Haley
               </div>
-              <HaleyThinkingAnimation mode={animationMode} />
+              <HaleyThinkingAnimation />
             </div>
           </div>
         )}
