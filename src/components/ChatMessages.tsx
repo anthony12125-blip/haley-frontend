@@ -36,15 +36,6 @@ export default function ChatMessages({
     return null;
   }, [messages]);
 
-  // Determine animation mode based on loading and streaming state
-  const animationMode = useMemo(() => {
-    if (!isLoading) return 'static';
-    // If we're loading and there's a streaming message, we're generating tokens
-    if (streamingMessageId) return 'generating';
-    // Otherwise we're thinking (pre-token generation)
-    return 'thinking';
-  }, [isLoading, streamingMessageId]);
-
   // Improved scroll to bottom function with instant scrolling
   const scrollToBottom = useCallback((force = false) => {
     if (!containerRef.current || (!force && userScrolledUp)) return;
@@ -222,7 +213,7 @@ export default function ChatMessages({
               <div className="loading-header">
                 Haley
               </div>
-              <HaleyThinkingAnimation mode={animationMode} />
+              <HaleyThinkingAnimation />
             </div>
           </div>
         )}
