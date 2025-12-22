@@ -343,8 +343,8 @@ export default function MessageBubble({
           {message.role === 'user' ? 'You' : message.role === 'assistant' ? 'Haley' : 'System'}
         </div>
 
-        {/* Show thinking animation when streaming but no content displayed yet */}
-        {isStreaming && message.role === 'assistant' && !displayedContent && (
+        {/* Show thinking animation throughout entire streaming process */}
+        {isStreaming && message.role === 'assistant' && !isComplete && (
           <HaleyThinkingAnimation />
         )}
 
