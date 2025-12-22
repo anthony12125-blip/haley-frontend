@@ -300,20 +300,38 @@ export default function ChatPage() {
     }
   };
 
-  const handleFileUpload = (file: File) => {
-    console.log('File uploaded:', file.name);
+  const handleFileUpload = (files: FileList) => {
+    console.log('Files uploaded:', files);
+    setMagicWindowContent({
+      type: 'data',
+      content: {
+        files: files.length,
+        names: Array.from(files).map(f => f.name).join(', '),
+      },
+      title: 'Uploaded Files',
+    });
+    setMagicWindowOpen(true);
   };
 
-  const handleGallerySelect = (mediaType: 'image' | 'video' | 'audio') => {
-    console.log('Gallery select:', mediaType);
+  const handleGallerySelect = () => {
+    console.log('Gallery selection');
   };
 
-  const handleModeSelect = (mode: AIMode) => {
-    setAiMode(mode);
+  const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
+    if (mode === 'haley') {
+      setAiMode('single');
+      setActiveModel(null);
+    } else if (mode === 'ais') {
+      setAiMode('supreme-court');
+    } else if (mode === 'agents') {
+      setAiMode('agents');
+    }
     setModeSelectorOpen(false);
   };
 
-  const handleModelSelect = async (justice: string) => {
+  const handleModelSelect = async (justice: string | null) => {
+    if (!justice) return;
+    
     console.log('[CHAT] ======== handleModelSelect CALLED ========');
     console.log('[CHAT] Target model:', justice);
     console.log('[CHAT] Current activeModel before:', activeModel);
