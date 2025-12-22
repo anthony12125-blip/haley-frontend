@@ -21,6 +21,8 @@ export interface MessageMetadata {
   confidence?: number;
   supreme_court?: boolean;
   selectedModel?: string | null; // Track which model was selected when message was created
+  streaming?: boolean; // Track if message is currently streaming
+  error?: boolean; // Track if message encountered an error
 }
 
 export interface SystemStatus {
