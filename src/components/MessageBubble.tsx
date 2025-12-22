@@ -214,10 +214,19 @@ export default function MessageBubble({
           gap: 12px;
           opacity: 1;
           transition: opacity 0.2s ease;
+          /* Reserve minimum height to prevent jump when buttons appear */
+          min-height: 48px;
         }
 
         .user-message .action-buttons {
           align-items: flex-end;
+          min-height: 28px; /* Smaller for user messages (only 1 row) */
+        }
+        
+        /* Make buttons invisible during streaming but keep layout space */
+        .action-buttons.streaming {
+          opacity: 0;
+          pointer-events: none;
         }
 
         .icon-row {
@@ -368,9 +377,9 @@ export default function MessageBubble({
           </div>
         )}
 
-        {/* Action Buttons - Only show when complete */}
-        {message.role !== 'system' && isComplete && (
-          <div className="action-buttons">
+        {/* Action Buttons - Always render to maintain layout space, but invisible during streaming */}
+        {message.role !== 'system' && (
+          <div className={`action-buttons ${!isComplete ? 'streaming' : ''}`}>
             {message.role === 'assistant' && (
               <div className="action-column">
                 <div className="icon-row">
