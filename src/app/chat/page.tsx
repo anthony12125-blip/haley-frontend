@@ -314,7 +314,7 @@ export default function ChatPage() {
     setModeSelectorOpen(false);
   };
 
-  const handleModelSelect = (justice: string) => {
+  const handleModelSelect = (justice: string | null) => {
     console.log('[CHAT] ========== MODEL SELECTION ==========');
     console.log('[CHAT] Previous activeModel:', activeModel);
     console.log('[CHAT] New model selected:', justice);
