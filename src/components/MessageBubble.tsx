@@ -12,6 +12,7 @@ interface MessageBubbleProps {
   onRetry?: () => void;
   onBranch?: () => void;
   isStreaming?: boolean;
+  isLastMessage?: boolean;
 }
 
 export default function MessageBubble({ 
@@ -20,7 +21,8 @@ export default function MessageBubble({
   onShare, 
   onRetry, 
   onBranch,
-  isStreaming = false 
+  isStreaming = false,
+  isLastMessage = false 
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
@@ -96,7 +98,9 @@ export default function MessageBubble({
 
   return (
     <div 
-      className={`message-container ${message.role === 'user' ? 'user-message' : ''}`}
+      className={`message-container ${message.role === 'user' ? 'user-message' : ''} ${
+        message.role === 'assistant' && isLastMessage ? 'last-assistant-message' : ''
+      }`}
     >
       <style jsx>{`
         .message-container {
@@ -108,6 +112,23 @@ export default function MessageBubble({
         .message-container.user-message {
           display: flex;
           justify-content: flex-end;
+        }
+
+        /* Cliff gradient effect - only on last assistant message */
+        .last-assistant-message::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 120px;
+          background: linear-gradient(to bottom, transparent 0%, var(--background) 90%);
+          pointer-events: none;
+          z-index: 1;
+        }
+
+        :root.light .last-assistant-message::after {
+          background: linear-gradient(to bottom, transparent 0%, #FFFFFF 90%);
         }
 
         @keyframes messageAppear {
