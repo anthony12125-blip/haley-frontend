@@ -343,11 +343,6 @@ export default function MessageBubble({
           {message.role === 'user' ? 'You' : message.role === 'assistant' ? 'Haley' : 'System'}
         </div>
 
-        {/* Show thinking animation throughout entire streaming process */}
-        {isStreaming && message.role === 'assistant' && !isComplete && (
-          <HaleyThinkingAnimation />
-        )}
-
         {/* Supreme Court Indicator */}
         {message.metadata?.supreme_court && message.metadata?.llm_sources && (
           <div className="supreme-indicator-wrapper">
@@ -415,10 +410,10 @@ export default function MessageBubble({
                     </button>
                   )}
                 </div>
-                {/* Only show Haley glyph for the last (most recent) assistant message */}
+                {/* Show animation while streaming, static glyph when complete - only for last message */}
                 {isLastAssistantMessage && (
                   <div className="haley-symbol-wrapper" title="Haley AI">
-                    <HaleyCoreGlyph size={48} />
+                    {!isComplete ? <HaleyThinkingAnimation /> : <HaleyCoreGlyph size={48} />}
                   </div>
                 )}
               </div>
