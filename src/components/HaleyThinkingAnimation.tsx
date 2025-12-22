@@ -84,7 +84,7 @@ export function HaleyThinkingAnimation() {
         <svg 
           width={size} 
           height={size} 
-          viewBox="0 0 24 24" 
+          viewBox="-2 -2 28 28" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -114,8 +114,8 @@ export function HaleyThinkingAnimation() {
               
               // Calculate translation direction for this segment (radial outward)
               const midAngle = (angle * Math.PI) / 180;
-              const tx = Math.cos(midAngle) * 3; // Move 3px outward
-              const ty = Math.sin(midAngle) * 3;
+              const tx = Math.cos(midAngle) * 4; // Move 4px outward for more visible expansion
+              const ty = Math.sin(midAngle) * 4;
               
               return (
                 <path
