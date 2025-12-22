@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import MessageBubble from './MessageBubble';
 import { HaleyThinkingAnimation } from './HaleyThinkingAnimation';
 import type { Message } from '@/types';
@@ -24,6 +24,17 @@ export default function ChatMessages({
   const prevMessagesLengthRef = useRef(0);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Memoize the last assistant message ID to prevent double-glyph flash
+  const lastAssistantMessageId = useMemo(() => {
+    // Find the last assistant message by iterating backwards
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') {
+        return messages[i].id;
+      }
+    }
+    return null;
+  }, [messages]);
 
   // Improved scroll to bottom function with instant scrolling
   const scrollToBottom = useCallback((force = false) => {
@@ -177,25 +188,18 @@ export default function ChatMessages({
       `}</style>
 
       <div className="messages-container">
-        {messages.map((message, index) => {
-          // Find the index of the last assistant message
-          const lastAssistantMessageIndex = [...messages].reverse().findIndex(m => m.role === 'assistant');
-          const isLastAssistantMessage = message.role === 'assistant' && 
-            (messages.length - 1 - lastAssistantMessageIndex) === index;
-          
-          return (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isStreaming={message.id === streamingMessageId}
-              isLastAssistantMessage={isLastAssistantMessage}
-              onReadAloud={() => handleReadAloud(message.content)}
-              onShare={() => handleShare(message)}
-              onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
-              onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
-            />
-          );
-        })}
+        {messages.map((message) => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            isStreaming={message.id === streamingMessageId}
+            isLastAssistantMessage={message.id === lastAssistantMessageId}
+            onReadAloud={() => handleReadAloud(message.content)}
+            onShare={() => handleShare(message)}
+            onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
+            onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
+          />
+        ))}
 
         {isLoading && (
           <div className="loading-container">
