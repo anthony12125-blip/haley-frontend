@@ -6,6 +6,7 @@ import { Send, Paperclip, Mic, Image as ImageIcon, Plus, X } from 'lucide-react'
 interface ChatInputBarProps {
   input: string;
   setInput: (value: string) => void;
+  isLoading: boolean;
   onSend: (message?: string, audioBlob?: Blob) => void;
   onFileUpload?: (files: FileList) => void;
   onGallerySelect?: () => void;
@@ -15,7 +16,7 @@ interface ChatInputBarProps {
 export default function ChatInputBar({
   input,
   setInput,
-
+  isLoading,
   onSend,
   onFileUpload,
   onGallerySelect,
@@ -50,7 +51,7 @@ export default function ChatInputBar({
   };
 
   const handleSend = () => {
-    if (input.trim() && true) {
+    if (input.trim() && !isLoading) {
       onSend(input);
       setInput('');
     }
@@ -214,7 +215,7 @@ export default function ChatInputBar({
                     onClick={() => setShowPlusMenu(!showPlusMenu)}
                     className={`icon-btn !w-8 !h-8 flex-shrink-0 ${showPlusMenu ? 'bg-primary text-white' : ''}`}
                     title="More options"
-                    disabled={false}
+                    disabled={isLoading}
                   >
                     {showPlusMenu ? <X size={18} /> : <Plus size={18} />}
                   </button>
@@ -227,7 +228,7 @@ export default function ChatInputBar({
                     onKeyDown={handleKeyDown}
                     placeholder="Message Haley OS..."
                     className="flex-1 bg-transparent border-none outline-none resize-none min-h-[36px] max-h-[200px] text-primary placeholder:text-secondary py-1 min-w-0"
-                    disabled={false}
+                    disabled={isLoading}
                     rows={1}
                   />
                   
@@ -236,7 +237,7 @@ export default function ChatInputBar({
                     onClick={startRecording}
                     className="icon-btn !w-8 !h-8 flex-shrink-0"
                     title="Voice input"
-                    disabled={false}
+                    disabled={isLoading}
                   >
                     <Mic size={20} />
                   </button>
@@ -246,7 +247,7 @@ export default function ChatInputBar({
                     onClick={handleSend}
                     disabled={isLoading || !input.trim()}
                     className={`icon-btn !w-8 !h-8 flex-shrink-0 ${
-                      input.trim() && true
+                      input.trim() && !isLoading
                         ? 'bg-primary text-white hover:bg-accent'
                         : 'opacity-50 cursor-not-allowed'
                     }`}
