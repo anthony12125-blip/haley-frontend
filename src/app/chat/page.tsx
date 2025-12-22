@@ -301,8 +301,10 @@ export default function ChatPage() {
     }
   };
 
-  const handleFileUpload = (file: File) => {
-    console.log('File upload:', file.name);
+  const handleFileUpload = (files: FileList) => {
+    if (files.length > 0) {
+      console.log('File upload:', files[0].name);
+    }
   };
 
   const handleGallerySelect = (imageUrl: string) => {
