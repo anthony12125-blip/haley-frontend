@@ -14,7 +14,7 @@
  */
 
 export function HaleyThinkingAnimation() {
-  const size = 48; // Larger container to prevent clipping
+  const size = 64; // Larger container to prevent clipping during animation
   
   return (
     <div className="haley-thinking-container">
@@ -27,6 +27,7 @@ export function HaleyThinkingAnimation() {
           width: ${size}px;
           height: ${size}px;
           position: relative;
+          overflow: visible;
         }
 
         :root.light .haley-thinking-container {
@@ -39,6 +40,7 @@ export function HaleyThinkingAnimation() {
           left: 0;
           width: 100%;
           height: 100%;
+          overflow: visible;
         }
 
         /* Main animation container - handles rotation */
