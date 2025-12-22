@@ -37,16 +37,6 @@ export function HaleyCoreGlyph({
         xmlns="http://www.w3.org/2000/svg"
         className={animated ? 'animate-spin-slow' : ''}
       >
-        {/* Outer ring - represents unity of The Seven */}
-        <circle 
-          cx="12" 
-          cy="12" 
-          r="10" 
-          stroke="currentColor" 
-          strokeWidth="0.5"
-          opacity="0.3"
-        />
-        
         {/* Seven radial segments - representing The Seven */}
         {Array.from({ length: 7 }).map((_, i) => {
           const angle = (i * 360) / 7;
