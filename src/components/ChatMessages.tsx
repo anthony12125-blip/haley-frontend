@@ -177,11 +177,12 @@ export default function ChatMessages({
       `}</style>
 
       <div className="messages-container">
-        {messages.map((message) => (
+        {messages.map((message, index) => (
           <MessageBubble
             key={message.id}
             message={message}
             isStreaming={message.id === streamingMessageId}
+            isLastMessage={index === messages.length - 1}
             onReadAloud={() => handleReadAloud(message.content)}
             onShare={() => handleShare(message)}
             onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
