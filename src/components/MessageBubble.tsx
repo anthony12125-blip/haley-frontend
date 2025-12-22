@@ -12,6 +12,7 @@ interface MessageBubbleProps {
   onRetry?: () => void;
   onBranch?: () => void;
   isStreaming?: boolean;
+  isLastAssistantMessage?: boolean;
 }
 
 export default function MessageBubble({ 
@@ -20,7 +21,8 @@ export default function MessageBubble({
   onShare, 
   onRetry, 
   onBranch,
-  isStreaming = false 
+  isStreaming = false,
+  isLastAssistantMessage = false
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
@@ -401,9 +403,12 @@ export default function MessageBubble({
                     </button>
                   )}
                 </div>
-                <div className="haley-symbol-wrapper" title="Haley AI">
-                  <HaleyCoreGlyph size={48} />
-                </div>
+                {/* Only show Haley glyph for the last (most recent) assistant message */}
+                {isLastAssistantMessage && (
+                  <div className="haley-symbol-wrapper" title="Haley AI">
+                    <HaleyCoreGlyph size={48} />
+                  </div>
+                )}
               </div>
             )}
             {message.role === 'user' && (
