@@ -25,7 +25,7 @@ export default function ChatMessages({
   const [userScrolledUp, setUserScrolledUp] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Memoize the last assistant message ID to prevent double-glyph flash
+  // Memoize the last assistant message ID
   const lastAssistantMessageId = useMemo(() => {
     // Find the last assistant message by iterating backwards
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -188,18 +188,23 @@ export default function ChatMessages({
       `}</style>
 
       <div className="messages-container">
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            isStreaming={message.id === streamingMessageId}
-            isLastAssistantMessage={message.id === lastAssistantMessageId}
-            onReadAloud={() => handleReadAloud(message.content)}
-            onShare={() => handleShare(message)}
-            onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
-            onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
-          />
-        ))}
+        {messages.map((message) => {
+          // Only show glyph if this is the last assistant message AND nothing is currently streaming
+          const shouldShowGlyph = message.id === lastAssistantMessageId && !streamingMessageId;
+          
+          return (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isStreaming={message.id === streamingMessageId}
+              isLastAssistantMessage={shouldShowGlyph}
+              onReadAloud={() => handleReadAloud(message.content)}
+              onShare={() => handleShare(message)}
+              onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
+              onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
+            />
+          );
+        })}
 
         {isLoading && (
           <div className="loading-container">
