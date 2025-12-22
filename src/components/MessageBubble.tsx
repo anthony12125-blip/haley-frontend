@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Copy, Share2, RotateCcw, GitBranch, CheckCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import type { Message } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
-import { HaleyThinkingAnimation } from './HaleyThinkingAnimation';
 
 interface MessageBubbleProps {
   message: Message;
@@ -14,7 +13,6 @@ interface MessageBubbleProps {
   onBranch?: () => void;
   isStreaming?: boolean;
   isLastAssistantMessage?: boolean;
-  onStreamingComplete?: () => void;
 }
 
 export default function MessageBubble({ 
@@ -24,8 +22,7 @@ export default function MessageBubble({
   onRetry, 
   onBranch,
   isStreaming = false,
-  isLastAssistantMessage = false,
-  onStreamingComplete
+  isLastAssistantMessage = false
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
@@ -63,15 +60,11 @@ export default function MessageBubble({
       } else {
         setIsComplete(true);
         clearInterval(interval);
-        // Notify parent that streaming is complete
-        if (onStreamingComplete) {
-          onStreamingComplete();
-        }
       }
     }, 15); // 15ms = fast, natural streaming like ChatGPT/Claude
 
     return () => clearInterval(interval);
-  }, [message.content, isStreaming, message.role, onStreamingComplete]);
+  }, [message.content, isStreaming, message.role]);
 
   // Don't render until we have content to show (prevents black bar flash)
   if (isStreaming && message.role === 'assistant' && !displayedContent) {
@@ -410,10 +403,10 @@ export default function MessageBubble({
                     </button>
                   )}
                 </div>
-                {/* Show animation while streaming, static glyph when complete - only for last message */}
+                {/* Only show Haley glyph for the last (most recent) assistant message */}
                 {isLastAssistantMessage && (
                   <div className="haley-symbol-wrapper" title="Haley AI">
-                    {!isComplete ? <HaleyThinkingAnimation /> : <HaleyCoreGlyph size={48} />}
+                    <HaleyCoreGlyph size={48} />
                   </div>
                 )}
               </div>

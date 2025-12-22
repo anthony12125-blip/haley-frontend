@@ -21,7 +21,6 @@ export default function ChatMessages({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
-  const [isStreamingComplete, setIsStreamingComplete] = useState(true);
   const prevMessagesLengthRef = useRef(0);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -64,16 +63,13 @@ export default function ChatMessages({
       const newMessage = messages[messages.length - 1];
       if (newMessage.role === 'assistant') {
         setStreamingMessageId(newMessage.id);
-        setIsStreamingComplete(false); // Mark streaming as not complete
         // Force scroll to bottom on new assistant message
         scrollToBottom(true);
         
         // Clear streaming after message is complete
-        const estimatedDuration = newMessage.content.length * 15 + 500;
         setTimeout(() => {
           setStreamingMessageId(null);
-          setIsStreamingComplete(true); // Mark streaming as complete
-        }, estimatedDuration);
+        }, newMessage.content.length * 15 + 500);
       }
     }
     prevMessagesLengthRef.current = messages.length;
@@ -137,11 +133,6 @@ export default function ChatMessages({
     }
   }, [messages, scrollToBottom]);
 
-  // Handle when a message completes streaming
-  const handleStreamingComplete = useCallback(() => {
-    setIsStreamingComplete(true);
-  }, []);
-
   return (
     <div
       ref={containerRef}
@@ -202,12 +193,11 @@ export default function ChatMessages({
               onShare={() => handleShare(message)}
               onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
               onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
-              onStreamingComplete={message.id === streamingMessageId ? handleStreamingComplete : undefined}
             />
           );
         })}
 
-        {(isLoading || !isStreamingComplete) && (
+        {isLoading && (
           <div className="loading-container">
             <div className="loading-content">
               <div className="loading-header">
