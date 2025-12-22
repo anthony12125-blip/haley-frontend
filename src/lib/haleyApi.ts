@@ -1,6 +1,6 @@
 // src/lib/haleyApi.ts
 // Haley OS Backend API Integration
-// FIXED: Removed Claude hard default - model selection now enforced
+// ASYNC VERSION: Non-blocking message submission with streaming
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
 
@@ -52,41 +52,141 @@ export interface OSOperationResponse {
 }
 
 // ============================================================================
-// API FUNCTIONS
+// ASYNC API FUNCTIONS
 // ============================================================================
 
 /**
- * Send user message - Routes to specified AI provider
+ * Send user message - ASYNC VERSION
+ * Returns immediately, streams response via callback
  * 
- * CRITICAL FIX: No default provider fallback
- * - Provider MUST be specified by caller
- * - This ensures UI model selection is always respected
- * - Throws error if provider is missing
+ * @param message - User message text
+ * @param provider - AI provider to use
+ * @param onToken - Callback for streaming tokens
+ * @param onComplete - Callback when streaming completes
+ * @param onError - Callback for errors
  */
-export async function sendMessage(message: string, provider?: string | null): Promise<OSOperationResponse> {
+export async function sendMessage(
+  message: string, 
+  provider?: string | null,
+  onToken?: (token: string) => void,
+  onComplete?: (response: OSOperationResponse) => void,
+  onError?: (error: string) => void
+): Promise<{ messageId: string }> {
   try {
-    // CRITICAL: Validate provider is specified
+    // Validate provider
+    if (!provider) {
+      const error = 'Provider must be specified - no model selected';
+      console.error('[API] ❌ FATAL:', error);
+      onError?.(error);
+      throw new Error(error);
+    }
+    
+    console.log('[API] ====== ASYNC SEND MESSAGE ======');
+    console.log('[API] Provider:', provider);
+    console.log('[API] Message length:', message.length);
+    
+    // Step 1: Submit message (returns immediately)
+    const submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        conversation_id: 'default', // TODO: Use actual conversation ID
+        user_id: 'user',
+        message: message,
+        provider: provider,
+        mode: 'auto'
+      }),
+    });
+
+    if (!submitResponse.ok) {
+      throw new Error(`Submit failed: ${submitResponse.status} ${submitResponse.statusText}`);
+    }
+
+    const { assistant_message_id } = await submitResponse.json();
+    console.log('[API] Message submitted, ID:', assistant_message_id);
+    
+    // Step 2: Connect to streaming endpoint (non-blocking)
+    const eventSource = new EventSource(
+      `${BACKEND_URL}/chat/stream/${assistant_message_id}`
+    );
+    
+    let fullResponse = '';
+    let metadata: any = {};
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'token') {
+          fullResponse += data.content;
+          onToken?.(data.content);
+        } else if (data.type === 'done') {
+          metadata = data.metadata || {};
+          console.log('[API] Stream complete');
+          eventSource.close();
+          
+          // Call completion callback
+          onComplete?.({
+            status: 'completed',
+            result: {
+              response: fullResponse,
+              ...metadata
+            },
+            model_used: provider,
+            task: metadata.task || 'general',
+            operation: 'chat',
+            baby_invoked: metadata.baby_invoked || false
+          });
+        } else if (data.type === 'error') {
+          console.error('[API] Stream error:', data.error);
+          eventSource.close();
+          onError?.(data.error);
+        }
+      } catch (error) {
+        console.error('[API] Parse error:', error);
+      }
+    };
+    
+    eventSource.onerror = (error) => {
+      console.error('[API] EventSource error:', error);
+      eventSource.close();
+      onError?.('Connection lost');
+    };
+    
+    console.log('[API] ============================');
+    
+    return { messageId: assistant_message_id };
+    
+  } catch (error) {
+    console.error('[HaleyAPI] Error:', error);
+    onError?.(error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  }
+}
+
+/**
+ * Legacy synchronous version (for backward compatibility)
+ * Uses old blocking endpoint
+ */
+export async function sendMessageSync(message: string, provider?: string | null): Promise<OSOperationResponse> {
+  try {
     if (!provider) {
       console.error('[API] ❌ FATAL: No provider specified');
       throw new Error('Provider must be specified - no model selected');
     }
-    
-    console.log('[API] ====== SEND MESSAGE ======');
-    console.log('[API] Provider:', provider);
-    console.log('[API] Message length:', message.length);
     
     const requestPayload: ProcessRequest = {
       intent: 'chat.message',
       user_id: 'user',
       payload: {
         message: message,
-        provider: provider  // ALWAYS include provider, validated above
+        provider: provider
       },
       permissions: ['user'],
       mode: 'auto'
     };
-    
-    console.log('[API] Full request payload:', JSON.stringify(requestPayload, null, 2));
     
     const response = await fetch(`${BACKEND_URL}/logic/process`, {
       method: 'POST',
@@ -101,9 +201,6 @@ export async function sendMessage(message: string, provider?: string | null): Pr
     }
 
     const data: ProcessResponse = await response.json();
-    
-    console.log('[API] Response received from:', data.result?.model_used || provider);
-    console.log('[API] ============================');
     
     return {
       status: data.status,
