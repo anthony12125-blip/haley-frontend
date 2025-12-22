@@ -32,33 +32,27 @@ export default function ChatPage() {
     if (typeof window !== 'undefined') {
       const savedState = localStorage.getItem('haley_sidebarCollapsed');
       if (savedState !== null) {
-        // If we have saved state, use the inverse (since we store "collapsed" but state is "open")
         const isCollapsed = JSON.parse(savedState);
         setSidebarOpen(!isCollapsed);
       } else if (device.type === 'desktop') {
-        // Default behavior: open on desktop
         setSidebarOpen(true);
       }
     }
   }, [device.type]);
 
-  // Save sidebar state to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Store the inverse: we store "collapsed" state, but our state is "open"
       localStorage.setItem('haley_sidebarCollapsed', JSON.stringify(!sidebarOpen));
     }
   }, [sidebarOpen]);
 
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
-  // FIX #3: Initialize with default model (Gemini, first in list)
   const [activeModel, setActiveModel] = useState<string | null>('gemini');
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   
   // Feature Toggles
   const [researchEnabled, setResearchEnabled] = useState(false);
@@ -84,10 +78,8 @@ export default function ChatPage() {
     'grok': [],
   });
   
-  // New Chat Guard - prevents spam clicking
   const [hasActiveNewChat, setHasActiveNewChat] = useState(false);
 
-  // Available Justices and Agents (updated order)
   const availableModels = [
     { id: 'gemini', name: 'Gemini', provider: 'Google' },
     { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
@@ -100,7 +92,6 @@ export default function ChatPage() {
 
   const availableAgents: Array<{ id: string; name: string; description: string }> = [];
 
-  // Initialize
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/');
@@ -111,12 +102,11 @@ export default function ChatPage() {
       initializeChat();
       loadConversationsFromStorage();
       loadSystemStatus();
-      const statusInterval = setInterval(loadSystemStatus, 30000); // Update every 30s
+      const statusInterval = setInterval(loadSystemStatus, 30000);
       return () => clearInterval(statusInterval);
     }
   }, [user, authLoading, router]);
 
-  // Monitor activeModel changes for debugging
   useEffect(() => {
     console.log('[CHAT] ===== activeModel STATE CHANGED =====');
     console.log('[CHAT] New activeModel value:', activeModel);
@@ -158,9 +148,8 @@ export default function ChatPage() {
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
     const textToSend = messageText || input;
-    if ((!textToSend.trim() && !audioBlob) || isLoading) return;
+    if (!textToSend.trim() && !audioBlob) return;
 
-    // Validate model selection
     if (!activeModel) {
       console.error('[CHAT] ❌ CRITICAL: No model selected');
       setActiveModel('gemini');
@@ -168,7 +157,6 @@ export default function ChatPage() {
       return;
     }
 
-    // Create user message
     const userMessage: Message = {
       id: generateId(),
       role: 'user',
@@ -179,12 +167,10 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     
-    // Clear new chat guard when user sends first message
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
     }
 
-    // Create placeholder assistant message for streaming
     const assistantMessageId = generateId();
     let streamingContent = '';
     
@@ -201,17 +187,14 @@ export default function ChatPage() {
     };
     
     setMessages((prev) => [...prev, assistantMessage]);
-    setIsLoading(true);
 
     try {
       console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
       console.log('[CHAT] activeModel state:', activeModel);
       
-      // Submit message and stream response
       await sendMessage(
         textToSend,
         activeModel,
-        // onToken callback - update message as tokens arrive
         (token: string) => {
           streamingContent += token;
           setMessages((prev) =>
@@ -222,7 +205,6 @@ export default function ChatPage() {
             )
           );
         },
-        // onComplete callback
         (response) => {
           console.log('[CHAT] Stream completed');
           setMessages((prev) =>
@@ -244,14 +226,11 @@ export default function ChatPage() {
                 : msg
             )
           );
-          setIsLoading(false);
           
-          // If audioBlob was used, speak the response
           if (audioBlob) {
             speakResponse(streamingContent);
           }
           
-          // Auto-save after completion
           if (user?.uid) {
             setMessages((currentMessages) => {
               saveChat(user.uid!, currentConversationId, currentMessages, activeModel)
@@ -263,7 +242,6 @@ export default function ChatPage() {
           
           loadSystemStatus();
         },
-        // onError callback
         (error) => {
           console.error('[CHAT] Stream error:', error);
           setMessages((prev) =>
@@ -277,7 +255,6 @@ export default function ChatPage() {
                 : msg
             )
           );
-          setIsLoading(false);
         }
       );
       
@@ -297,7 +274,6 @@ export default function ChatPage() {
             : msg
         )
       );
-      setIsLoading(false);
     }
   };
 
@@ -355,19 +331,16 @@ export default function ChatPage() {
     console.log('[CHAT] Switching to:', modelKey);
     console.log('[CHAT] Parameter received (justice):', justice);
     
-    // Save current messages to current model
     const currentModelKey = activeModel || 'haley';
     setConversationsByJustice(prev => ({
       ...prev,
       [currentModelKey]: messages
     }));
     
-    // Load messages for selected model
     const loadedMessages = conversationsByModel[modelKey];
     if (loadedMessages && loadedMessages.length > 0) {
       setMessages(loadedMessages);
     } else {
-      // Initialize with system message for new model
       const systemMessage: Message = {
         id: generateId(),
         role: 'system',
@@ -383,10 +356,8 @@ export default function ChatPage() {
       setMessages([systemMessage]);
     }
     
-    // CRITICAL: Set the model state
     setActiveModel(justice);
     
-    // Force update the current conversation's modelMode
     if (currentConversationId) {
       setConversations(prev => prev.map(conv => 
         conv.id === currentConversationId 
@@ -418,19 +389,13 @@ export default function ChatPage() {
   };
 
   const handleNewConversation = async () => {
-    // NEW CHAT GUARD: Ignore if there's already an active fresh/empty chat
     if (hasActiveNewChat) {
       console.log('New chat already active - ignoring additional clicks');
       return;
     }
     
-    // TEMP FIX v1: Create new chat without Firestore persistence
-    // Full persistence will be handled in Module 1.5
-    
-    // Generate new chat ID
     const newId = generateId();
     
-    // Create new chat object for local state
     const newChat: ConversationHistory = {
       id: newId,
       title: 'New Chat',
@@ -441,19 +406,11 @@ export default function ChatPage() {
       modelMode: activeModel || undefined,
     };
     
-    // Add to conversations list (in-memory only, not saved to Firestore)
     setConversations(prev => [newChat, ...prev]);
-    
-    // Switch to new chat
     setCurrentConversationId(newId);
-    
-    // Initialize with system message
     initializeChat();
-    
-    // Set guard to prevent additional new chats
     setHasActiveNewChat(true);
     
-    // Close sidebar on mobile
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
     }
@@ -462,24 +419,20 @@ export default function ChatPage() {
   };
 
   const handleSelectConversation = async (id: string) => {
-    // Save current chat before switching
     if (user?.uid && messages.length > 1 && id !== currentConversationId) {
       await saveChat(user.uid, currentConversationId, messages, activeModel);
     }
     
     setCurrentConversationId(id);
     
-    // Clear new chat guard when switching to existing conversation
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
     }
     
-    // Load the selected conversation
     if (user?.uid) {
       const loadedChat = await loadChat(user.uid, id);
       if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
         setMessages(loadedChat.messages);
-        // CRITICAL FIX: Restore the activeModel from the loaded conversation
         setActiveModel(loadedChat.modelMode);
       } else {
         initializeChat();
@@ -498,7 +451,6 @@ export default function ChatPage() {
       await deleteStoredChat(user.uid, id);
       await loadConversationsFromStorage();
       
-      // If we deleted the current conversation, start a new one
       if (id === currentConversationId) {
         handleNewConversation();
       }
@@ -528,7 +480,6 @@ export default function ChatPage() {
 
   return (
     <div className="full-screen flex overflow-hidden">
-      {/* Space Background */}
       <div className="space-bg">
         <div className="stars" />
         {[...Array(3)].map((_, i) => (
@@ -544,7 +495,6 @@ export default function ChatPage() {
         ))}
       </div>
 
-      {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(!sidebarOpen)}
@@ -564,13 +514,11 @@ export default function ChatPage() {
         onMigrateChat={() => console.log('Migrate chat not yet implemented')}
       />
 
-      {/* Main Chat Area */}
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
         device.type === 'desktop' 
           ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
           : 'ml-0'
       }`}>
-        {/* Header with hamburger menu */}
         <ChatHeader
           aiMode={aiMode}
           activeModels={activeModel ? [activeModel] : ['Haley']}
@@ -585,27 +533,21 @@ export default function ChatPage() {
           onMigrateChat={() => console.log('Migrate chat not yet implemented')}
         />
 
-        {/* Messages */}
         <ChatMessages
           messages={messages}
-          isLoading={isLoading}
           onRetryMessage={handleRetryMessage}
           onBranchMessage={handleBranchMessage}
-          onStreamingComplete={() => setIsLoading(false)}
         />
 
-        {/* Input Bar */}
         <ChatInputBar
           input={input}
           setInput={setInput}
-          isLoading={isLoading}
           onSend={handleSend}
           onFileUpload={handleFileUpload}
           onGallerySelect={handleGallerySelect}
           sidebarOpen={sidebarOpen && device.type === 'desktop'}
         />
 
-        {/* Magic Window - bottom right, translucent */}
         <MagicWindow
           isOpen={magicWindowOpen}
           content={magicWindowContent}
@@ -614,7 +556,6 @@ export default function ChatPage() {
           onClose={() => setMagicWindowOpen(false)}
         />
 
-        {/* Mode Selector Modal */}
         <ModeSelector
           isOpen={modeSelectorOpen}
           currentMode={aiMode}
