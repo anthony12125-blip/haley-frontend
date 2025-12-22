@@ -189,8 +189,9 @@ export default function ChatMessages({
 
       <div className="messages-container">
         {messages.map((message) => {
-          // Only show glyph if this is the last assistant message AND nothing is currently streaming
-          const shouldShowGlyph = message.id === lastAssistantMessageId && !streamingMessageId;
+          // Hide glyph from all messages when isLoading is true (thinking animation is showing)
+          // Only show glyph on the last assistant message when NOT loading
+          const shouldShowGlyph = message.id === lastAssistantMessageId && !isLoading;
           
           return (
             <MessageBubble
