@@ -402,7 +402,7 @@ export default function MessageBubble({
                   )}
                 </div>
                 <div className="haley-symbol-wrapper" title="Haley AI">
-                  <HaleyCoreGlyph size={30} />
+                  <HaleyCoreGlyph size={48} />
                 </div>
               </div>
             )}
