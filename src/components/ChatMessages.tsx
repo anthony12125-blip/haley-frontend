@@ -207,7 +207,7 @@ export default function ChatMessages({
           );
         })}
 
-        {(isLoading || !isStreamingComplete) && (
+        {isLoading && (
           <div className="loading-container">
             <div className="loading-content">
               <div className="loading-header">
