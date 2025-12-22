@@ -10,6 +10,7 @@ interface ChatMessagesProps {
   isLoading: boolean;
   onRetryMessage?: (messageId: string) => void;
   onBranchMessage?: (messageId: string) => void;
+  onStreamingComplete?: () => void;
 }
 
 export default function ChatMessages({
@@ -17,6 +18,7 @@ export default function ChatMessages({
   isLoading,
   onRetryMessage,
   onBranchMessage,
+  onStreamingComplete,
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -90,14 +92,19 @@ export default function ChatMessages({
         scrollToBottom(true);
         
         // Clear streaming after message is complete
+        const timeoutDuration = newMessage.content.length * 15 + 500;
         setTimeout(() => {
           console.log('✅ STREAMING COMPLETE - Clearing streamingMessageId');
           setStreamingMessageId(null);
-        }, newMessage.content.length * 15 + 500);
+          // Tell parent that streaming is done so it can turn off isLoading
+          if (onStreamingComplete) {
+            onStreamingComplete();
+          }
+        }, timeoutDuration);
       }
     }
     prevMessagesLengthRef.current = messages.length;
-  }, [messages, scrollToBottom, isLoading]);
+  }, [messages, scrollToBottom, isLoading, onStreamingComplete]);
 
   // Smooth scrolling during streaming - only when content height actually changes
   useEffect(() => {
@@ -164,6 +171,11 @@ export default function ChatMessages({
     messageCount: messages.length,
     lastMessageRole: messages[messages.length - 1]?.role
   });
+
+  // Determine animation mode
+  // - If streaming (streamingMessageId exists), show fast generating animation
+  // - Otherwise show normal thinking animation
+  const animationMode = streamingMessageId ? 'generating' : 'thinking';
 
   return (
     <div
@@ -234,7 +246,7 @@ export default function ChatMessages({
               <div className="loading-header">
                 Haley
               </div>
-              <HaleyThinkingAnimation />
+              <HaleyThinkingAnimation mode={animationMode} />
             </div>
           </div>
         )}
