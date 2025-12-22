@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Copy, Share2, RotateCcw, GitBranch, CheckCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
 import type { Message } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
+import { HaleyThinkingAnimation } from './HaleyThinkingAnimation';
 
 interface MessageBubbleProps {
   message: Message;
@@ -341,6 +342,11 @@ export default function MessageBubble({
         <div className={`message-header ${message.role === 'assistant' ? 'haley-header' : ''}`}>
           {message.role === 'user' ? 'You' : message.role === 'assistant' ? 'Haley' : 'System'}
         </div>
+
+        {/* Show thinking animation when streaming but no content displayed yet */}
+        {isStreaming && message.role === 'assistant' && !displayedContent && (
+          <HaleyThinkingAnimation />
+        )}
 
         {/* Supreme Court Indicator */}
         {message.metadata?.supreme_court && message.metadata?.llm_sources && (
