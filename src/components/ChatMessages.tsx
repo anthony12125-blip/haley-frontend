@@ -207,6 +207,17 @@ export default function ChatMessages({
           );
         })}
 
+        {(isLoading || !isStreamingComplete) && (
+          <div className="loading-container">
+            <div className="loading-content">
+              <div className="loading-header">
+                Haley
+              </div>
+              <HaleyThinkingAnimation />
+            </div>
+          </div>
+        )}
+
         {/* Scroll target - positioned to keep content visible */}
         <div ref={messagesEndRef} style={{ height: '20px' }} />
       </div>
