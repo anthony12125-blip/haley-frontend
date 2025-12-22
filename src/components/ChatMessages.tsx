@@ -36,6 +36,15 @@ export default function ChatMessages({
     return null;
   }, [messages]);
 
+  // Determine animation mode based on loading and streaming state
+  const animationMode = useMemo(() => {
+    if (!isLoading) return 'static';
+    // If we're loading and there's a streaming message, we're generating tokens
+    if (streamingMessageId) return 'generating';
+    // Otherwise we're thinking (pre-token generation)
+    return 'thinking';
+  }, [isLoading, streamingMessageId]);
+
   // Improved scroll to bottom function with instant scrolling
   const scrollToBottom = useCallback((force = false) => {
     if (!containerRef.current || (!force && userScrolledUp)) return;
@@ -73,18 +82,22 @@ export default function ChatMessages({
     if (messages.length > prevMessagesLengthRef.current) {
       const newMessage = messages[messages.length - 1];
       if (newMessage.role === 'assistant') {
+        console.log('🎬 STREAMING STARTED - New assistant message detected');
+        console.log('   isLoading:', isLoading);
+        console.log('   streamingMessageId:', newMessage.id);
         setStreamingMessageId(newMessage.id);
         // Force scroll to bottom on new assistant message
         scrollToBottom(true);
         
         // Clear streaming after message is complete
         setTimeout(() => {
+          console.log('✅ STREAMING COMPLETE - Clearing streamingMessageId');
           setStreamingMessageId(null);
         }, newMessage.content.length * 15 + 500);
       }
     }
     prevMessagesLengthRef.current = messages.length;
-  }, [messages, scrollToBottom]);
+  }, [messages, scrollToBottom, isLoading]);
 
   // Smooth scrolling during streaming - only when content height actually changes
   useEffect(() => {
@@ -143,6 +156,14 @@ export default function ChatMessages({
       scrollToBottom(true);
     }
   }, [messages, scrollToBottom]);
+
+  // Debug logging
+  console.log('🔍 ChatMessages Render:', {
+    isLoading,
+    streamingMessageId,
+    messageCount: messages.length,
+    lastMessageRole: messages[messages.length - 1]?.role
+  });
 
   return (
     <div
@@ -213,7 +234,7 @@ export default function ChatMessages({
               <div className="loading-header">
                 Haley
               </div>
-              <HaleyThinkingAnimation />
+              <HaleyThinkingAnimation mode={animationMode} />
             </div>
           </div>
         )}
