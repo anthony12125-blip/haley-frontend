@@ -58,7 +58,6 @@ export default function ChatPage() {
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   
   // Feature Toggles
   const [researchEnabled, setResearchEnabled] = useState(false);
@@ -158,7 +157,8 @@ export default function ChatPage() {
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
     const textToSend = messageText || input;
-    if ((!textToSend.trim() && !audioBlob) || isLoading) return;
+    // FIXED: Removed isLoading check - allow sending while streaming
+    if (!textToSend.trim() && !audioBlob) return;
 
     // Validate model selection
     if (!activeModel) {
@@ -201,7 +201,6 @@ export default function ChatPage() {
     };
     
     setMessages((prev) => [...prev, assistantMessage]);
-    setIsLoading(true);
 
     try {
       console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
@@ -244,7 +243,6 @@ export default function ChatPage() {
                 : msg
             )
           );
-          setIsLoading(false);
           
           // If audioBlob was used, speak the response
           if (audioBlob) {
@@ -277,7 +275,6 @@ export default function ChatPage() {
                 : msg
             )
           );
-          setIsLoading(false);
         }
       );
       
@@ -297,7 +294,6 @@ export default function ChatPage() {
             : msg
         )
       );
-      setIsLoading(false);
     }
   };
 
@@ -526,6 +522,9 @@ export default function ChatPage() {
     return null;
   }
 
+  // FIXED: Calculate if any message is currently streaming
+  const isAnyMessageStreaming = messages.some(msg => msg.metadata?.streaming === true);
+
   return (
     <div className="full-screen flex overflow-hidden">
       {/* Space Background */}
@@ -588,17 +587,17 @@ export default function ChatPage() {
         {/* Messages */}
         <ChatMessages
           messages={messages}
-          isLoading={isLoading}
+          isLoading={isAnyMessageStreaming}
           onRetryMessage={handleRetryMessage}
           onBranchMessage={handleBranchMessage}
-          onStreamingComplete={() => setIsLoading(false)}
+          onStreamingComplete={() => {}}
         />
 
-        {/* Input Bar */}
+        {/* Input Bar - FIXED: Never disabled during streaming */}
         <ChatInputBar
           input={input}
           setInput={setInput}
-          isLoading={isLoading}
+          isLoading={false}
           onSend={handleSend}
           onFileUpload={handleFileUpload}
           onGallerySelect={handleGallerySelect}
