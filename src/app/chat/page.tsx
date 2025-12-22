@@ -307,8 +307,8 @@ export default function ChatPage() {
     }
   };
 
-  const handleGallerySelect = (imageUrl: string) => {
-    console.log('Gallery select:', imageUrl);
+  const handleGallerySelect = () => {
+    console.log('Gallery select clicked');
   };
 
   const handleModeSelect = (mode: AIMode) => {
