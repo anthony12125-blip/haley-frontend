@@ -4,7 +4,7 @@
  * Adapter to convert Haley OS backend API to LLMCall signature for rd_questionizer
  */
 
-import { sendMessage } from '../haleyApi';
+import { sendMessageSync } from '../haleyApi';
 import type { LLMCall } from './rd_questionizer';
 
 /**
@@ -20,7 +20,7 @@ export function createLLMAdapter(provider: string = 'claude'): LLMCall {
     const combinedMessage = `[System Instructions]\n${system}\n\n[User Query]\n${user}`;
     
     try {
-      const response = await sendMessage(combinedMessage, provider);
+      const response = await sendMessageSync(combinedMessage, provider);
       
       if (response.status === 'error') {
         throw new Error(response.error_msg || 'LLM call failed');
