@@ -58,7 +58,8 @@ export default function ChatPage() {
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // REMOVED: Global isLoading state - now tracked per message
   
   // Feature Toggles
   const [researchEnabled, setResearchEnabled] = useState(false);
@@ -158,7 +159,9 @@ export default function ChatPage() {
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
     const textToSend = messageText || input;
-    if ((!textToSend.trim() && !audioBlob) || isLoading) return;
+    
+    // FIXED: Removed isLoading check - allow sending while streaming
+    if (!textToSend.trim() && !audioBlob) return;
 
     // Validate model selection
     if (!activeModel) {
@@ -201,7 +204,6 @@ export default function ChatPage() {
     };
     
     setMessages((prev) => [...prev, assistantMessage]);
-    setIsLoading(true);
 
     try {
       console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
@@ -244,14 +246,8 @@ export default function ChatPage() {
                 : msg
             )
           );
-          setIsLoading(false);
           
-          // If audioBlob was used, speak the response
-          if (audioBlob) {
-            speakResponse(streamingContent);
-          }
-          
-          // Auto-save after completion
+          // Save chat after successful completion
           if (user?.uid) {
             setMessages((currentMessages) => {
               saveChat(user.uid!, currentConversationId, currentMessages, activeModel)
@@ -260,8 +256,6 @@ export default function ChatPage() {
               return currentMessages;
             });
           }
-          
-          loadSystemStatus();
         },
         // onError callback
         (error) => {
@@ -272,122 +266,84 @@ export default function ChatPage() {
                 ? {
                     ...msg,
                     content: `Error: ${error}`,
-                    metadata: { ...msg.metadata, streaming: false, error: true },
+                    metadata: {
+                      ...msg.metadata,
+                      streaming: false,
+                      error: true,
+                    },
                   }
                 : msg
             )
           );
-          setIsLoading(false);
         }
       );
       
-      console.log('[CHAT] Message submitted (non-blocking)');
-      console.log('[CHAT] ============================================');
-
+      await loadSystemStatus();
+      
     } catch (error) {
-      console.error('[CHAT] Fatal error:', error);
+      console.error('[CHAT] Error sending message:', error);
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessageId
             ? {
                 ...msg,
-                content: `Fatal error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                metadata: { ...msg.metadata, streaming: false, error: true },
+                content: `System error: ${error instanceof Error ? error.message : 'Failed to process operation'}`,
+                metadata: {
+                  ...msg.metadata,
+                  streaming: false,
+                  error: true,
+                },
               }
             : msg
         )
       );
-      setIsLoading(false);
     }
   };
 
-  const formatResponse = (result: any): string => {
-    if (!result) return 'Operation completed';
-    if (typeof result === 'string') return result;
-    if (result.response) return result.response;
-    if (result.computation) {
-      return `${result.computation}\n\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
-    }
-    if (result.result !== undefined) {
-      return `Result: ${JSON.stringify(result.result)}`;
-    }
-    return JSON.stringify(result, null, 2);
+  const handleFileUpload = (file: File) => {
+    console.log('File uploaded:', file.name);
   };
 
-  const speakResponse = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    }
+  const handleGallerySelect = (mediaType: 'image' | 'video' | 'audio') => {
+    console.log('Gallery select:', mediaType);
   };
 
-  const handleFileUpload = (files: FileList) => {
-    console.log('Files uploaded:', files);
-    setMagicWindowContent({
-      type: 'data',
-      content: {
-        files: files.length,
-        names: Array.from(files).map(f => f.name).join(', '),
-      },
-      title: 'Uploaded Files',
-    });
-    setMagicWindowOpen(true);
+  const handleModeSelect = (mode: AIMode) => {
+    setAiMode(mode);
+    setModeSelectorOpen(false);
   };
 
-  const handleGallerySelect = () => {
-    console.log('Gallery selection');
-  };
-
-  const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
-    if (mode === 'haley') {
-      handleModelSelect(null);
-    }
-  };
-
-  const handleModelSelect = (justice: string | null) => {
-    const modelKey = justice || 'haley';
+  const handleModelSelect = async (justice: string) => {
+    console.log('[CHAT] ======== handleModelSelect CALLED ========');
+    console.log('[CHAT] Target model:', justice);
+    console.log('[CHAT] Current activeModel before:', activeModel);
+    console.log('[CHAT] Current messages count:', messages.length);
     
-    console.log('[CHAT] ========== MODEL SELECTION ==========');
-    console.log('[CHAT] Switching from:', activeModel || 'haley');
-    console.log('[CHAT] Switching to:', modelKey);
-    console.log('[CHAT] Parameter received (justice):', justice);
-    
-    // Save current messages to current model
-    const currentModelKey = activeModel || 'haley';
-    setConversationsByJustice(prev => ({
-      ...prev,
-      [currentModelKey]: messages
-    }));
-    
-    // Load messages for selected model
-    const loadedMessages = conversationsByModel[modelKey];
-    if (loadedMessages && loadedMessages.length > 0) {
-      setMessages(loadedMessages);
-    } else {
-      // Initialize with system message for new model
-      const systemMessage: Message = {
-        id: generateId(),
-        role: 'system',
-        content: justice 
-          ? `Switched to ${justice.charAt(0).toUpperCase() + justice.slice(1)}. Ready to assist.`
-          : 'Haley OS initialized. Multi-LLM router active. Ready to assist.',
-        timestamp: new Date(),
-        metadata: {
-          operation: 'system_init',
-          selectedModel: justice,
-        },
-      };
-      setMessages([systemMessage]);
+    // Save current conversation if there are messages
+    if (user?.uid && messages.length > 1) {
+      console.log('[CHAT] Saving current conversation...');
+      await saveChat(user.uid, currentConversationId, messages, activeModel);
     }
     
-    // CRITICAL: Set the model state
+    // Set the active model
     setActiveModel(justice);
     
-    // Force update the current conversation's modelMode
-    if (currentConversationId) {
+    // Map justice to modelKey and load that conversation
+    const modelKey = justice.toLowerCase();
+    console.log('[CHAT] Model key:', modelKey);
+    
+    const loadedMessages = conversationsByModel[modelKey] || [];
+    console.log('[CHAT] Loading messages for model:', loadedMessages.length);
+    
+    if (loadedMessages.length > 0) {
+      setMessages(loadedMessages);
+    } else {
+      // Initialize new conversation for this model
+      initializeChat();
+    }
+    
+    // Update conversation list to mark this justice as active
+    if (user?.uid && currentConversationId) {
       setConversations(prev => prev.map(conv => 
         conv.id === currentConversationId 
           ? { ...conv, modelMode: justice }
@@ -526,6 +482,9 @@ export default function ChatPage() {
     return null;
   }
 
+  // Calculate if any message is currently streaming
+  const isAnyMessageStreaming = messages.some(msg => msg.metadata?.streaming === true);
+
   return (
     <div className="full-screen flex overflow-hidden">
       {/* Space Background */}
@@ -588,17 +547,17 @@ export default function ChatPage() {
         {/* Messages */}
         <ChatMessages
           messages={messages}
-          isLoading={isLoading}
+          isLoading={isAnyMessageStreaming}
           onRetryMessage={handleRetryMessage}
           onBranchMessage={handleBranchMessage}
-          onStreamingComplete={() => setIsLoading(false)}
+          onStreamingComplete={() => {}}
         />
 
-        {/* Input Bar */}
+        {/* Input Bar - FIXED: No longer disabled while streaming */}
         <ChatInputBar
           input={input}
           setInput={setInput}
-          isLoading={isLoading}
+          isLoading={false}
           onSend={handleSend}
           onFileUpload={handleFileUpload}
           onGallerySelect={handleGallerySelect}
