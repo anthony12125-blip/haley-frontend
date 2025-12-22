@@ -7,18 +7,16 @@ import type { Message } from '@/types';
 
 interface ChatMessagesProps {
   messages: Message[];
-  isLoading: boolean;
   onRetryMessage?: (messageId: string) => void;
   onBranchMessage?: (messageId: string) => void;
   onStreamingComplete?: () => void;
-}
 
 export default function ChatMessages({
   messages,
-  isLoading,
+
   onRetryMessage,
   onBranchMessage,
-  onStreamingComplete,
+  
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -157,7 +155,7 @@ export default function ChatMessages({
 
   // Debug logging
   console.log('🔍 ChatMessages Render:', {
-    isLoading,
+  
     streamingMessageId,
     messageCount: messages.length,
     lastMessageRole: messages[messages.length - 1]?.role
