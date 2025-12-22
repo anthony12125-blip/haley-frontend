@@ -13,6 +13,7 @@ interface MessageBubbleProps {
   onBranch?: () => void;
   isStreaming?: boolean;
   isLastAssistantMessage?: boolean;
+  onStreamingComplete?: () => void;
 }
 
 export default function MessageBubble({ 
@@ -22,7 +23,8 @@ export default function MessageBubble({
   onRetry, 
   onBranch,
   isStreaming = false,
-  isLastAssistantMessage = false
+  isLastAssistantMessage = false,
+  onStreamingComplete
 }: MessageBubbleProps) {
   const [copied, setCopied] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
@@ -60,11 +62,15 @@ export default function MessageBubble({
       } else {
         setIsComplete(true);
         clearInterval(interval);
+        // Notify parent that streaming is complete
+        if (onStreamingComplete) {
+          onStreamingComplete();
+        }
       }
     }, 15); // 15ms = fast, natural streaming like ChatGPT/Claude
 
     return () => clearInterval(interval);
-  }, [message.content, isStreaming, message.role]);
+  }, [message.content, isStreaming, message.role, onStreamingComplete]);
 
   // Don't render until we have content to show (prevents black bar flash)
   if (isStreaming && message.role === 'assistant' && !displayedContent) {
