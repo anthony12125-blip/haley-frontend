@@ -3,7 +3,7 @@
 // Force dynamic rendering to prevent Firebase initialization during build
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
@@ -32,32 +32,33 @@ export default function ChatPage() {
     if (typeof window !== 'undefined') {
       const savedState = localStorage.getItem('haley_sidebarCollapsed');
       if (savedState !== null) {
+        // If we have saved state, use the inverse (since we store "collapsed" but state is "open")
         const isCollapsed = JSON.parse(savedState);
         setSidebarOpen(!isCollapsed);
       } else if (device.type === 'desktop') {
+        // Default behavior: open on desktop
         setSidebarOpen(true);
       }
     }
   }, [device.type]);
 
+  // Save sidebar state to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Store the inverse: we store "collapsed" state, but our state is "open"
       localStorage.setItem('haley_sidebarCollapsed', JSON.stringify(!sidebarOpen));
     }
   }, [sidebarOpen]);
 
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
+  // FIX #3: Initialize with default model (Gemini, first in list)
   const [activeModel, setActiveModel] = useState<string | null>('gemini');
   
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Streaming state - tracks current assistant message being built
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
-  const streamingContentRef = useRef<string>('');
   
   // Feature Toggles
   const [researchEnabled, setResearchEnabled] = useState(false);
@@ -83,10 +84,10 @@ export default function ChatPage() {
     'grok': [],
   });
   
-  // New Chat Guard
+  // New Chat Guard - prevents spam clicking
   const [hasActiveNewChat, setHasActiveNewChat] = useState(false);
 
-  // Available Models
+  // Available Justices and Agents (updated order)
   const availableModels = [
     { id: 'gemini', name: 'Gemini', provider: 'Google' },
     { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
@@ -110,10 +111,17 @@ export default function ChatPage() {
       initializeChat();
       loadConversationsFromStorage();
       loadSystemStatus();
-      const statusInterval = setInterval(loadSystemStatus, 30000);
+      const statusInterval = setInterval(loadSystemStatus, 30000); // Update every 30s
       return () => clearInterval(statusInterval);
     }
   }, [user, authLoading, router]);
+
+  // Monitor activeModel changes for debugging
+  useEffect(() => {
+    console.log('[CHAT] ===== activeModel STATE CHANGED =====');
+    console.log('[CHAT] New activeModel value:', activeModel);
+    console.log('[CHAT] ======================================');
+  }, [activeModel]);
 
   const loadConversationsFromStorage = async () => {
     if (!user?.uid) return;
@@ -176,8 +184,10 @@ export default function ChatPage() {
       setHasActiveNewChat(false);
     }
 
-    // Create placeholder assistant message
+    // Create placeholder assistant message for streaming
     const assistantMessageId = generateId();
+    let streamingContent = '';
+    
     const assistantMessage: Message = {
       id: assistantMessageId,
       role: 'assistant',
@@ -191,8 +201,6 @@ export default function ChatPage() {
     };
     
     setMessages((prev) => [...prev, assistantMessage]);
-    setStreamingMessageId(assistantMessageId);
-    streamingContentRef.current = '';
     setIsLoading(true);
 
     try {
@@ -203,13 +211,13 @@ export default function ChatPage() {
       await sendMessage(
         textToSend,
         activeModel,
-        // onToken callback
+        // onToken callback - update message as tokens arrive
         (token: string) => {
-          streamingContentRef.current += token;
+          streamingContent += token;
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === assistantMessageId
-                ? { ...msg, content: streamingContentRef.current }
+                ? { ...msg, content: streamingContent }
                 : msg
             )
           );
@@ -222,25 +230,38 @@ export default function ChatPage() {
               msg.id === assistantMessageId
                 ? {
                     ...msg,
-                    content: streamingContentRef.current,
+                    content: streamingContent,
                     metadata: {
                       ...msg.metadata,
                       streaming: false,
                       model_used: response.model_used,
                       baby_invoked: response.baby_invoked,
                       task: response.task,
+                      supreme_court: aiMode === 'supreme-court',
+                      llm_sources: activeModel ? [activeModel] : undefined,
                     },
                   }
                 : msg
             )
           );
-          setStreamingMessageId(null);
           setIsLoading(false);
+          
+          // If audioBlob was used, speak the response
+          if (audioBlob) {
+            speakResponse(streamingContent);
+          }
           
           // Auto-save after completion
           if (user?.uid) {
-            saveChat(user.uid, currentConversationId, messages, activeModel);
+            setMessages((currentMessages) => {
+              saveChat(user.uid!, currentConversationId, currentMessages, activeModel)
+                .then(() => loadConversationsFromStorage())
+                .catch((error) => console.error('Error saving chat:', error));
+              return currentMessages;
+            });
           }
+          
+          loadSystemStatus();
         },
         // onError callback
         (error) => {
@@ -256,7 +277,6 @@ export default function ChatPage() {
                 : msg
             )
           );
-          setStreamingMessageId(null);
           setIsLoading(false);
         }
       );
@@ -277,50 +297,108 @@ export default function ChatPage() {
             : msg
         )
       );
-      setStreamingMessageId(null);
       setIsLoading(false);
     }
   };
 
   const formatResponse = (result: any): string => {
+    if (!result) return 'Operation completed';
     if (typeof result === 'string') return result;
-    if (result && typeof result === 'object') {
-      if (result.response) return result.response;
-      if (result.content) return result.content;
-      if (result.message) return result.message;
-      if (result.text) return result.text;
-      return JSON.stringify(result, null, 2);
+    if (result.response) return result.response;
+    if (result.computation) {
+      return `${result.computation}\n\nProblem: ${result.problem}\nSolution: ${result.solution}\nConfidence: ${(result.confidence * 100).toFixed(0)}%`;
     }
-    return String(result);
+    if (result.result !== undefined) {
+      return `Result: ${JSON.stringify(result.result)}`;
+    }
+    return JSON.stringify(result, null, 2);
   };
 
   const speakResponse = (text: string) => {
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
     }
   };
 
   const handleFileUpload = (files: FileList) => {
-    if (files.length > 0) {
-      console.log('File upload:', files[0].name);
-    }
+    console.log('Files uploaded:', files);
+    setMagicWindowContent({
+      type: 'data',
+      content: {
+        files: files.length,
+        names: Array.from(files).map(f => f.name).join(', '),
+      },
+      title: 'Uploaded Files',
+    });
+    setMagicWindowOpen(true);
   };
 
   const handleGallerySelect = () => {
-    console.log('Gallery select clicked');
+    console.log('Gallery selection');
   };
 
-  const handleModeSelect = (mode: AIMode) => {
-    setAiMode(mode);
-    setModeSelectorOpen(false);
+  const handleModeSelect = (mode: 'haley' | 'ais' | 'agents') => {
+    if (mode === 'haley') {
+      handleModelSelect(null);
+    }
   };
 
   const handleModelSelect = (justice: string | null) => {
+    const modelKey = justice || 'haley';
+    
     console.log('[CHAT] ========== MODEL SELECTION ==========');
-    console.log('[CHAT] Previous activeModel:', activeModel);
-    console.log('[CHAT] New model selected:', justice);
+    console.log('[CHAT] Switching from:', activeModel || 'haley');
+    console.log('[CHAT] Switching to:', modelKey);
+    console.log('[CHAT] Parameter received (justice):', justice);
+    
+    // Save current messages to current model
+    const currentModelKey = activeModel || 'haley';
+    setConversationsByJustice(prev => ({
+      ...prev,
+      [currentModelKey]: messages
+    }));
+    
+    // Load messages for selected model
+    const loadedMessages = conversationsByModel[modelKey];
+    if (loadedMessages && loadedMessages.length > 0) {
+      setMessages(loadedMessages);
+    } else {
+      // Initialize with system message for new model
+      const systemMessage: Message = {
+        id: generateId(),
+        role: 'system',
+        content: justice 
+          ? `Switched to ${justice.charAt(0).toUpperCase() + justice.slice(1)}. Ready to assist.`
+          : 'Haley OS initialized. Multi-LLM router active. Ready to assist.',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'system_init',
+          selectedModel: justice,
+        },
+      };
+      setMessages([systemMessage]);
+    }
+    
+    // CRITICAL: Set the model state
     setActiveModel(justice);
+    
+    // Force update the current conversation's modelMode
+    if (currentConversationId) {
+      setConversations(prev => prev.map(conv => 
+        conv.id === currentConversationId 
+          ? { ...conv, modelMode: justice }
+          : conv
+      ));
+    }
+    
+    setAiMode('single');
+    
+    console.log(`[CHAT] Model switched to: ${modelKey}`);
+    console.log('[CHAT] Loaded messages:', loadedMessages?.length || 0);
     console.log('[CHAT] activeModel should now be:', justice);
     console.log('[CHAT] ========================================');
   };
@@ -340,13 +418,19 @@ export default function ChatPage() {
   };
 
   const handleNewConversation = async () => {
+    // NEW CHAT GUARD: Ignore if there's already an active fresh/empty chat
     if (hasActiveNewChat) {
       console.log('New chat already active - ignoring additional clicks');
       return;
     }
     
+    // TEMP FIX v1: Create new chat without Firestore persistence
+    // Full persistence will be handled in Module 1.5
+    
+    // Generate new chat ID
     const newId = generateId();
     
+    // Create new chat object for local state
     const newChat: ConversationHistory = {
       id: newId,
       title: 'New Chat',
@@ -357,33 +441,45 @@ export default function ChatPage() {
       modelMode: activeModel || undefined,
     };
     
+    // Add to conversations list (in-memory only, not saved to Firestore)
     setConversations(prev => [newChat, ...prev]);
+    
+    // Switch to new chat
     setCurrentConversationId(newId);
+    
+    // Initialize with system message
     initializeChat();
+    
+    // Set guard to prevent additional new chats
     setHasActiveNewChat(true);
     
+    // Close sidebar on mobile
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
     }
     
-    console.log('New chat created:', newId);
+    console.log('New chat created (temp, not saved):', newId);
   };
 
   const handleSelectConversation = async (id: string) => {
+    // Save current chat before switching
     if (user?.uid && messages.length > 1 && id !== currentConversationId) {
       await saveChat(user.uid, currentConversationId, messages, activeModel);
     }
     
     setCurrentConversationId(id);
     
+    // Clear new chat guard when switching to existing conversation
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
     }
     
+    // Load the selected conversation
     if (user?.uid) {
       const loadedChat = await loadChat(user.uid, id);
       if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
         setMessages(loadedChat.messages);
+        // CRITICAL FIX: Restore the activeModel from the loaded conversation
         setActiveModel(loadedChat.modelMode);
       } else {
         initializeChat();
@@ -402,6 +498,7 @@ export default function ChatPage() {
       await deleteStoredChat(user.uid, id);
       await loadConversationsFromStorage();
       
+      // If we deleted the current conversation, start a new one
       if (id === currentConversationId) {
         handleNewConversation();
       }
@@ -473,7 +570,7 @@ export default function ChatPage() {
           ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
           : 'ml-0'
       }`}>
-        {/* Header */}
+        {/* Header with hamburger menu */}
         <ChatHeader
           aiMode={aiMode}
           activeModels={activeModel ? [activeModel] : ['Haley']}
@@ -508,7 +605,7 @@ export default function ChatPage() {
           sidebarOpen={sidebarOpen && device.type === 'desktop'}
         />
 
-        {/* Magic Window */}
+        {/* Magic Window - bottom right, translucent */}
         <MagicWindow
           isOpen={magicWindowOpen}
           content={magicWindowContent}
