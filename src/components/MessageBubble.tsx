@@ -113,7 +113,7 @@ export default function MessageBubble({
         @keyframes messageAppear {
           from {
             opacity: 0;
-            transform: translateY(8px);
+            transform: translateY(4px);
           }
           to {
             opacity: 1;
@@ -163,6 +163,8 @@ export default function MessageBubble({
           color: var(--text-primary);
           white-space: pre-wrap;
           word-wrap: break-word;
+          will-change: contents;
+          contain: layout style;
         }
 
         .user-message .message-text {
