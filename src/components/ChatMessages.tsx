@@ -75,17 +75,29 @@ export default function ChatMessages({
     prevMessagesLengthRef.current = messages.length;
   }, [messages, scrollToBottom]);
 
-  // Continuous scrolling during streaming (simulates content updates)
+  // Smooth scrolling during streaming - only when content height actually changes
   useEffect(() => {
-    if (streamingMessageId) {
-      // Scroll to bottom repeatedly during streaming
-      const interval = setInterval(() => {
-        scrollToBottom(true);
-      }, 100); // Check every 100ms
+    if (streamingMessageId && !userScrolledUp) {
+      // Use requestAnimationFrame for smoother scrolling tied to browser repaints
+      let rafId: number;
       
-      return () => clearInterval(interval);
+      const smoothScroll = () => {
+        if (containerRef.current) {
+          const { scrollHeight, clientHeight, scrollTop } = containerRef.current;
+          const isNearBottom = scrollHeight - clientHeight - scrollTop < 100;
+          
+          // Only scroll if we're near the bottom
+          if (isNearBottom) {
+            containerRef.current.scrollTop = scrollHeight - clientHeight;
+          }
+        }
+        rafId = requestAnimationFrame(smoothScroll);
+      };
+      
+      rafId = requestAnimationFrame(smoothScroll);
+      return () => cancelAnimationFrame(rafId);
     }
-  }, [streamingMessageId, scrollToBottom]);
+  }, [streamingMessageId, userScrolledUp]);
 
   const handleReadAloud = (content: string) => {
     if ('speechSynthesis' in window) {
@@ -128,7 +140,8 @@ export default function ChatMessages({
       onScroll={handleScroll}
       style={{
         scrollbarWidth: 'thin',
-        scrollbarColor: 'var(--border) transparent'
+        scrollbarColor: 'var(--border) transparent',
+        scrollBehavior: 'auto' // Use auto instead of smooth to prevent conflicts
       }}
     >
       <style jsx>{`
