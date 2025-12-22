@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
+import { sendMessageSync, getSystemStatus } from '@/lib/haleyApi';
 import { saveChat, loadAllChats, loadChat, deleteChat as deleteStoredChat } from '@/lib/chatStorage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import ChatHeader from '@/components/ChatHeader';
@@ -164,7 +164,7 @@ export default function ChatPage() {
       
       console.log('[SEND] Using provider:', resolvedProvider);
       
-      const response = await sendMessage(textToSend, resolvedProvider);
+      const response = await sendMessageSync(textToSend, resolvedProvider);
 
       if (response.status === 'success' || response.status === 'completed') {
         const assistantMessage: Message = {
