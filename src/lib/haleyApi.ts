@@ -138,6 +138,44 @@ export async function sendMessage(
   }
 }
 
+/**
+ * Send the same message to multiple LLM providers in parallel
+ * Returns handlers for each provider's stream
+ */
+export async function sendMultiLLMMessage(
+  message: string,
+  providers: string[],
+  onProviderToken?: (provider: string, token: string) => void,
+  onProviderComplete?: (provider: string, response: OSOperationResponse) => void,
+  onProviderError?: (provider: string, error: string) => void
+): Promise<Array<{ provider: string; messageId: string; cleanup: () => void }>> {
+  console.log('[API] ====== MULTI-LLM QUERY ======');
+  console.log('[API] Providers:', providers);
+  console.log('[API] Message:', message);
+
+  const streams = await Promise.all(
+    providers.map(async (provider) => {
+      try {
+        const { messageId, cleanup } = await sendMessage(
+          message,
+          provider,
+          (token) => onProviderToken?.(provider, token),
+          (response) => onProviderComplete?.(provider, response),
+          (error) => onProviderError?.(provider, error)
+        );
+
+        return { provider, messageId, cleanup };
+      } catch (error) {
+        console.error(`[API] Failed to initialize stream for ${provider}:`, error);
+        onProviderError?.(provider, error instanceof Error ? error.message : 'Failed to start stream');
+        return { provider, messageId: '', cleanup: () => {} };
+      }
+    })
+  );
+
+  return streams;
+}
+
 export async function sendAudioMessage(
   audioBlob: Blob,
   provider?: string | null,

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessage, sendAudioMessage, getSystemStatus } from '@/lib/haleyApi';
+import { sendMessage, sendAudioMessage, sendMultiLLMMessage, getSystemStatus } from '@/lib/haleyApi';
 import { saveChat, loadAllChats, loadChat, deleteChat as deleteStoredChat } from '@/lib/chatStorage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { MigrationEngine } from '@/lib/migrationEngine';
@@ -17,6 +17,7 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInputBar from '@/components/ChatInputBar';
 import MagicWindow from '@/components/MagicWindow';
 import ModeSelector from '@/components/ModeSelector';
+import LLMResponseCard from '@/components/LLMResponseCard';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
 
 export default function ChatPage() {
@@ -55,7 +56,13 @@ export default function ChatPage() {
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
   const [activeModel, setActiveModel] = useState<string | null>('gemini');
-  
+
+  // Multi-LLM State
+  const [multiLLMEnabled, setMultiLLMEnabled] = useState(false);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+  const [multiLLMResponses, setMultiLLMResponses] = useState<Record<string, string>>({});
+  const [completedModels, setCompletedModels] = useState<Set<string>>(new Set());
+
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -617,6 +624,10 @@ export default function ChatPage() {
         userPhotoURL={user.photoURL || undefined}
         onRecoverChat={() => console.log('Recover chat not yet implemented')}
         onMigrateChat={handleMigrateChat}
+        multiLLMEnabled={multiLLMEnabled}
+        onToggleMultiLLM={setMultiLLMEnabled}
+        selectedModels={selectedModels}
+        onSelectModels={setSelectedModels}
       />
 
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${

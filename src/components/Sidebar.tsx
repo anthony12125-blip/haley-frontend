@@ -46,6 +46,10 @@ interface SidebarProps {
   userPhotoURL?: string;
   onRecoverChat?: () => void;
   onMigrateChat?: () => void;
+  multiLLMEnabled?: boolean;
+  onToggleMultiLLM?: (enabled: boolean) => void;
+  selectedModels?: string[];
+  onSelectModels?: (models: string[]) => void;
 }
 
 // AI Models
@@ -90,16 +94,16 @@ export default function Sidebar({
   userPhotoURL,
   onRecoverChat,
   onMigrateChat,
+  multiLLMEnabled = false,
+  onToggleMultiLLM,
+  selectedModels = [],
+  onSelectModels,
 }: SidebarProps) {
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showHaleyMenu, setShowHaleyMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  
-  // Multi-LLM Query state (default OFF, no persistence)
-  const [multiLLMEnabled, setMultiLLMEnabled] = useState(false);
-  const [selectedModels, setSelectedModels] = useState<string[]>([]);
   
   // Initialize aiModelsCollapsed from localStorage (default to expanded = false for collapsed)
   const [aiModelsCollapsed, setAiModelsCollapsed] = useState(() => {
@@ -179,16 +183,13 @@ export default function Sidebar({
         // Haley cannot be selected in multi-LLM mode
         return;
       }
-      
-      setSelectedModels(prev => {
-        if (prev.includes(modelId)) {
-          // Deselect if already selected
-          return prev.filter(id => id !== modelId);
-        } else {
-          // Add to selection
-          return [...prev, modelId];
-        }
-      });
+
+      if (onSelectModels) {
+        const newSelection = selectedModels.includes(modelId)
+          ? selectedModels.filter(id => id !== modelId)
+          : [...selectedModels, modelId];
+        onSelectModels(newSelection);
+      }
     } else {
       // Single-select mode (original behavior)
       if (onSelectModel) {
@@ -511,13 +512,13 @@ export default function Sidebar({
                 <div className="mt-2 space-y-1">
                   {/* Multi-LLM Toggle - Always visible */}
                   <div className="px-3 py-2 mb-2 border-b border-border">
-                    <MultiLLMToggle 
+                    <MultiLLMToggle
                       enabled={multiLLMEnabled}
                       onChange={(enabled) => {
-                        setMultiLLMEnabled(enabled);
+                        onToggleMultiLLM?.(enabled);
                         if (!enabled) {
                           // Reset to single-select mode
-                          setSelectedModels([]);
+                          onSelectModels?.([]);
                           // Restore active model if there was one before multi-mode
                           if (activeModel) {
                             onSelectModel?.(activeModel);
@@ -563,10 +564,10 @@ export default function Sidebar({
                           const allModelIds = AI_MODELS.map(m => m.id);
                           if (selectedModels.length === AI_MODELS.length) {
                             // Deselect all
-                            setSelectedModels([]);
+                            onSelectModels?.([]);
                           } else {
                             // Select all
-                            setSelectedModels(allModelIds);
+                            onSelectModels?.(allModelIds);
                           }
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
