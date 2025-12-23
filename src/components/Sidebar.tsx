@@ -231,6 +231,18 @@ export default function Sidebar({
 
             {/* Primary Action Buttons */}
             <div className="flex-1 flex flex-col items-center gap-2">
+              {/* AI Labs */}
+              <button
+                onClick={() => router.push('/ai-rd/soundboard')}
+                className="sidebar-mini-btn w-10 h-10 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
+                title="AI Labs"
+              >
+                <IconBeaker size={22} className="sidebar-mini-icon" />
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                  AI Labs
+                </div>
+              </button>
+
               {/* New Chat */}
               <button
                 onClick={onNewConversation}
@@ -240,18 +252,6 @@ export default function Sidebar({
                 <Plus size={22} className="sidebar-mini-icon" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
                   New Chat
-                </div>
-              </button>
-
-              {/* Recover Chat */}
-              <button
-                onClick={onRecoverChat}
-                className="sidebar-mini-btn w-12 h-12 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
-                title="Recover Chat"
-              >
-                <RotateCcw size={22} className="sidebar-mini-icon" />
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  Recover Chat
                 </div>
               </button>
 
