@@ -214,9 +214,12 @@ export default function ChatPage() {
     try {
       console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
       console.log('[CHAT] activeModel state:', activeModel);
-      
+
+      // For voice messages, send '[Voice message]' as content since backend expects text
+      const messageContent = audioBlob ? '[Voice message]' : textToSend;
+
       const { messageId, cleanup } = await sendMessage(
-        textToSend,
+        messageContent,
         activeModel,
         (token: string) => {
           streamingContent += token;
