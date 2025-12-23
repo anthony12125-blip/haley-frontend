@@ -403,7 +403,7 @@ export default function MessageBubble({
                     title={migrated ? "Migrated!" : "Migrate this response"}
                     aria-label="Generate AI-agnostic summary for this message"
                   >
-                    <IconEnvelopeWings size={16} />
+                    <IconEnvelopeWings size={32} />
                   </button>
                   <button
                     className="action-btn"
@@ -443,7 +443,7 @@ export default function MessageBubble({
                   title={migrated ? "Migrated!" : "Migrate this message"}
                   aria-label="Generate AI-agnostic summary for this message"
                 >
-                  <IconEnvelopeWings size={16} />
+                  <IconEnvelopeWings size={32} />
                 </button>
                 {onRetry && (
                   <button
