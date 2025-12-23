@@ -51,9 +51,7 @@ export default function ChatInputBar({
   };
 
   const handleSend = () => {
-    console.log('[CHATINPUT] handleSend called, input:', input);
     if (input.trim()) {
-      console.log('[CHATINPUT] Input valid, calling onSend with:', input);
       onSend(input);
       setInput('');
       console.log('[CHATINPUT] onSend completed, input cleared');
