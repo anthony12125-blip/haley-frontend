@@ -3,7 +3,7 @@
 // Force dynamic rendering to prevent Firebase initialization during build
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
@@ -21,6 +21,9 @@ export default function ChatPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const device = useDeviceDetection();
+
+  // Ref to store cleanup functions for active streams
+  const cleanupFunctionsRef = useRef<Map<string, () => void>>(new Map());
 
   // UI State
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -115,6 +118,15 @@ export default function ChatPage() {
     }
   }, [user, authLoading, router]);
 
+  // Cleanup all active streams on unmount
+  useEffect(() => {
+    return () => {
+      console.log('[CHAT] Component unmounting, cleaning up streams');
+      cleanupFunctionsRef.current.forEach((cleanup) => cleanup());
+      cleanupFunctionsRef.current.clear();
+    };
+  }, []);
+
   // Monitor activeModel changes for debugging
   useEffect(() => {
     console.log('[CHAT] ===== activeModel STATE CHANGED =====');
@@ -207,7 +219,7 @@ export default function ChatPage() {
       console.log('[CHAT] activeModel state:', activeModel);
       
       // Submit message and stream response
-      await sendMessage(
+      const { messageId, cleanup } = await sendMessage(
         textToSend,
         activeModel,
         // onToken callback - update message as tokens arrive
@@ -243,12 +255,15 @@ export default function ChatPage() {
                 : msg
             )
           );
-          
+
+          // Remove cleanup function from ref after completion
+          cleanupFunctionsRef.current.delete(assistantMessageId);
+
           // If audioBlob was used, speak the response
           if (audioBlob) {
             speakResponse(streamingContent);
           }
-          
+
           // Auto-save after completion
           if (user?.uid) {
             setMessages((currentMessages) => {
@@ -258,12 +273,16 @@ export default function ChatPage() {
               return currentMessages;
             });
           }
-          
+
           loadSystemStatus();
         },
         // onError callback
         (error) => {
           console.error('[CHAT] Stream error:', error);
+
+          // Remove cleanup function from ref after error
+          cleanupFunctionsRef.current.delete(assistantMessageId);
+
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === assistantMessageId
@@ -277,6 +296,9 @@ export default function ChatPage() {
           );
         }
       );
+
+      // Store cleanup function for this stream
+      cleanupFunctionsRef.current.set(assistantMessageId, cleanup);
       
       console.log('[CHAT] Message submitted (non-blocking)');
       console.log('[CHAT] ============================================');
