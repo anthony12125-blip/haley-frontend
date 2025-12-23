@@ -496,7 +496,6 @@ export default function Sidebar({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <HaleyCoreGlyph size={20} className="text-primary" />
                   <span className="font-semibold text-sm">AI Models</span>
                 </div>
                 <ChevronDown 
