@@ -429,6 +429,15 @@ export default function MessageBubble({
                 >
                   {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
                 </button>
+                {onRetry && (
+                  <button
+                    onClick={onRetry}
+                    className="action-btn"
+                    title="Retry message"
+                  >
+                    <RotateCcw size={16} />
+                  </button>
+                )}
               </div>
             )}
           </div>
