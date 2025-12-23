@@ -158,8 +158,18 @@ export default function ChatPage() {
   };
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
+    console.log('[PAGE] ========== handleSend CALLED ==========');
+    console.log('[PAGE] messageText param:', messageText);
+    console.log('[PAGE] audioBlob param:', audioBlob);
+    console.log('[PAGE] current input state:', input);
+
     const textToSend = messageText || input;
-    if (!textToSend.trim() && !audioBlob) return;
+    console.log('[PAGE] textToSend resolved to:', textToSend);
+
+    if (!textToSend.trim() && !audioBlob) {
+      console.log('[PAGE] ❌ Empty message, returning early');
+      return;
+    }
 
     if (!activeModel) {
       console.error('[CHAT] ❌ CRITICAL: No model selected');
@@ -167,6 +177,8 @@ export default function ChatPage() {
       alert('Please select an AI model first. Defaulting to Gemini.');
       return;
     }
+
+    console.log('[PAGE] ✅ Proceeding with message send');
 
     const userMessage: Message = {
       id: generateId(),
