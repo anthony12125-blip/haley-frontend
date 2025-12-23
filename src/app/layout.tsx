@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/lib/authContext';
 import { ThemeProvider } from '@/lib/themeContext';
+import { VibePackProvider } from '@/contexts/VibePackContext';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -23,9 +24,11 @@ export default function RootLayout({
       </head>
       <body className="prevent-select">
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <VibePackProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </VibePackProvider>
         </ThemeProvider>
       </body>
     </html>

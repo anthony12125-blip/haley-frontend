@@ -1,22 +1,29 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useVibePack } from '@/contexts/VibePackContext';
+import { getRandomWord } from '@/lib/vibePacks';
+
 /**
- * HaleyThinkingAnimation - Animated Haley logo for loading states
- * 
+ * HaleyThinkingAnimation - Animated Haley logo with vibe words for loading states
+ *
  * Animation states:
- * 1. THINKING (mode='thinking'): Full expand/spin/contract cycle
+ * 1. THINKING (mode='thinking'): Full expand/spin/contract cycle + rotating words
  *    - Segments separate outward
  *    - Rotate while separated
  *    - Contract back to center
+ *    - Words rotate every few seconds
  *    - Repeat infinitely
- * 
- * 2. GENERATING (mode='generating'): Fast collapsed spin
+ *
+ * 2. GENERATING (mode='generating'): Fast collapsed spin + locked word
  *    - Segments stay collapsed (no expansion)
  *    - Rotate twice as fast as thinking mode
+ *    - Single locked word for entire generation
  *    - Indicates active token generation
- * 
- * 3. STATIC (mode='static'): No animation
+ *
+ * 3. STATIC (mode='static'): No animation, no words
  *    - Just the static glyph
+ *    - No status text
  */
 
 interface HaleyThinkingAnimationProps {
@@ -24,11 +31,64 @@ interface HaleyThinkingAnimationProps {
 }
 
 export function HaleyThinkingAnimation({ mode = 'thinking' }: HaleyThinkingAnimationProps) {
-  const size = 64; // Larger container to prevent clipping during animation
-  
+  const size = 64;
+  const { currentPack } = useVibePack();
+  const [currentWord, setCurrentWord] = useState<string>('');
+  const [lockedWord, setLockedWord] = useState<string | null>(null);
+
+  // THINKING MODE: Rotate words every 3 seconds
+  useEffect(() => {
+    if (mode === 'thinking') {
+      // Set initial word immediately
+      setCurrentWord(getRandomWord(currentPack.thinking_words));
+
+      // Rotate words during thinking
+      const interval = setInterval(() => {
+        setCurrentWord(getRandomWord(currentPack.thinking_words));
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [mode, currentPack]);
+
+  // GENERATING MODE: Lock a single word for the entire stream
+  useEffect(() => {
+    if (mode === 'generating') {
+      // Lock a word if we don't have one yet
+      if (!lockedWord) {
+        const word = getRandomWord(currentPack.generating_words);
+        setLockedWord(word);
+        setCurrentWord(word);
+      } else {
+        // Use the locked word
+        setCurrentWord(lockedWord);
+      }
+    } else {
+      // Clear locked word when not generating
+      setLockedWord(null);
+    }
+  }, [mode, currentPack, lockedWord]);
+
+  // STATIC MODE: No words
+  useEffect(() => {
+    if (mode === 'static') {
+      setCurrentWord('');
+    }
+  }, [mode]);
+
+  // Determine if we should show the word
+  const showWord = mode !== 'static' && currentWord;
+
   return (
-    <div className="haley-thinking-container">
+    <div className="haley-thinking-wrapper">
       <style jsx>{`
+        .haley-thinking-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 12px;
+        }
+
         .haley-thinking-container {
           display: flex;
           align-items: center;
@@ -51,6 +111,30 @@ export function HaleyThinkingAnimation({ mode = 'thinking' }: HaleyThinkingAnima
           width: 100%;
           height: 100%;
           overflow: visible;
+        }
+
+        .vibe-word {
+          font-size: 14px;
+          color: var(--text-secondary);
+          font-weight: 500;
+          letter-spacing: 0.02em;
+          animation: wordFadeIn 0.3s ease-out;
+          min-height: 20px;
+        }
+
+        :root.light .vibe-word {
+          color: #6A6A6A;
+        }
+
+        @keyframes wordFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         /* Main animation container - handles rotation */
@@ -117,90 +201,99 @@ export function HaleyThinkingAnimation({ mode = 'thinking' }: HaleyThinkingAnima
           100% { transform: rotate(360deg); }
         }
       `}</style>
-      
-      <div className="haley-svg-wrapper">
-        <svg 
-          width={size} 
-          height={size} 
-          viewBox="-2 -2 28 28" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Seven segments - wrapped in group for rotation */}
-          <g className={`segments-group mode-${mode}`}>
-            {Array.from({ length: 7 }).map((_, i) => {
-              const angle = (i * 360) / 7;
-              const startAngle = angle - 20;
-              const endAngle = angle + 20;
-              
-              // Convert angles to radians
-              const startRad = (startAngle * Math.PI) / 180;
-              const endRad = (endAngle * Math.PI) / 180;
-              
-              // Calculate arc points
-              const innerRadius = 6;
-              const outerRadius = 10;
-              
-              const x1 = 12 + innerRadius * Math.cos(startRad);
-              const y1 = 12 + innerRadius * Math.sin(startRad);
-              const x2 = 12 + outerRadius * Math.cos(startRad);
-              const y2 = 12 + outerRadius * Math.sin(startRad);
-              const x3 = 12 + outerRadius * Math.cos(endRad);
-              const y3 = 12 + outerRadius * Math.sin(endRad);
-              const x4 = 12 + innerRadius * Math.cos(endRad);
-              const y4 = 12 + innerRadius * Math.sin(endRad);
-              
-              // Calculate translation direction for this segment (radial outward)
-              const midAngle = (angle * Math.PI) / 180;
-              const tx = Math.cos(midAngle) * 4; // Move 4px outward for more visible expansion
-              const ty = Math.sin(midAngle) * 4;
-              
-              return (
-                <path
-                  key={i}
-                  className="segment"
-                  d={`M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z`}
-                  fill="currentColor"
-                  opacity={0.7}
-                  style={{ 
-                    '--tx': `${tx}px`,
-                    '--ty': `${ty}px`
-                  } as React.CSSProperties}
-                />
-              );
-            })}
-          </g>
-          
-          {/* Center core - stays still */}
-          <g className="center-core">
-            <circle 
-              cx="12" 
-              cy="12" 
-              r="4" 
-              fill="currentColor"
-              opacity="0.9"
-            />
-            
-            <circle 
-              cx="12" 
-              cy="12" 
-              r="2.5" 
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="0.5"
-              opacity="0.4"
-            />
-            
-            <circle 
-              cx="12" 
-              cy="12" 
-              r="1" 
-              fill="currentColor"
-              opacity="1"
-            />
-          </g>
-        </svg>
+
+      <div className="haley-thinking-container">
+        <div className="haley-svg-wrapper">
+          <svg
+            width={size}
+            height={size}
+            viewBox="-2 -2 28 28"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* Seven segments - wrapped in group for rotation */}
+            <g className={`segments-group mode-${mode}`}>
+              {Array.from({ length: 7 }).map((_, i) => {
+                const angle = (i * 360) / 7;
+                const startAngle = angle - 20;
+                const endAngle = angle + 20;
+
+                // Convert angles to radians
+                const startRad = (startAngle * Math.PI) / 180;
+                const endRad = (endAngle * Math.PI) / 180;
+
+                // Calculate arc points
+                const innerRadius = 6;
+                const outerRadius = 10;
+
+                const x1 = 12 + innerRadius * Math.cos(startRad);
+                const y1 = 12 + innerRadius * Math.sin(startRad);
+                const x2 = 12 + outerRadius * Math.cos(startRad);
+                const y2 = 12 + outerRadius * Math.sin(startRad);
+                const x3 = 12 + outerRadius * Math.cos(endRad);
+                const y3 = 12 + outerRadius * Math.sin(endRad);
+                const x4 = 12 + innerRadius * Math.cos(endRad);
+                const y4 = 12 + innerRadius * Math.sin(endRad);
+
+                // Calculate translation direction for this segment (radial outward)
+                const midAngle = (angle * Math.PI) / 180;
+                const tx = Math.cos(midAngle) * 4; // Move 4px outward for more visible expansion
+                const ty = Math.sin(midAngle) * 4;
+
+                return (
+                  <path
+                    key={i}
+                    className="segment"
+                    d={`M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z`}
+                    fill="currentColor"
+                    opacity={0.7}
+                    style={{
+                      '--tx': `${tx}px`,
+                      '--ty': `${ty}px`
+                    } as React.CSSProperties}
+                  />
+                );
+              })}
+            </g>
+
+            {/* Center core - stays still */}
+            <g className="center-core">
+              <circle
+                cx="12"
+                cy="12"
+                r="4"
+                fill="currentColor"
+                opacity="0.9"
+              />
+
+              <circle
+                cx="12"
+                cy="12"
+                r="2.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="0.5"
+                opacity="0.4"
+              />
+
+              <circle
+                cx="12"
+                cy="12"
+                r="1"
+                fill="currentColor"
+                opacity="1"
+              />
+            </g>
+          </svg>
+        </div>
       </div>
+
+      {/* Vibe word - only shows during thinking/generating, not static */}
+      {showWord && (
+        <div className="vibe-word" key={currentWord}>
+          {currentWord}
+        </div>
+      )}
     </div>
   );
 }

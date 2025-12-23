@@ -25,6 +25,7 @@ import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 import { HaleyIndicator } from './HaleyIndicator';
 import { MultiLLMToggle } from './MultiLLMToggle';
 import ThemeSelector from './ThemeSelector';
+import VibePackSelector from './VibePackSelector';
 import IconSoundboard from './icons/IconSoundboard';
 import IconBeaker from './icons/IconBeaker';
 
@@ -754,11 +755,9 @@ export default function Sidebar({
             </div>
             <div className="space-y-4">
               <ThemeSelector />
-              
+
               <div className="pt-4 border-t border-border">
-                <div className="text-sm text-secondary">
-                  More settings coming soon...
-                </div>
+                <VibePackSelector />
               </div>
             </div>
           </div>
