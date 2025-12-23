@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Copy, Share2, RotateCcw, GitBranch, CheckCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Share2, RotateCcw, GitBranch, ThumbsUp, ThumbsDown } from 'lucide-react';
 import type { Message } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
+import IconEnvelopeWings from './icons/IconEnvelopeWings';
+import { MigrationEngine } from '@/lib/migrationEngine';
+import { useAIClipboard } from '@/contexts/AIClipboardContext';
 
 interface MessageBubbleProps {
   message: Message;
@@ -24,11 +27,12 @@ export default function MessageBubble({
   isStreaming = false,
   isLastAssistantMessage = false
 }: MessageBubbleProps) {
-  const [copied, setCopied] = useState(false);
+  const [migrated, setMigrated] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
   const [isComplete, setIsComplete] = useState(!isStreaming);
   const contentRef = useRef(message.content);
   const indexRef = useRef(0);
+  const { setPayload } = useAIClipboard();
 
   // Streaming typewriter effect
   useEffect(() => {
@@ -71,13 +75,22 @@ export default function MessageBubble({
     return null;
   }
 
-  const handleCopy = async () => {
+  const handleMigrate = async () => {
     try {
-      await navigator.clipboard.writeText(message.content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Generate AI-agnostic migration payload
+      const payload = MigrationEngine.migrateSingleMessage(message);
+
+      // Store in AI Clipboard
+      setPayload(payload);
+
+      // Copy to system clipboard
+      await MigrationEngine.copyToClipboard(payload);
+
+      // Show migrated feedback briefly
+      setMigrated(true);
+      setTimeout(() => setMigrated(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      console.error('Failed to migrate message:', error);
     }
   };
 
@@ -92,7 +105,8 @@ export default function MessageBubble({
         console.error('Failed to share:', error);
       }
     } else {
-      handleCopy();
+      // Fallback to migration instead of copy
+      handleMigrate();
     }
   };
 
@@ -384,11 +398,12 @@ export default function MessageBubble({
               <div className="action-column">
                 <div className="icon-row">
                   <button
-                    onClick={handleCopy}
+                    onClick={handleMigrate}
                     className="action-btn"
-                    title={copied ? "Copied!" : "Copy"}
+                    title={migrated ? "Migrated!" : "Migrate this response"}
+                    aria-label="Generate AI-agnostic summary for this message"
                   >
-                    {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                    <IconEnvelopeWings size={16} />
                   </button>
                   <button
                     className="action-btn"
@@ -423,11 +438,12 @@ export default function MessageBubble({
             {message.role === 'user' && (
               <div className="icon-row">
                 <button
-                  onClick={handleCopy}
+                  onClick={handleMigrate}
                   className="action-btn"
-                  title={copied ? "Copied!" : "Copy"}
+                  title={migrated ? "Migrated!" : "Migrate this message"}
+                  aria-label="Generate AI-agnostic summary for this message"
                 >
-                  {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                  <IconEnvelopeWings size={16} />
                 </button>
                 {onRetry && (
                   <button

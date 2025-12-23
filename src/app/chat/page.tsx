@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { sendMessage, sendAudioMessage, getSystemStatus } from '@/lib/haleyApi';
 import { saveChat, loadAllChats, loadChat, deleteChat as deleteStoredChat } from '@/lib/chatStorage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
+import { MigrationEngine } from '@/lib/migrationEngine';
+import { useAIClipboard } from '@/contexts/AIClipboardContext';
 import Sidebar from '@/components/Sidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -21,6 +23,7 @@ export default function ChatPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const device = useDeviceDetection();
+  const { setPayload } = useAIClipboard();
 
   // Ref to store cleanup functions for active streams
   const cleanupFunctionsRef = useRef<Map<string, () => void>>(new Map());
@@ -471,6 +474,23 @@ export default function ChatPage() {
     console.log('Branch conversation from message:', messageId);
   };
 
+  const handleMigrateChat = async () => {
+    try {
+      // Generate AI-agnostic migration payload for entire chat
+      const payload = MigrationEngine.migrateFullChat(messages);
+
+      // Store in AI Clipboard
+      setPayload(payload);
+
+      // Copy to system clipboard
+      await MigrationEngine.copyToClipboard(payload);
+
+      console.log('Chat migrated successfully:', payload);
+    } catch (error) {
+      console.error('Failed to migrate chat:', error);
+    }
+  };
+
   const handleNewConversation = async () => {
     if (hasActiveNewChat) {
       console.log('New chat already active - ignoring additional clicks');
@@ -596,7 +616,7 @@ export default function ChatPage() {
         userEmail={user.email || undefined}
         userPhotoURL={user.photoURL || undefined}
         onRecoverChat={() => console.log('Recover chat not yet implemented')}
-        onMigrateChat={() => console.log('Migrate chat not yet implemented')}
+        onMigrateChat={handleMigrateChat}
       />
 
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
@@ -615,7 +635,7 @@ export default function ChatPage() {
           researchEnabled={researchEnabled}
           logicEngineEnabled={logicEngineEnabled}
           onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
-          onMigrateChat={() => console.log('Migrate chat not yet implemented')}
+          onMigrateChat={handleMigrateChat}
         />
 
         <ChatMessages

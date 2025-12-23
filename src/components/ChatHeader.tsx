@@ -3,6 +3,7 @@
 import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
+import IconEnvelopeWings from './icons/IconEnvelopeWings';
 
 interface ChatHeaderProps {
   aiMode: AIMode;
@@ -16,45 +17,6 @@ interface ChatHeaderProps {
   logicEngineEnabled: boolean;
   onToggleLogicEngine: () => void;
   onMigrateChat?: () => void;
-}
-
-// Custom Migrate icon component (envelope with wings)
-function MigrateIcon({ size = 24, showAI = true }: { size?: number; showAI?: boolean }) {
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg 
-        width={size} 
-        height={size} 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="1.5"
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-      >
-        {/* Left wing */}
-        <path d="M2 10 C2 8, 3 7, 4 8 C5 9, 6 10, 6 11 L6 13 C6 14, 5 15, 4 14 C3 13, 2 12, 2 10 Z" />
-        
-        {/* Right wing */}
-        <path d="M22 10 C22 8, 21 7, 20 8 C19 9, 18 10, 18 11 L18 13 C18 14, 19 15, 20 14 C21 13, 22 12, 22 10 Z" />
-        
-        {/* Envelope body - rectangle */}
-        <rect x="7" y="8" width="10" height="8" rx="0.5" />
-        
-        {/* Envelope flap - triangle on top */}
-        <path d="M7 8 L12 12 L17 8" />
-      </svg>
-      {showAI && (
-        <span 
-          className="absolute -top-1 -right-1 text-[8px] font-bold text-primary"
-          style={{ fontSize: size * 0.3 }}
-        >
-          AI
-        </span>
-      )}
-    </div>
-  );
 }
 
 export default function ChatHeader({
@@ -119,26 +81,17 @@ export default function ChatHeader({
           <h1 className="text-xl font-bold text-gradient">{getDisplayName()}</h1>
         </div>
 
-        {/* Right: Migrate Button */}
-        <div className="flex items-center gap-2 mr-4">
+        {/* Right: Migrate Chat Button */}
+        <div className="flex items-center gap-2">
           {onMigrateChat && (
-            <div className="flex items-center gap-2">
-              {/* Non-clickable text */}
-              <span className="hidden sm:inline text-sm text-text-secondary">
-                AI chat migration
-              </span>
-              
-              {/* Clickable envelope button */}
-              <button
-                onClick={onMigrateChat}
-                className="p-2 rounded-lg hover:bg-panel-light active:bg-primary/20 transition-all group"
-                title="AI chat migration"
-              >
-                <div className="group-active:scale-95 group-active:text-primary transition-all">
-                  <MigrateIcon size={36} showAI={true} />
-                </div>
-              </button>
-            </div>
+            <button
+              onClick={onMigrateChat}
+              className="p-2 rounded-lg hover:bg-panel-light active:bg-primary/20 transition-all"
+              title="Migrate entire chat"
+              aria-label="Generate AI-agnostic summary for entire chat"
+            >
+              <IconEnvelopeWings size={24} />
+            </button>
           )}
         </div>
       </div>

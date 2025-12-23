@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { AuthProvider } from '@/lib/authContext';
 import { ThemeProvider } from '@/lib/themeContext';
 import { VibePackProvider } from '@/contexts/VibePackContext';
+import { AIClipboardProvider } from '@/contexts/AIClipboardContext';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -25,9 +26,11 @@ export default function RootLayout({
       <body className="prevent-select">
         <ThemeProvider>
           <VibePackProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            <AIClipboardProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </AIClipboardProvider>
           </VibePackProvider>
         </ThemeProvider>
       </body>
