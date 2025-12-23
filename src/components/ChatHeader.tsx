@@ -90,7 +90,7 @@ export default function ChatHeader({
               title="Migrate entire chat"
               aria-label="Generate AI-agnostic summary for entire chat"
             >
-              <IconEnvelopeWings size={48} />
+              <IconEnvelopeWings size={38} />
             </button>
           )}
         </div>
