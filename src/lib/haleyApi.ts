@@ -138,6 +138,102 @@ export async function sendMessage(
   }
 }
 
+export async function sendAudioMessage(
+  audioBlob: Blob,
+  provider?: string | null,
+  onToken?: (token: string) => void,
+  onComplete?: (response: OSOperationResponse) => void,
+  onError?: (error: string) => void
+): Promise<{ messageId: string; cleanup: () => void }> {
+  let eventSource: EventSource | null = null;
+
+  try {
+    if (!provider) {
+      const error = 'Provider must be specified - no model selected';
+      console.error('[API] ❌ FATAL:', error);
+      onError?.(error);
+      throw new Error(error);
+    }
+
+    console.log('[API] ====== ASYNC SEND AUDIO MESSAGE ======');
+    console.log('[API] Provider:', provider);
+
+    // Create form data with audio file
+    const formData = new FormData();
+    formData.append('audio_file', audioBlob, 'voice_message.webm');
+    formData.append('conversation_id', 'default');
+    formData.append('provider', provider);
+
+    const submitResponse = await fetch(`${BACKEND_URL}/chat/submit/audio`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!submitResponse.ok) {
+      throw new Error(`Audio submit failed: ${submitResponse.status}`);
+    }
+
+    const { assistant_message_id } = await submitResponse.json();
+    console.log('[API] Audio message submitted, ID:', assistant_message_id);
+
+    eventSource = new EventSource(`${BACKEND_URL}/chat/stream/${assistant_message_id}`);
+
+    let fullResponse = '';
+    let metadata: any = {};
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'token') {
+          fullResponse += data.content;
+          onToken?.(data.content);
+        } else if (data.type === 'done') {
+          metadata = data.metadata || {};
+          console.log('[API] Stream complete');
+          eventSource?.close();
+          onComplete?.({
+            status: 'completed',
+            result: { response: fullResponse, ...metadata },
+            model_used: provider,
+            task: metadata.task || 'general',
+            operation: 'chat',
+            baby_invoked: metadata.baby_invoked || false
+          });
+        } else if (data.type === 'error') {
+          console.error('[API] Stream error:', data.error);
+          eventSource?.close();
+          onError?.(data.error);
+        }
+      } catch (error) {
+        console.error('[API] Parse error:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('[API] EventSource error:', error);
+      eventSource?.close();
+      onError?.('Connection lost');
+    };
+
+    const cleanup = () => {
+      if (eventSource) {
+        console.log('[API] Cleaning up EventSource');
+        eventSource.close();
+        eventSource = null;
+      }
+    };
+
+    return { messageId: assistant_message_id, cleanup };
+
+  } catch (error) {
+    console.error('[HaleyAPI] Audio Error:', error);
+    if (eventSource) eventSource.close();
+    onError?.(error instanceof Error ? error.message : 'Unknown error');
+    throw error;
+  }
+}
+
 export async function sendMessageSync(message: string, provider?: string | null): Promise<OSOperationResponse> {
   try {
     if (!provider) {

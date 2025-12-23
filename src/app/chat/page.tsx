@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessage, getSystemStatus } from '@/lib/haleyApi';
+import { sendMessage, sendAudioMessage, getSystemStatus } from '@/lib/haleyApi';
 import { saveChat, loadAllChats, loadChat, deleteChat as deleteStoredChat } from '@/lib/chatStorage';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import Sidebar from '@/components/Sidebar';
@@ -214,14 +214,68 @@ export default function ChatPage() {
     try {
       console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
       console.log('[CHAT] activeModel state:', activeModel);
+      console.log('[CHAT] audioBlob present:', !!audioBlob);
 
-      // For voice messages, send '[Voice message]' as content since backend expects text
-      const messageContent = audioBlob ? '[Voice message]' : textToSend;
+      // Use sendAudioMessage for voice, sendMessage for text
+      const { messageId, cleanup } = audioBlob
+        ? await sendAudioMessage(
+            audioBlob,
+            activeModel,
+            (token: string) => {
+              streamingContent += token;
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, content: streamingContent }
+                    : msg
+                )
+              );
+            },
+            (response) => {
+              console.log('[CHAT] Stream completed');
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? {
+                        ...msg,
+                        content: streamingContent,
+                        metadata: {
+                          ...msg.metadata,
+                          streaming: false,
+                          model_used: response.model_used,
+                          baby_invoked: response.baby_invoked,
+                          task: response.task,
+                          supreme_court: aiMode === 'supreme-court',
+                          llm_sources: activeModel ? [activeModel] : undefined,
+                        },
+                      }
+                    : msg
+                )
+              );
 
-      const { messageId, cleanup } = await sendMessage(
-        messageContent,
-        activeModel,
-        (token: string) => {
+              cleanupFunctionsRef.current.delete(assistantMessageId);
+              speakResponse(streamingContent);
+            },
+            (error) => {
+              console.error('[CHAT] ❌ Audio stream error:', error);
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? {
+                        ...msg,
+                        content: `Error: ${error}`,
+                        metadata: { ...msg.metadata, streaming: false },
+                      }
+                    : msg
+                )
+              );
+              cleanupFunctionsRef.current.delete(assistantMessageId);
+            }
+          )
+        : await sendMessage(
+            textToSend,
+            activeModel,
+            (token: string) => {
           streamingContent += token;
           setMessages((prev) =>
             prev.map((msg) =>
@@ -254,10 +308,6 @@ export default function ChatPage() {
           );
 
           cleanupFunctionsRef.current.delete(assistantMessageId);
-
-          if (audioBlob) {
-            speakResponse(streamingContent);
-          }
 
           if (user?.uid) {
             setMessages((currentMessages) => {
