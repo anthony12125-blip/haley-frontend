@@ -57,16 +57,31 @@ export async function saveChat(
     ? firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
     : 'New Chat';
 
-  // Sanitize messages - strip undefined values from metadata
-  const sanitizeMetadata = (metadata: any): any => {
-    if (!metadata) return {};
-    const cleaned: any = {};
-    for (const [key, value] of Object.entries(metadata)) {
-      if (value !== undefined) {
-        cleaned[key] = value;
-      }
+  // Recursively sanitize entire payload - Firestore rejects undefined anywhere
+  const deepSanitize = (obj: any): any => {
+    if (obj === null || obj === undefined) {
+      return null;
     }
-    return cleaned;
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => deepSanitize(item));
+    }
+
+    if (obj instanceof Date) {
+      return obj;
+    }
+
+    if (typeof obj === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          cleaned[key] = deepSanitize(value);
+        }
+      }
+      return cleaned;
+    }
+
+    return obj;
   };
 
   const chatData: Partial<ChatDocument> = {
@@ -75,25 +90,27 @@ export async function saveChat(
     messages: messages.map(msg => ({
       ...msg,
       timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp),
-      metadata: msg.metadata ? sanitizeMetadata(msg.metadata) : undefined
     })),
     timestamp,
     lastActive: new Date(),
     messageCount: messages.filter(m => m.role !== 'system').length,
     modelMode,
-    provider: provider || modelMode || 'haley', // CRITICAL: Always save provider
+    provider: provider || modelMode || 'haley',
     userId,
   };
 
+  // Deep sanitize entire document before Firestore
+  const sanitizedData = deepSanitize(chatData);
+
   console.log('[FIRESTORE] Saving chat:', chatId);
-  console.log('[FIRESTORE] Message count:', chatData.messages?.length);
+  console.log('[FIRESTORE] Message count:', sanitizedData.messages?.length);
 
   try {
-    await setDoc(chatRef, chatData);
+    await setDoc(chatRef, sanitizedData);
     console.log('[FIRESTORE] ✅ Chat saved successfully');
   } catch (error) {
     console.error('[FIRESTORE] ❌ setDoc failed:', error);
-    console.error('[FIRESTORE] Chat data:', JSON.stringify(chatData, null, 2));
+    console.error('[FIRESTORE] Sanitized data:', JSON.stringify(sanitizedData, null, 2));
     throw error;
   }
 }
