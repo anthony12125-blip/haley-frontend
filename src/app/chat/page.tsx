@@ -528,16 +528,35 @@ export default function ChatPage() {
 
           cleanupFunctionsRef.current.delete(assistantMessageId);
 
+          // TTS: Speak the response
+          console.log('[PAGE] 🔊 Triggering TTS...');
+          try {
+            speakResponse(streamingContent);
+            console.log('[PAGE] ✅ TTS triggered');
+          } catch (ttsError) {
+            console.error('[PAGE] ❌ TTS failed:', ttsError);
+          }
+
+          // Save chat to Firestore (non-blocking, wrapped in try-catch)
           if (user?.uid) {
+            console.log('[PAGE] 💾 Saving chat to Firestore...');
             setMessages((currentMessages) => {
               saveChat(user.uid!, currentConversationId, currentMessages, activeModel || 'gemini')
-                .then(() => loadConversationsFromStorage())
-                .catch((error) => console.error('Error saving chat:', error));
+                .then(() => {
+                  console.log('[PAGE] ✅ Chat saved successfully');
+                  loadConversationsFromStorage();
+                })
+                .catch((error) => {
+                  console.error('[PAGE] ❌ Firestore save failed (non-fatal):', error);
+                  // Don't throw - this is non-critical post-stream logic
+                });
               return currentMessages;
             });
           }
 
-          loadSystemStatus();
+          // Load system status
+          console.log('[PAGE] 📊 Loading system status...');
+          loadSystemStatus().catch(err => console.error('[PAGE] System status load failed:', err));
         },
         (error) => {
           console.error('[PAGE] ❌ onError CALLBACK FIRED IN PAGE.TSX');

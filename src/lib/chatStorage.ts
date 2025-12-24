@@ -53,16 +53,29 @@ export async function saveChat(
   
   // Generate title from first user message
   const firstUserMessage = messages.find(m => m.role === 'user');
-  const title = firstUserMessage 
+  const title = firstUserMessage
     ? firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
     : 'New Chat';
-  
+
+  // Sanitize messages - strip undefined values from metadata
+  const sanitizeMetadata = (metadata: any): any => {
+    if (!metadata) return {};
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(metadata)) {
+      if (value !== undefined) {
+        cleaned[key] = value;
+      }
+    }
+    return cleaned;
+  };
+
   const chatData: Partial<ChatDocument> = {
     id: chatId,
     title,
     messages: messages.map(msg => ({
       ...msg,
-      timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
+      timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp),
+      metadata: msg.metadata ? sanitizeMetadata(msg.metadata) : undefined
     })),
     timestamp,
     lastActive: new Date(),
@@ -71,8 +84,18 @@ export async function saveChat(
     provider: provider || modelMode || 'haley', // CRITICAL: Always save provider
     userId,
   };
-  
-  await setDoc(chatRef, chatData);
+
+  console.log('[FIRESTORE] Saving chat:', chatId);
+  console.log('[FIRESTORE] Message count:', chatData.messages?.length);
+
+  try {
+    await setDoc(chatRef, chatData);
+    console.log('[FIRESTORE] ✅ Chat saved successfully');
+  } catch (error) {
+    console.error('[FIRESTORE] ❌ setDoc failed:', error);
+    console.error('[FIRESTORE] Chat data:', JSON.stringify(chatData, null, 2));
+    throw error;
+  }
 }
 
 /**
