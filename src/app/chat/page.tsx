@@ -172,6 +172,10 @@ export default function ChatPage() {
     console.log('[PAGE] messageText param:', messageText);
     console.log('[PAGE] audioBlob param:', audioBlob);
     console.log('[PAGE] current input state:', input);
+    console.log('[PAGE] 🎯 STATE CHECK:');
+    console.log('[PAGE]    multiLLMEnabled:', multiLLMEnabled);
+    console.log('[PAGE]    selectedModels:', selectedModels);
+    console.log('[PAGE]    selectedModels.length:', selectedModels.length);
 
     const textToSend = messageText || input;
     console.log('[PAGE] textToSend resolved to:', textToSend);
@@ -182,6 +186,9 @@ export default function ChatPage() {
     }
 
     // Multi-LLM Mode Check
+    console.log('[PAGE] 🔍 Checking multi-LLM condition...');
+    console.log('[PAGE]    multiLLMEnabled && selectedModels.length > 0 =', multiLLMEnabled && selectedModels.length > 0);
+
     if (multiLLMEnabled && selectedModels.length > 0) {
       console.log('[PAGE] ⚡ Multi-LLM Mode Active');
       console.log('[PAGE] Selected models:', selectedModels);
@@ -218,6 +225,8 @@ export default function ChatPage() {
       };
 
       setMessages((prev) => [...prev, multiLLMMessage]);
+      console.log('[PAGE] ✅ Multi-LLM message added to state:', multiLLMMessageId);
+      console.log('[PAGE]    metadata:', multiLLMMessage.metadata);
 
       // Initialize response tracking
       const providerResponses: Record<string, string> = {};
@@ -779,6 +788,9 @@ export default function ChatPage() {
         onRecoverChat={() => console.log('Recover chat not yet implemented')}
         onMigrateChat={handleMigrateChat}
         onMultiLLMChange={(enabled, models) => {
+          console.log('[PAGE] 🔄 onMultiLLMChange CALLBACK FIRED');
+          console.log('[PAGE]    enabled:', enabled);
+          console.log('[PAGE]    models:', models);
           setMultiLLMEnabled(enabled);
           setSelectedModels(models);
         }}

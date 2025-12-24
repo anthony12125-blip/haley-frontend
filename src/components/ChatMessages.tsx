@@ -227,11 +227,15 @@ export default function ChatMessages({
         {messages.map((message) => {
           // Check if this is a multi-LLM message
           if (message.metadata?.isMultiLLM) {
+            console.log('[ChatMessages] 🎨 Rendering multi-LLM message:', message.id);
             const providers = message.metadata.providers || [];
             const providerResponses = message.metadata.providerResponses || {};
             const completedProviders = message.metadata.completedProviders || [];
             const allComplete = message.metadata.allProvidersComplete || false;
             const isStreaming = message.metadata.streaming || false;
+            console.log('[ChatMessages]   providers:', providers);
+            console.log('[ChatMessages]   providerResponses:', providerResponses);
+            console.log('[ChatMessages]   completedProviders:', completedProviders);
 
             return (
               <div key={message.id} className="mb-4">
