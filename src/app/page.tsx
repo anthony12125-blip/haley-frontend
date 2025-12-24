@@ -6,8 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessageSync, getSystemStatus } from '@/lib/haleyApi';
-import { saveChat, loadAllChats, loadChat, deleteChat as deleteStoredChat } from '@/lib/chatStorage';
+import { sendMessageSync, getSystemStatus, loadAllConversations, loadConversation, deleteConversation } from '@/lib/haleyApi';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -116,7 +115,7 @@ export default function ChatPage() {
     if (!user?.uid) return;
     
     try {
-      const loadedConversations = await loadAllChats(user.uid);
+      const loadedConversations = await loadAllConversations(user.uid);
       setConversations(loadedConversations);
     } catch (error) {
       console.error('Error loading conversations:', error);
@@ -212,16 +211,6 @@ export default function ChatPage() {
 
       await loadSystemStatus();
       
-      // Save chat after successful message exchange
-      if (user?.uid) {
-        // Use a callback to get the latest messages state
-        setMessages((currentMessages) => {
-          saveChat(user.uid!, currentConversationId, currentMessages, activeModel, activeProvider)
-            .then(() => loadConversationsFromStorage())
-            .catch((error) => console.error('Error saving chat:', error));
-          return currentMessages;
-        });
-      }
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
@@ -368,10 +357,6 @@ export default function ChatPage() {
   };
 
   const handleSelectConversation = async (id: string) => {
-    // Save current chat before switching
-    if (user?.uid && messages.length > 1 && id !== currentConversationId) {
-      await saveChat(user.uid, currentConversationId, messages, activeModel, activeProvider);
-    }
     
     setCurrentConversationId(id);
     
@@ -382,7 +367,7 @@ export default function ChatPage() {
     
     // Load the selected conversation
     if (user?.uid) {
-      const loadedChat = await loadChat(user.uid, id);
+      const loadedChat = await loadConversation(user.uid, id);
       if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
         setMessages(loadedChat.messages);
         setActiveModel(loadedChat.modelMode);
@@ -402,7 +387,7 @@ export default function ChatPage() {
     if (!user?.uid) return;
     
     try {
-      await deleteStoredChat(user.uid, id);
+      await deleteConversation(user.uid, id);
       await loadConversationsFromStorage();
       
       // If we deleted the current conversation, start a new one
