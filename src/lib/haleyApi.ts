@@ -51,6 +51,11 @@ export async function sendMessage(
   let eventSource: EventSource | null = null;
 
   try {
+    console.log('[API] 🔵 sendMessage() ENTRY');
+    console.log('[API]    provider:', provider);
+    console.log('[API]    message:', message);
+    console.log('[API]    BACKEND_URL:', BACKEND_URL);
+
     if (!provider) {
       const error = 'Provider must be specified - no model selected';
       console.error('[API] ❌ FATAL:', error);
@@ -60,6 +65,7 @@ export async function sendMessage(
 
     console.log('[API] ====== ASYNC SEND MESSAGE ======');
     console.log('[API] Provider:', provider);
+    console.log('[API] 🌐 About to fetch:', `${BACKEND_URL}/chat/submit`);
 
     const submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
       method: 'POST',

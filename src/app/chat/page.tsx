@@ -236,7 +236,12 @@ export default function ChatPage() {
         providerStreamingContent[model] = '';
       });
 
+      console.log('[PAGE] 🚀 ABOUT TO CALL sendMultiLLMMessage');
+      console.log('[PAGE]    textToSend:', textToSend);
+      console.log('[PAGE]    selectedModels:', selectedModels);
+
       try {
+        console.log('[PAGE] 🌐 Calling sendMultiLLMMessage NOW...');
         const streams = await sendMultiLLMMessage(
           textToSend,
           selectedModels,
