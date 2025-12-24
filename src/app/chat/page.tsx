@@ -3,7 +3,7 @@
 // Force dynamic rendering to prevent Firebase initialization during build
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, sendAudioMessage, sendMultiLLMMessage, getSystemStatus } from '@/lib/haleyApi';
@@ -630,6 +630,14 @@ export default function ChatPage() {
     console.log('[CHAT] ========================================');
   };
 
+  const handleMultiLLMChange = useCallback((enabled: boolean, models: string[]) => {
+    console.log('[PAGE] 🔄 onMultiLLMChange CALLBACK FIRED');
+    console.log('[PAGE]    enabled:', enabled);
+    console.log('[PAGE]    models:', models);
+    setMultiLLMEnabled(enabled);
+    setSelectedModels(models);
+  }, []);
+
   const handleRetryMessage = (messageId: string) => {
     const messageIndex = messages.findIndex(m => m.id === messageId);
     if (messageIndex > 0) {
@@ -787,13 +795,7 @@ export default function ChatPage() {
         userPhotoURL={user.photoURL || undefined}
         onRecoverChat={() => console.log('Recover chat not yet implemented')}
         onMigrateChat={handleMigrateChat}
-        onMultiLLMChange={(enabled, models) => {
-          console.log('[PAGE] 🔄 onMultiLLMChange CALLBACK FIRED');
-          console.log('[PAGE]    enabled:', enabled);
-          console.log('[PAGE]    models:', models);
-          setMultiLLMEnabled(enabled);
-          setSelectedModels(models);
-        }}
+        onMultiLLMChange={handleMultiLLMChange}
       />
 
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
