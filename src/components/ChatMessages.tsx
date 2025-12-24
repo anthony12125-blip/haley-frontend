@@ -23,6 +23,7 @@ interface ChatMessagesProps {
   onRetryMessage?: (messageId: string) => void;
   onBranchMessage?: (messageId: string) => void;
   onStreamingComplete?: () => void;
+  onRetryProvider?: (messageId: string, provider: string) => void;
 }
 
 export default function ChatMessages({
@@ -31,6 +32,7 @@ export default function ChatMessages({
   onRetryMessage,
   onBranchMessage,
   onStreamingComplete,
+  onRetryProvider,
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -263,35 +265,59 @@ export default function ChatMessages({
                         content={response}
                         isStreaming={isProviderStreaming}
                         isComplete={isComplete}
+                        onRetry={onRetryProvider ? () => onRetryProvider(message.id, provider) : undefined}
                       />
                     );
                   })}
 
                   {/* Haley Summarization Offer */}
-                  {allComplete && (
-                    <div className="mt-4 p-4 glass-medium rounded-lg border border-primary/30">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-primary mb-1">
-                            All {providers.length} models have responded
+                  {allComplete && (() => {
+                    // Check for failed providers
+                    const failedProviders = providers.filter(p => {
+                      const response = providerResponses[p] || '';
+                      return response.startsWith('Error:');
+                    });
+                    const hasFailures = failedProviders.length > 0;
+                    const successCount = providers.length - failedProviders.length;
+
+                    return (
+                      <div className="mt-4 p-4 glass-medium rounded-lg border border-primary/30">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold text-primary mb-1">
+                                {hasFailures
+                                  ? `${successCount} of ${providers.length} models responded`
+                                  : `All ${providers.length} models have responded`
+                                }
+                              </div>
+                              <div className="text-sm text-secondary">
+                                {hasFailures
+                                  ? 'Retry failed providers or generate summary with available results?'
+                                  : 'Do you want a summary?'
+                                }
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                // TODO: Implement summarization
+                                console.log('Summarize requested for message:', message.id);
+                                alert('Summarization feature coming soon!');
+                              }}
+                              className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              {hasFailures ? 'Summarize Available' : 'Summarize'}
+                            </button>
                           </div>
-                          <div className="text-sm text-secondary">
-                            Would you like me to summarize and compare the responses?
-                          </div>
+                          {hasFailures && (
+                            <div className="text-xs text-error">
+                              Failed: {failedProviders.map(p => MODEL_NAMES[p] || p).join(', ')}
+                            </div>
+                          )}
                         </div>
-                        <button
-                          onClick={() => {
-                            // TODO: Implement summarization
-                            console.log('Summarize requested for message:', message.id);
-                            alert('Summarization feature coming soon!');
-                          }}
-                          className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors"
-                        >
-                          Summarize
-                        </button>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
             );

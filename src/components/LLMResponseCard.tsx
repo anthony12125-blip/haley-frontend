@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Loader } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader, RotateCw } from 'lucide-react';
 
 interface LLMResponseCardProps {
   modelId: string;
@@ -10,6 +10,7 @@ interface LLMResponseCardProps {
   isStreaming: boolean;
   isComplete: boolean;
   colorClass?: string;
+  onRetry?: () => void;
 }
 
 export default function LLMResponseCard({
@@ -18,7 +19,8 @@ export default function LLMResponseCard({
   content,
   isStreaming,
   isComplete,
-  colorClass = 'hue-teal'
+  colorClass = 'hue-teal',
+  onRetry
 }: LLMResponseCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -35,7 +37,22 @@ export default function LLMResponseCard({
     }
   };
 
+  const getModelCode = () => {
+    switch (modelId) {
+      case 'gemini': return 'GEM';
+      case 'gpt': return 'GPT';
+      case 'claude': return 'CLA';
+      case 'llama': return 'LLA';
+      case 'perplexity': return 'PER';
+      case 'mistral': return 'MIS';
+      case 'grok': return 'GRK';
+      default: return modelId.substring(0, 3).toUpperCase();
+    }
+  };
+
+  const isError = content.startsWith('Error:');
   const modelColorClass = getModelColor();
+  const modelCode = getModelCode();
 
   return (
     <div className={`llm-response-card glass-medium rounded-lg border border-border mb-3 ${modelColorClass}`}>
@@ -45,29 +62,45 @@ export default function LLMResponseCard({
         className="w-full flex items-center justify-between p-4 hover:bg-panel-light/30 transition-colors rounded-t-lg"
       >
         <div className="flex items-center gap-3">
+          {/* 3-letter identifier - size varies by state */}
+          <div className={`font-bold ${isError ? 'text-lg' : 'text-2xl'} ${modelColorClass}`}>
+            {modelCode}
+          </div>
+
           {/* Status indicator */}
           {isStreaming && (
             <Loader size={16} className="animate-spin text-primary" />
           )}
-          {isComplete && !isStreaming && (
+          {isComplete && !isStreaming && !isError && (
             <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
           )}
           {!isStreaming && !isComplete && (
             <div className="w-2 h-2 rounded-full bg-gray-500" />
           )}
 
-          {/* Model name */}
-          <span className="font-semibold text-base">{modelName}</span>
+          {/* Retry icon for error state */}
+          {isError && onRetry && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRetry();
+              }}
+              className="p-1 hover:bg-panel-light rounded transition-colors"
+              title="Retry this provider"
+            >
+              <RotateCw size={16} className="text-error" />
+            </button>
+          )}
 
           {/* Status text */}
           <span className="text-xs text-secondary">
-            {isStreaming ? 'Responding...' : isComplete ? 'Complete' : 'Waiting...'}
+            {isStreaming ? 'Responding...' : isError ? 'Failed' : isComplete ? 'Complete' : 'Waiting...'}
           </span>
         </div>
 
         {/* Expand/collapse icon */}
         <div className="flex items-center gap-2">
-          {content && (
+          {content && !isError && (
             <span className="text-xs text-secondary">
               {content.length} chars
             </span>

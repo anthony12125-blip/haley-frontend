@@ -676,6 +676,153 @@ export default function ChatPage() {
     console.log('Branch conversation from message:', messageId);
   };
 
+  const handleRetryProvider = async (messageId: string, provider: string) => {
+    console.log('[RETRY] Retrying provider:', provider, 'for message:', messageId);
+
+    // Find the original user message
+    const msgIndex = messages.findIndex(m => m.id === messageId);
+    if (msgIndex <= 0) return;
+
+    const userMessage = messages[msgIndex - 1];
+    if (userMessage.role !== 'user') return;
+
+    // Reset this provider's state to streaming
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              metadata: {
+                ...msg.metadata,
+                providerResponses: {
+                  ...msg.metadata?.providerResponses,
+                  [provider]: '',
+                },
+                completedProviders: (msg.metadata?.completedProviders || []).filter(p => p !== provider),
+                streaming: true,
+                allProvidersComplete: false,
+              },
+            }
+          : msg
+      )
+    );
+
+    // Stream content tracker for this retry
+    let providerStreamingContent = '';
+
+    try {
+      const { messageId: streamMsgId, cleanup } = await sendMessage(
+        userMessage.content,
+        provider,
+        (token) => {
+          // Token callback
+          providerStreamingContent += token;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === messageId
+                ? {
+                    ...msg,
+                    metadata: {
+                      ...msg.metadata,
+                      providerResponses: {
+                        ...msg.metadata?.providerResponses,
+                        [provider]: providerStreamingContent,
+                      },
+                    },
+                  }
+                : msg
+            )
+          );
+        },
+        (response) => {
+          // Completion callback
+          console.log(`[RETRY] ${provider} completed`);
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.id === messageId) {
+                const completedProviders = [
+                  ...(msg.metadata?.completedProviders || []),
+                  provider,
+                ];
+                const allProviders = msg.metadata?.providers || [];
+                const allComplete = completedProviders.length === allProviders.length;
+
+                return {
+                  ...msg,
+                  metadata: {
+                    ...msg.metadata,
+                    completedProviders,
+                    streaming: !allComplete,
+                    allProvidersComplete: allComplete,
+                  },
+                };
+              }
+              return msg;
+            })
+          );
+          cleanup();
+        },
+        (error) => {
+          // Error callback
+          console.error(`[RETRY] ${provider} error:`, error);
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.id === messageId) {
+                const completedProviders = [
+                  ...(msg.metadata?.completedProviders || []),
+                  provider,
+                ];
+                const allProviders = msg.metadata?.providers || [];
+                const allComplete = completedProviders.length === allProviders.length;
+
+                return {
+                  ...msg,
+                  metadata: {
+                    ...msg.metadata,
+                    providerResponses: {
+                      ...msg.metadata?.providerResponses,
+                      [provider]: `Error: ${error}`,
+                    },
+                    completedProviders,
+                    streaming: !allComplete,
+                    allProvidersComplete: allComplete,
+                  },
+                };
+              }
+              return msg;
+            })
+          );
+        }
+      );
+
+      // Store cleanup function
+      cleanupFunctionsRef.current.set(`${messageId}-${provider}-retry`, cleanup);
+
+    } catch (error) {
+      console.error(`[RETRY] Failed to retry ${provider}:`, error);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                metadata: {
+                  ...msg.metadata,
+                  providerResponses: {
+                    ...msg.metadata?.providerResponses,
+                    [provider]: `Error: ${error instanceof Error ? error.message : 'Retry failed'}`,
+                  },
+                  completedProviders: [
+                    ...(msg.metadata?.completedProviders || []),
+                    provider,
+                  ],
+                },
+              }
+            : msg
+        )
+      );
+    }
+  };
+
   const handleMigrateChat = async () => {
     try {
       // Generate AI-agnostic migration payload for entire chat
@@ -847,6 +994,7 @@ export default function ChatPage() {
           onRetryMessage={handleRetryMessage}
           onBranchMessage={handleBranchMessage}
           onStreamingComplete={() => {}}
+          onRetryProvider={handleRetryProvider}
         />
 
         <ChatInputBar
