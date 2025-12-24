@@ -3,7 +3,19 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import MessageBubble from './MessageBubble';
 import { HaleyThinkingAnimation } from './HaleyThinkingAnimation';
+import LLMResponseCard from './LLMResponseCard';
 import type { Message } from '@/types';
+
+// Model name mapping
+const MODEL_NAMES: Record<string, string> = {
+  'gemini': 'Gemini',
+  'gpt': 'GPT',
+  'claude': 'Claude',
+  'llama': 'Meta',
+  'perplexity': 'Perplexity',
+  'mistral': 'Mistral',
+  'grok': 'Grok',
+};
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -213,10 +225,79 @@ export default function ChatMessages({
 
       <div className="messages-container">
         {messages.map((message) => {
+          // Check if this is a multi-LLM message
+          if (message.metadata?.isMultiLLM) {
+            const providers = message.metadata.providers || [];
+            const providerResponses = message.metadata.providerResponses || {};
+            const completedProviders = message.metadata.completedProviders || [];
+            const allComplete = message.metadata.allProvidersComplete || false;
+            const isStreaming = message.metadata.streaming || false;
+
+            return (
+              <div key={message.id} className="mb-4">
+                {/* User message for context */}
+                {message.content && (
+                  <div className="max-w-3xl mx-auto px-4 mb-2">
+                    <div className="text-sm text-secondary italic">
+                      Querying {providers.length} models in parallel...
+                    </div>
+                  </div>
+                )}
+
+                {/* Multi-LLM Response Cards */}
+                <div className="max-w-3xl mx-auto px-4 space-y-3">
+                  {providers.map((provider: string) => {
+                    const response = providerResponses[provider] || '';
+                    const isComplete = completedProviders.includes(provider);
+                    const isProviderStreaming = !isComplete && response.length > 0;
+
+                    return (
+                      <LLMResponseCard
+                        key={`${message.id}-${provider}`}
+                        modelId={provider}
+                        modelName={MODEL_NAMES[provider] || provider}
+                        content={response}
+                        isStreaming={isProviderStreaming}
+                        isComplete={isComplete}
+                      />
+                    );
+                  })}
+
+                  {/* Haley Summarization Offer */}
+                  {allComplete && (
+                    <div className="mt-4 p-4 glass-medium rounded-lg border border-primary/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold text-primary mb-1">
+                            All {providers.length} models have responded
+                          </div>
+                          <div className="text-sm text-secondary">
+                            Would you like me to summarize and compare the responses?
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            // TODO: Implement summarization
+                            console.log('Summarize requested for message:', message.id);
+                            alert('Summarization feature coming soon!');
+                          }}
+                          className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors"
+                        >
+                          Summarize
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          // Regular message rendering
           // Hide glyph from all messages when isLoading is true (thinking animation is showing)
           // Only show glyph on the last assistant message when NOT loading
           const shouldShowGlyph = message.id === lastAssistantMessageId && !isLoading;
-          
+
           return (
             <MessageBubble
               key={message.id}

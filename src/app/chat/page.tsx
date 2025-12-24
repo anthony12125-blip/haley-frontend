@@ -181,6 +181,160 @@ export default function ChatPage() {
       return;
     }
 
+    // Multi-LLM Mode Check
+    if (multiLLMEnabled && selectedModels.length > 0) {
+      console.log('[PAGE] ⚡ Multi-LLM Mode Active');
+      console.log('[PAGE] Selected models:', selectedModels);
+
+      const userMessage: Message = {
+        id: generateId(),
+        role: 'user',
+        content: textToSend,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+      setInput('');
+
+      if (hasActiveNewChat) {
+        setHasActiveNewChat(false);
+      }
+
+      // Create multi-LLM response container message
+      const multiLLMMessageId = generateId();
+      const multiLLMMessage: Message = {
+        id: multiLLMMessageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'multi-llm',
+          isMultiLLM: true,
+          providers: selectedModels,
+          streaming: true,
+          providerResponses: {},
+          completedProviders: [],
+        },
+      };
+
+      setMessages((prev) => [...prev, multiLLMMessage]);
+
+      // Initialize response tracking
+      const providerResponses: Record<string, string> = {};
+      const providerStreamingContent: Record<string, string> = {};
+      selectedModels.forEach(model => {
+        providerResponses[model] = '';
+        providerStreamingContent[model] = '';
+      });
+
+      try {
+        const streams = await sendMultiLLMMessage(
+          textToSend,
+          selectedModels,
+          (provider: string, token: string) => {
+            // Update streaming content for this provider
+            providerStreamingContent[provider] += token;
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === multiLLMMessageId
+                  ? {
+                      ...msg,
+                      metadata: {
+                        ...msg.metadata,
+                        providerResponses: {
+                          ...msg.metadata?.providerResponses,
+                          [provider]: providerStreamingContent[provider],
+                        },
+                      },
+                    }
+                  : msg
+              )
+            );
+          },
+          (provider: string, response) => {
+            // Mark provider as completed
+            console.log(`[MULTI-LLM] ${provider} completed`);
+
+            setMessages((prev) =>
+              prev.map((msg) => {
+                if (msg.id === multiLLMMessageId) {
+                  const completedProviders = [
+                    ...(msg.metadata?.completedProviders || []),
+                    provider,
+                  ];
+                  const allComplete = completedProviders.length === selectedModels.length;
+
+                  return {
+                    ...msg,
+                    metadata: {
+                      ...msg.metadata,
+                      completedProviders,
+                      streaming: !allComplete,
+                      allProvidersComplete: allComplete,
+                    },
+                  };
+                }
+                return msg;
+              })
+            );
+
+            // Cleanup this provider's stream
+            const streamData = streams.find(s => s.provider === provider);
+            if (streamData) {
+              streamData.cleanup();
+              cleanupFunctionsRef.current.delete(`${multiLLMMessageId}-${provider}`);
+            }
+          },
+          (provider: string, error: string) => {
+            console.error(`[MULTI-LLM] ${provider} error:`, error);
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === multiLLMMessageId
+                  ? {
+                      ...msg,
+                      metadata: {
+                        ...msg.metadata,
+                        providerResponses: {
+                          ...msg.metadata?.providerResponses,
+                          [provider]: `Error: ${error}`,
+                        },
+                      },
+                    }
+                  : msg
+              )
+            );
+          }
+        );
+
+        // Store cleanup functions
+        streams.forEach((stream) => {
+          cleanupFunctionsRef.current.set(
+            `${multiLLMMessageId}-${stream.provider}`,
+            stream.cleanup
+          );
+        });
+
+      } catch (error) {
+        console.error('[MULTI-LLM] ❌ Failed to initialize streams:', error);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === multiLLMMessageId
+              ? {
+                  ...msg,
+                  content: `Error: ${error instanceof Error ? error.message : 'Failed to start multi-LLM query'}`,
+                  metadata: { ...msg.metadata, streaming: false },
+                }
+              : msg
+          )
+        );
+      }
+
+      return; // Exit early for multi-LLM mode
+    }
+
+    // Single Model Mode (existing logic)
     if (!activeModel) {
       console.error('[CHAT] ❌ CRITICAL: No model selected');
       setActiveModel('gemini');
