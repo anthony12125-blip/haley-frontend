@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, sendAudioMessage, sendMultiLLMMessage, getSystemStatus } from '@/lib/haleyApi';
-import { saveChat, loadAllChats, loadChat, deleteChat as deleteStoredChat } from '@/lib/chatStorage';
+import { loadAllConversations, loadConversation, deleteConversation } from "@/lib/haleyApi";
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { MigrationEngine } from '@/lib/migrationEngine';
 import { useAIClipboard } from '@/contexts/AIClipboardContext';
@@ -30,7 +30,6 @@ export default function ChatPage() {
   const cleanupFunctionsRef = useRef<Map<string, () => void>>(new Map());
 
   // Write lock to prevent race conditions during Firestore persistence
-  const saveLockRef = useRef<boolean>(false);
 
   // UI State
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -141,7 +140,7 @@ export default function ChatPage() {
     if (!user?.uid) return;
     
     try {
-      const loadedConversations = await loadAllChats(user.uid);
+      const loadedConversations = await loadAllConversations(user.uid);
       setConversations(loadedConversations);
     } catch (error) {
       console.error('Error loading conversations:', error);
@@ -172,12 +171,6 @@ export default function ChatPage() {
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
     console.log('[PAGE] ========== handleSend CALLED ==========');
-
-    // Block new messages while save is in progress
-    if (saveLockRef.current) {
-      console.warn('[PAGE] 🚫 MESSAGE BLOCKED - Firestore save in progress, rejecting new message');
-      return;
-    }
 
     console.log('[PAGE] messageText param:', messageText);
     console.log('[PAGE] audioBlob param:', audioBlob);
@@ -547,38 +540,6 @@ export default function ChatPage() {
             console.error('[PAGE] ❌ TTS failed:', ttsError);
           }
 
-          // Save chat to Firestore atomically with write lock
-          if (user?.uid) {
-            console.log('[PAGE] 💾 ACQUIRING SAVE LOCK...');
-            if (saveLockRef.current) {
-              console.warn('[PAGE] ⚠️  CONCURRENT SAVE BLOCKED - Lock already held');
-              return;
-            }
-
-            saveLockRef.current = true;
-            console.log('[PAGE] 🔒 SAVE LOCK ACQUIRED - Persisting to Firestore...');
-
-            // Get current messages state for atomic save
-            setMessages((currentMessages) => {
-              // Persist atomically - await completes before lock release
-              (async () => {
-                try {
-                  await saveChat(user.uid!, currentConversationId, currentMessages, activeModel || 'gemini');
-                  console.log('[PAGE] ✅✅✅ PERSISTENCE COMMITTED ✅✅✅');
-                  await loadConversationsFromStorage();
-                } catch (error) {
-                  console.error('[PAGE] ❌ PERSISTENCE FAILED:', error);
-                  // Don't throw - log and release lock
-                } finally {
-                  saveLockRef.current = false;
-                  console.log('[PAGE] 🔓 SAVE LOCK RELEASED');
-                }
-              })();
-              return currentMessages; // No state mutation during save
-            });
-          }
-
-          // Load system status
           console.log('[PAGE] 📊 Loading system status...');
           loadSystemStatus().catch(err => console.error('[PAGE] System status load failed:', err));
         },
@@ -670,11 +631,6 @@ export default function ChatPage() {
   };
 
   const handleModelSelect = (justice: string | null) => {
-    // Block model switch while save is in progress
-    if (saveLockRef.current) {
-      console.warn('[PAGE] 🚫 MODEL SWITCH BLOCKED - Firestore save in progress');
-      return;
-    }
 
     const modelKey = justice || 'haley';
 
@@ -913,11 +869,6 @@ export default function ChatPage() {
   };
 
   const handleNewConversation = async () => {
-    // Block new conversation while save is in progress
-    if (saveLockRef.current) {
-      console.warn('[PAGE] 🚫 NEW CONVERSATION BLOCKED - Firestore save in progress');
-      return;
-    }
 
     if (hasActiveNewChat) {
       console.log('New chat already active - ignoring additional clicks');
@@ -949,25 +900,6 @@ export default function ChatPage() {
   };
 
   const handleSelectConversation = async (id: string) => {
-    // Block conversation switch while save is in progress
-    if (saveLockRef.current) {
-      console.warn('[PAGE] 🚫 CONVERSATION SWITCH BLOCKED - Firestore save in progress');
-      return;
-    }
-
-    if (user?.uid && messages.length > 1 && id !== currentConversationId) {
-      saveLockRef.current = true;
-      console.log('[PAGE] 🔒 SAVE LOCK ACQUIRED (conversation switch)');
-      try {
-        await saveChat(user.uid, currentConversationId, messages, activeModel || 'gemini');
-        console.log('[PAGE] ✅ Pre-switch save completed');
-      } catch (error) {
-        console.error('[PAGE] ❌ Pre-switch save failed:', error);
-      } finally {
-        saveLockRef.current = false;
-        console.log('[PAGE] 🔓 SAVE LOCK RELEASED (conversation switch)');
-      }
-    }
 
     setCurrentConversationId(id);
     
@@ -976,7 +908,7 @@ export default function ChatPage() {
     }
     
     if (user?.uid) {
-      const loadedChat = await loadChat(user.uid, id);
+      const loadedChat = await loadConversation(user.uid, id);
       if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
         setMessages(loadedChat.messages);
         setActiveModel(loadedChat.modelMode);
@@ -994,7 +926,7 @@ export default function ChatPage() {
     if (!user?.uid) return;
     
     try {
-      await deleteStoredChat(user.uid, id);
+      await deleteConversation(user.uid, id);
       await loadConversationsFromStorage();
       
       if (id === currentConversationId) {

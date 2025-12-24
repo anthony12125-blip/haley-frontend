@@ -370,4 +370,69 @@ export async function getSystemStatus(): Promise<SystemStatusResponse> {
   }
 }
 
+/**
+ * Load all conversations for a user from Mama Haley (backend)
+ * TRUTH MODEL: Mama Haley owns persistence, Baby Haley requests data
+ */
+export async function loadAllConversations(userId: string, limit: number = 50) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/chat/conversations/${userId}?limit=${limit}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to load conversations: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.conversations || [];
+  } catch (error) {
+    console.error('[API] Load conversations failed:', error);
+    return [];
+  }
+}
+
+/**
+ * Load a specific conversation from Mama Haley (backend)
+ * TRUTH MODEL: Mama Haley owns persistence, Baby Haley requests data
+ */
+export async function loadConversation(userId: string, conversationId: string) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/chat/conversations/${userId}/${conversationId}`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error(`Failed to load conversation: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('[API] Load conversation failed:', error);
+    return null;
+  }
+}
+
+/**
+ * Delete a conversation via Mama Haley (backend)
+ * TRUTH MODEL: Mama Haley owns persistence, Baby Haley requests deletion
+ */
+export async function deleteConversation(userId: string, conversationId: string) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/chat/conversations/${userId}/${conversationId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete conversation: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('[API] Delete conversation failed:', error);
+    throw error;
+  }
+}
+
 export { BACKEND_URL };
