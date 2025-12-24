@@ -478,19 +478,33 @@ export default function ChatPage() {
             textToSend,
             activeModel,
             (token: string) => {
+          console.log('[PAGE] 🔤 onToken CALLBACK FIRED IN PAGE.TSX');
+          console.log('[PAGE]    Token:', token);
+          console.log('[PAGE]    streamingContent before:', streamingContent.substring(0, 30));
           streamingContent += token;
-          setMessages((prev) =>
-            prev.map((msg) =>
+          console.log('[PAGE]    streamingContent after:', streamingContent.substring(0, 30));
+          console.log('[PAGE]    Calling setMessages to update UI...');
+          setMessages((prev) => {
+            console.log('[PAGE]    setMessages updater function executing');
+            console.log('[PAGE]    Current messages count:', prev.length);
+            const updated = prev.map((msg) =>
               msg.id === assistantMessageId
                 ? { ...msg, content: streamingContent }
                 : msg
-            )
-          );
+            );
+            console.log('[PAGE]    Updated messages created, returning to React');
+            return updated;
+          });
+          console.log('[PAGE] ✅ setMessages called, React should re-render');
         },
         (response) => {
-          console.log('[CHAT] Stream completed');
-          setMessages((prev) =>
-            prev.map((msg) =>
+          console.log('[PAGE] ✅✅✅ onComplete CALLBACK FIRED IN PAGE.TSX ✅✅✅');
+          console.log('[PAGE]    Response:', response);
+          console.log('[PAGE]    Final streamingContent:', streamingContent);
+          console.log('[PAGE]    Calling setMessages to mark complete...');
+          setMessages((prev) => {
+            console.log('[PAGE]    setMessages (complete) updater executing');
+            const updated = prev.map((msg) =>
               msg.id === assistantMessageId
                 ? {
                     ...msg,
@@ -506,8 +520,11 @@ export default function ChatPage() {
                     },
                   }
                 : msg
-            )
-          );
+            );
+            console.log('[PAGE]    Message marked as streaming:false');
+            return updated;
+          });
+          console.log('[PAGE] ✅ Stream marked complete, spinner should stop');
 
           cleanupFunctionsRef.current.delete(assistantMessageId);
 
@@ -523,7 +540,8 @@ export default function ChatPage() {
           loadSystemStatus();
         },
         (error) => {
-          console.error('[CHAT] Stream error:', error);
+          console.error('[PAGE] ❌ onError CALLBACK FIRED IN PAGE.TSX');
+          console.error('[PAGE]    Error:', error);
 
           cleanupFunctionsRef.current.delete(assistantMessageId);
 

@@ -79,28 +79,50 @@ export async function sendMessage(
       }),
     });
 
+    console.log('[API] ✅ Fetch completed. Status:', submitResponse.status, submitResponse.statusText);
+
     if (!submitResponse.ok) {
+      const errorText = await submitResponse.text();
+      console.error('[API] ❌ Submit failed:', submitResponse.status, errorText);
       throw new Error(`Submit failed: ${submitResponse.status}`);
     }
 
-    const { assistant_message_id } = await submitResponse.json();
-    console.log('[API] Message submitted, ID:', assistant_message_id);
+    const responseData = await submitResponse.json();
+    const { assistant_message_id } = responseData;
+    console.log('[API] ✅ Message submitted successfully');
+    console.log('[API]    assistant_message_id:', assistant_message_id);
+    console.log('[API] 📡 Creating EventSource...');
 
-    eventSource = new EventSource(`${BACKEND_URL}/chat/stream/${assistant_message_id}`);
+    const streamUrl = `${BACKEND_URL}/chat/stream/${assistant_message_id}`;
+    console.log('[API]    Stream URL:', streamUrl);
+
+    eventSource = new EventSource(streamUrl);
+    console.log('[API] ✅ EventSource created, waiting for connection...');
 
     let fullResponse = '';
     let metadata: any = {};
 
+    eventSource.onopen = () => {
+      console.log('[API] ✅✅✅ EventSource CONNECTED - stream is live! ✅✅✅');
+    };
+
     eventSource.onmessage = (event) => {
+      console.log('[API] 📨 EventSource message event fired');
+      console.log('[API]    Raw data:', event.data);
       try {
         const data = JSON.parse(event.data);
+        console.log('[API]    Parsed type:', data.type);
 
         if (data.type === 'token') {
           fullResponse += data.content;
+          console.log('[API] 🔤 TOKEN RECEIVED - calling onToken()');
+          console.log('[API]    Content:', data.content);
+          console.log('[API]    Full response so far:', fullResponse.substring(0, 50) + '...');
           onToken?.(data.content);
+          console.log('[API] ✅ onToken() called');
         } else if (data.type === 'done') {
           metadata = data.metadata || {};
-          console.log('[API] Stream complete');
+          console.log('[API] ✅✅✅ STREAM COMPLETE - calling onComplete() ✅✅✅');
           eventSource?.close();
           onComplete?.({
             status: 'completed',
@@ -110,18 +132,23 @@ export async function sendMessage(
             operation: 'chat',
             baby_invoked: metadata.baby_invoked || false
           });
+          console.log('[API] ✅ onComplete() called');
         } else if (data.type === 'error') {
-          console.error('[API] Stream error:', data.error);
+          console.error('[API] ❌ Stream error:', data.error);
           eventSource?.close();
           onError?.(data.error);
+        } else if (data.type === 'status') {
+          console.log('[API] ℹ️ Status update:', data.status);
         }
       } catch (error) {
-        console.error('[API] Parse error:', error);
+        console.error('[API] ❌ Parse error:', error);
       }
     };
 
     eventSource.onerror = (error) => {
-      console.error('[API] EventSource error:', error);
+      console.error('[API] ❌❌❌ EventSource ERROR ❌❌❌');
+      console.error('[API]    Error object:', error);
+      console.error('[API]    ReadyState:', eventSource?.readyState);
       eventSource?.close();
       onError?.('Connection lost');
     };
