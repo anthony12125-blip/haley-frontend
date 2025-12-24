@@ -57,14 +57,20 @@ export async function saveChat(
     ? firstUserMessage.content.slice(0, 50) + (firstUserMessage.content.length > 50 ? '...' : '')
     : 'New Chat';
 
+  // Track removed keys for proof of enforcement
+  const removedKeys: string[] = [];
+
   // Recursively sanitize entire payload - Firestore rejects undefined anywhere
-  const deepSanitize = (obj: any): any => {
+  const deepSanitize = (obj: any, path: string = 'root'): any => {
     if (obj === null || obj === undefined) {
+      if (obj === undefined && path !== 'root') {
+        removedKeys.push(path);
+      }
       return null;
     }
 
     if (Array.isArray(obj)) {
-      return obj.map(item => deepSanitize(item));
+      return obj.map((item, index) => deepSanitize(item, `${path}[${index}]`));
     }
 
     if (obj instanceof Date) {
@@ -75,7 +81,9 @@ export async function saveChat(
       const cleaned: any = {};
       for (const [key, value] of Object.entries(obj)) {
         if (value !== undefined) {
-          cleaned[key] = deepSanitize(value);
+          cleaned[key] = deepSanitize(value, `${path}.${key}`);
+        } else {
+          removedKeys.push(`${path}.${key}`);
         }
       }
       return cleaned;
@@ -99,18 +107,38 @@ export async function saveChat(
     userId,
   };
 
+  console.log('[FIRESTORE] ========================================');
+  console.log('[FIRESTORE] 🔒 SANITIZATION CHOKE POINT EXECUTING');
+  console.log('[FIRESTORE] ========================================');
+  console.log('[FIRESTORE] Chat ID:', chatId);
+  console.log('[FIRESTORE] User ID:', userId);
+  console.log('[FIRESTORE] Message count before sanitization:', messages.length);
+
   // Deep sanitize entire document before Firestore
   const sanitizedData = deepSanitize(chatData);
 
-  console.log('[FIRESTORE] Saving chat:', chatId);
-  console.log('[FIRESTORE] Message count:', sanitizedData.messages?.length);
+  console.log('[FIRESTORE] ✅ SANITIZATION COMPLETE');
+  console.log('[FIRESTORE] Keys removed during sanitization:', removedKeys.length);
+  if (removedKeys.length > 0) {
+    console.log('[FIRESTORE] ⚠️  UNDEFINED FIELDS REMOVED:', removedKeys);
+  } else {
+    console.log('[FIRESTORE] ✓ No undefined fields found');
+  }
+
+  console.log('[FIRESTORE] 📦 Full sanitized object:');
+  console.log(JSON.stringify(sanitizedData, null, 2));
+  console.log('[FIRESTORE] ========================================');
+  console.log('[FIRESTORE] 📝 Calling setDoc() NOW...');
 
   try {
     await setDoc(chatRef, sanitizedData);
-    console.log('[FIRESTORE] ✅ Chat saved successfully');
+    console.log('[FIRESTORE] ✅✅✅ setDoc() SUCCESS ✅✅✅');
   } catch (error) {
-    console.error('[FIRESTORE] ❌ setDoc failed:', error);
-    console.error('[FIRESTORE] Sanitized data:', JSON.stringify(sanitizedData, null, 2));
+    console.error('[FIRESTORE] ❌❌❌ setDoc() FAILED ❌❌❌');
+    console.error('[FIRESTORE] Error object:', error);
+    console.error('[FIRESTORE] Error type:', typeof error);
+    console.error('[FIRESTORE] Error message:', error instanceof Error ? error.message : 'Unknown');
+    console.error('[FIRESTORE] Sanitized data that failed:', JSON.stringify(sanitizedData, null, 2));
     throw error;
   }
 }
