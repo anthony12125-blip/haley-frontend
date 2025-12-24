@@ -299,20 +299,31 @@ export default function ChatPage() {
             console.error(`[MULTI-LLM] ${provider} error:`, error);
 
             setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === multiLLMMessageId
-                  ? {
-                      ...msg,
-                      metadata: {
-                        ...msg.metadata,
-                        providerResponses: {
-                          ...msg.metadata?.providerResponses,
-                          [provider]: `Error: ${error}`,
-                        },
+              prev.map((msg) => {
+                if (msg.id === multiLLMMessageId) {
+                  // Mark provider as completed even on error
+                  const completedProviders = [
+                    ...(msg.metadata?.completedProviders || []),
+                    provider,
+                  ];
+                  const allComplete = completedProviders.length === selectedModels.length;
+
+                  return {
+                    ...msg,
+                    metadata: {
+                      ...msg.metadata,
+                      providerResponses: {
+                        ...msg.metadata?.providerResponses,
+                        [provider]: `Error: ${error}`,
                       },
-                    }
-                  : msg
-              )
+                      completedProviders,
+                      streaming: !allComplete,
+                      allProvidersComplete: allComplete,
+                    },
+                  };
+                }
+                return msg;
+              })
             );
           }
         );
@@ -327,13 +338,26 @@ export default function ChatPage() {
 
       } catch (error) {
         console.error('[MULTI-LLM] ❌ Failed to initialize streams:', error);
+
+        // Create error artifacts for ALL providers
+        const errorMessage = error instanceof Error ? error.message : 'Failed to start multi-LLM query';
+        const errorResponses: Record<string, string> = {};
+        selectedModels.forEach(model => {
+          errorResponses[model] = `Error: ${errorMessage}`;
+        });
+
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === multiLLMMessageId
               ? {
                   ...msg,
-                  content: `Error: ${error instanceof Error ? error.message : 'Failed to start multi-LLM query'}`,
-                  metadata: { ...msg.metadata, streaming: false },
+                  metadata: {
+                    ...msg.metadata,
+                    providerResponses: errorResponses,
+                    completedProviders: selectedModels,
+                    streaming: false,
+                    allProvidersComplete: true,
+                  },
                 }
               : msg
           )
