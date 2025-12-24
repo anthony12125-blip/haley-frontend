@@ -778,10 +778,10 @@ export default function ChatPage() {
         userPhotoURL={user.photoURL || undefined}
         onRecoverChat={() => console.log('Recover chat not yet implemented')}
         onMigrateChat={handleMigrateChat}
-        multiLLMEnabled={multiLLMEnabled}
-        onToggleMultiLLM={setMultiLLMEnabled}
-        selectedModels={selectedModels}
-        onSelectModels={setSelectedModels}
+        onMultiLLMChange={(enabled, models) => {
+          setMultiLLMEnabled(enabled);
+          setSelectedModels(models);
+        }}
       />
 
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${

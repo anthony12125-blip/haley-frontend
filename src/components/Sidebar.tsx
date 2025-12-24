@@ -46,10 +46,7 @@ interface SidebarProps {
   userPhotoURL?: string;
   onRecoverChat?: () => void;
   onMigrateChat?: () => void;
-  multiLLMEnabled?: boolean;
-  onToggleMultiLLM?: (enabled: boolean) => void;
-  selectedModels?: string[];
-  onSelectModels?: (models: string[]) => void;
+  onMultiLLMChange?: (enabled: boolean, selectedModels: string[]) => void;
 }
 
 // AI Models
@@ -94,16 +91,22 @@ export default function Sidebar({
   userPhotoURL,
   onRecoverChat,
   onMigrateChat,
-  multiLLMEnabled = false,
-  onToggleMultiLLM,
-  selectedModels = [],
-  onSelectModels,
+  onMultiLLMChange,
 }: SidebarProps) {
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showHaleyMenu, setShowHaleyMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // Multi-LLM Query state (default OFF, no persistence)
+  const [multiLLMEnabled, setMultiLLMEnabled] = useState(false);
+  const [selectedModels, setSelectedModels] = useState<string[]>([]);
+
+  // Notify parent when Multi-LLM state changes
+  useEffect(() => {
+    onMultiLLMChange?.(multiLLMEnabled, selectedModels);
+  }, [multiLLMEnabled, selectedModels, onMultiLLMChange]);
   
   // Initialize aiModelsCollapsed from localStorage (default to expanded = false for collapsed)
   const [aiModelsCollapsed, setAiModelsCollapsed] = useState(() => {
@@ -184,12 +187,15 @@ export default function Sidebar({
         return;
       }
 
-      if (onSelectModels) {
-        const newSelection = selectedModels.includes(modelId)
-          ? selectedModels.filter(id => id !== modelId)
-          : [...selectedModels, modelId];
-        onSelectModels(newSelection);
-      }
+      setSelectedModels(prev => {
+        if (prev.includes(modelId)) {
+          // Deselect if already selected
+          return prev.filter(id => id !== modelId);
+        } else {
+          // Add to selection
+          return [...prev, modelId];
+        }
+      });
     } else {
       // Single-select mode (original behavior)
       if (onSelectModel) {
@@ -515,10 +521,10 @@ export default function Sidebar({
                     <MultiLLMToggle
                       enabled={multiLLMEnabled}
                       onChange={(enabled) => {
-                        onToggleMultiLLM?.(enabled);
+                        setMultiLLMEnabled(enabled);
                         if (!enabled) {
                           // Reset to single-select mode
-                          onSelectModels?.([]);
+                          setSelectedModels([]);
                           // Restore active model if there was one before multi-mode
                           if (activeModel) {
                             onSelectModel?.(activeModel);
@@ -564,10 +570,10 @@ export default function Sidebar({
                           const allModelIds = AI_MODELS.map(m => m.id);
                           if (selectedModels.length === AI_MODELS.length) {
                             // Deselect all
-                            onSelectModels?.([]);
+                            setSelectedModels([]);
                           } else {
                             // Select all
-                            onSelectModels?.(allModelIds);
+                            setSelectedModels(allModelIds);
                           }
                         }}
                         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
