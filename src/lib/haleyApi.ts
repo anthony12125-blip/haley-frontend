@@ -74,8 +74,7 @@ export async function sendMessage(
         conversation_id: 'default',
         user_id: 'user',
         message: message,
-        provider: provider,
-        mode: 'auto'
+        provider: provider
       }),
     });
 
@@ -301,43 +300,6 @@ export async function sendAudioMessage(
     console.error('[HaleyAPI] Audio Error:', error);
     if (eventSource) eventSource.close();
     onError?.(error instanceof Error ? error.message : 'Unknown error');
-    throw error;
-  }
-}
-
-export async function sendMessageSync(message: string, provider?: string | null): Promise<OSOperationResponse> {
-  try {
-    if (!provider) {
-      throw new Error('Provider must be specified');
-    }
-
-    const response = await fetch(`${BACKEND_URL}/logic/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        intent: 'chat.message',
-        user_id: 'user',
-        payload: { message, provider },
-        permissions: ['user'],
-        mode: 'auto'
-      }),
-    });
-
-    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-    const data = await response.json();
-
-    return {
-      status: data.status,
-      result: data.result,
-      state_changed: false,
-      error_msg: data.error,
-      baby_invoked: data.result?.baby_invoked || false,
-      model_used: data.result?.model_used || provider,
-      task: data.result?.task || 'general',
-      operation: 'chat'
-    };
-  } catch (error) {
-    console.error('[HaleyAPI] Error:', error);
     throw error;
   }
 }

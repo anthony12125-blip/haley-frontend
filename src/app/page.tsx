@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessageSync, getSystemStatus, loadAllConversations, loadConversation, deleteConversation } from '@/lib/haleyApi';
+import { sendMessage, getSystemStatus, loadAllConversations, loadConversation, deleteConversation } from '@/lib/haleyApi';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -157,60 +157,96 @@ export default function ChatPage() {
     }
 
     try {
-      // CRITICAL FIX: Resolve provider with proper precedence
-      // Priority: conversation.provider -> activeProvider -> 'haley' (fallback)
+      // Resolve provider with proper precedence
       const resolvedProvider = activeProvider || 'haley';
-      
+
       console.log('[SEND] Using provider:', resolvedProvider);
-      
-      const response = await sendMessageSync(textToSend, resolvedProvider);
 
-      if (response.status === 'success' || response.status === 'completed') {
-        const assistantMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: formatResponse(response.result),
-          timestamp: new Date(),
-          metadata: {
-            operation: 'chat',
-            model_used: response.model_used,
-            baby_invoked: response.baby_invoked,
-            task: response.task,
-            supreme_court: aiMode === 'supreme-court',
-            llm_sources: activeModel ? [activeModel] : undefined,
-          },
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
+      // Create assistant message placeholder for streaming
+      const assistantMessageId = generateId();
+      const assistantMessage: Message = {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'chat',
+          model_used: resolvedProvider,
+          task: 'general',
+          supreme_court: aiMode === 'supreme-court',
+          llm_sources: activeModel ? [activeModel] : undefined,
+        },
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
 
-        // If audioBlob was used, speak the response
-        if (audioBlob) {
-          speakResponse(assistantMessage.content);
+      // Call async sendMessage with streaming callbacks
+      await sendMessage(
+        textToSend,
+        resolvedProvider,
+        // onToken - stream tokens as they arrive
+        (token: string) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMessageId
+                ? { ...msg, content: msg.content + token }
+                : msg
+            )
+          );
+        },
+        // onComplete - finalize message
+        (response) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMessageId
+                ? {
+                    ...msg,
+                    metadata: {
+                      ...msg.metadata,
+                      baby_invoked: response.baby_invoked,
+                      model_used: response.model_used,
+                      task: response.task,
+                    },
+                  }
+                : msg
+            )
+          );
+          setIsLoading(false);
+
+          // If audioBlob was used, speak the response
+          if (audioBlob) {
+            const finalContent = response.result?.response || '';
+            speakResponse(finalContent);
+          }
+
+          // Check if response includes visualization data
+          if (response.result?.visualization) {
+            setMagicWindowContent({
+              type: 'visualization',
+              content: response.result.visualization,
+              title: 'Analysis Results',
+            });
+            setMagicWindowOpen(true);
+          }
+
+          loadSystemStatus();
+        },
+        // onError - handle errors
+        (error: string) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMessageId
+                ? {
+                    ...msg,
+                    content: `Error: ${error}`,
+                    metadata: { ...msg.metadata, operation: 'error' },
+                  }
+                : msg
+            )
+          );
+          setIsLoading(false);
         }
+      );
 
-        // Check if response includes visualization data
-        if (response.result?.visualization) {
-          setMagicWindowContent({
-            type: 'visualization',
-            content: response.result.visualization,
-            title: 'Analysis Results',
-          });
-          setMagicWindowOpen(true);
-        }
-      } else {
-        const errorMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: `Error: ${response.error_msg || 'Operation failed'}`,
-          timestamp: new Date(),
-          metadata: {
-            operation: 'error',
-          },
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-
-      await loadSystemStatus();
-      
     } catch (error) {
       console.error('Error sending message:', error);
       const errorMessage: Message = {
@@ -220,9 +256,8 @@ export default function ChatPage() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-      setIsLoading(false); // Only set false on error
+      setIsLoading(false);
     }
-    // Note: isLoading will be set to false by ChatMessages when streaming completes
   };
 
   const formatResponse = (result: any): string => {
