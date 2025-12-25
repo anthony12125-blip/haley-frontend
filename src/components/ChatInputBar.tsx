@@ -69,18 +69,24 @@ export default function ChatInputBar({
 
   const startRecording = async () => {
     try {
+      console.log('[VOICE] 🎤 Starting voice recording...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
-      
+
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
+        console.log('[VOICE] 📊 Audio data chunk received, size:', event.data.size);
         audioChunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        console.log('[VOICE] ⏹️ Recording stopped. Audio blob created:');
+        console.log('[VOICE]    Blob size:', audioBlob.size, 'bytes');
+        console.log('[VOICE]    Blob type:', audioBlob.type);
+        console.log('[VOICE] 📤 Calling onSend with audioBlob...');
         onSend(undefined, audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
@@ -88,23 +94,27 @@ export default function ChatInputBar({
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      console.log('[VOICE] ✅ Recording started successfully');
 
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
     } catch (error) {
-      console.error('Error accessing microphone:', error);
+      console.error('[VOICE] ❌ Error accessing microphone:', error);
       alert('Could not access microphone. Please check permissions.');
     }
   };
 
   const stopRecording = () => {
+    console.log('[VOICE] 🛑 Stop recording button clicked');
     if (mediaRecorderRef.current && isRecording) {
+      console.log('[VOICE] Stopping MediaRecorder...');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
       }
+      console.log('[VOICE] MediaRecorder stopped, waiting for onstop event...');
     }
   };
 

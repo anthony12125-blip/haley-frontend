@@ -240,6 +240,8 @@ export async function sendAudioMessage(
 
     console.log('[API] ====== ASYNC SEND AUDIO MESSAGE ======');
     console.log('[API] Provider:', provider);
+    console.log('[API] Audio blob size:', audioBlob.size, 'bytes');
+    console.log('[API] Audio blob type:', audioBlob.type);
 
     // Create form data with audio file
     const formData = new FormData();
@@ -247,17 +249,24 @@ export async function sendAudioMessage(
     formData.append('conversation_id', 'default');
     formData.append('provider', provider);
 
+    console.log('[API] 🌐 Posting to:', `${BACKEND_URL}/chat/submit/audio`);
     const submitResponse = await fetch(`${BACKEND_URL}/chat/submit/audio`, {
       method: 'POST',
       body: formData,
     });
 
+    console.log('[API] 📥 Response status:', submitResponse.status, submitResponse.statusText);
+
     if (!submitResponse.ok) {
-      throw new Error(`Audio submit failed: ${submitResponse.status}`);
+      const errorText = await submitResponse.text();
+      console.error('[API] ❌ Audio submit failed:', errorText);
+      throw new Error(`Audio submit failed: ${submitResponse.status} - ${errorText}`);
     }
 
-    const { assistant_message_id } = await submitResponse.json();
-    console.log('[API] Audio message submitted, ID:', assistant_message_id);
+    const responseData = await submitResponse.json();
+    console.log('[API] 📦 Response data:', responseData);
+    const { assistant_message_id } = responseData;
+    console.log('[API] ✅ Audio message submitted, ID:', assistant_message_id);
 
     eventSource = new EventSource(`${BACKEND_URL}/chat/stream/${assistant_message_id}`);
 
