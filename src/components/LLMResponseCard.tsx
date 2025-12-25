@@ -22,7 +22,7 @@ export default function LLMResponseCard({
   colorClass = 'hue-teal',
   onRetry
 }: LLMResponseCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const getModelColor = () => {
     switch (modelId) {
