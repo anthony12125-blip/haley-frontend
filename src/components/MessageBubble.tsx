@@ -7,6 +7,7 @@ import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 import IconEnvelopeWings from './icons/IconEnvelopeWings';
 import { MigrationEngine } from '@/lib/migrationEngine';
 import { useAIClipboard } from '@/contexts/AIClipboardContext';
+import { SpeakerButton } from './SpeakerButton';
 
 interface MessageBubbleProps {
   message: Message;
@@ -431,6 +432,11 @@ export default function MessageBubble({
                   >
                     <IconEnvelopeWings size={32} />
                   </button>
+                  <SpeakerButton
+                    messageId={message.id}
+                    content={message.content}
+                    audioUrl={message.metadata?.audio_url}
+                  />
                   <button
                     className="action-btn"
                     title="Good response"
