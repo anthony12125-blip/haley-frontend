@@ -121,7 +121,20 @@ export async function sendMessage(
           console.log('[API] ✅ onToken() called');
         } else if (data.type === 'done') {
           metadata = data.metadata || {};
+
+          // Extract final response from done event (backend may send complete text)
+          const finalResponse = data.result?.response || data.response || fullResponse;
+
+          // If final response differs from accumulated response, send final token update
+          if (finalResponse && finalResponse !== fullResponse && finalResponse.length > fullResponse.length) {
+            const remainingContent = finalResponse.substring(fullResponse.length);
+            console.log('[API] 📝 Sending final token update with remaining content');
+            onToken?.(remainingContent);
+            fullResponse = finalResponse;
+          }
+
           console.log('[API] ✅✅✅ STREAM COMPLETE - calling onComplete() ✅✅✅');
+          console.log('[API]    Final response length:', fullResponse.length);
           eventSource?.close();
           onComplete?.({
             status: 'completed',
