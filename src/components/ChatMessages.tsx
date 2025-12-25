@@ -325,7 +325,6 @@ export default function ChatMessages({
               message={message}
               isStreaming={message.id === streamingMessageId}
               isLastAssistantMessage={shouldShowGlyph}
-              onReadAloud={() => handleReadAloud(message.content)}
               onShare={() => handleShare(message)}
               onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
               onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
