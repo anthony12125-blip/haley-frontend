@@ -5,9 +5,10 @@ import { useState, useRef, useEffect } from 'react';
 
 interface MicButtonProps {
   onTranscript: (text: string) => void;
+  onAudioRecorded?: (audioBlob: Blob) => void;
 }
 
-export default function MicButton({ onTranscript }: MicButtonProps) {
+export default function MicButton({ onTranscript, onAudioRecorded }: MicButtonProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -59,6 +60,7 @@ export default function MicButton({ onTranscript }: MicButtonProps) {
 
   const handleStartRecording = async () => {
     try {
+      console.log('[MIC] 🎤 Starting voice recording...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -66,30 +68,46 @@ export default function MicButton({ onTranscript }: MicButtonProps) {
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
+          console.log('[MIC] 📊 Audio chunk received, size:', e.data.size);
           chunksRef.current.push(e.data);
         }
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/wav' });
-        // TODO: Send to speech-to-text API
-        // For now, just notify with recording duration
-        onTranscript(`[Voice message recorded - ${formatTime(recordingTime)}]`);
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        console.log('[MIC] ⏹️ Recording stopped. Audio blob created:');
+        console.log('[MIC]    Blob size:', audioBlob.size, 'bytes');
+        console.log('[MIC]    Blob type:', audioBlob.type);
+
+        // If onAudioRecorded callback is provided, use it for transcription
+        if (onAudioRecorded) {
+          console.log('[MIC] 📤 Calling onAudioRecorded with audioBlob...');
+          onAudioRecorded(audioBlob);
+        } else {
+          // Fallback to old behavior if callback not provided
+          console.log('[MIC] ⚠️ No onAudioRecorded callback, using placeholder');
+          onTranscript(`[Voice message recorded - ${formatTime(recordingTime)}]`);
+        }
+
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      console.log('[MIC] ✅ Recording started successfully');
     } catch (error) {
-      console.error('Microphone error:', error);
+      console.error('[MIC] ❌ Microphone error:', error);
       alert('Could not access microphone');
     }
   };
 
   const handleStopRecording = () => {
+    console.log('[MIC] 🛑 Stop recording button clicked');
     if (mediaRecorderRef.current && isRecording) {
+      console.log('[MIC] Stopping MediaRecorder...');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      console.log('[MIC] MediaRecorder stopped, waiting for onstop event...');
     }
   };
 
