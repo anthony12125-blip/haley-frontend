@@ -135,15 +135,6 @@ export default function ChatMessages({
     }
   }, [streamingMessageId, userScrolledUp]);
 
-  const handleReadAloud = (content: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(content);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
 
   const handleShare = async (message: Message) => {
     if (navigator.share) {
