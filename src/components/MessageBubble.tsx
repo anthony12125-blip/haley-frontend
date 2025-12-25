@@ -398,11 +398,20 @@ export default function MessageBubble({
         )}
 
         {/* Message Content with Streaming Effect - NO BACKGROUND */}
-        <div className="message-text">
+        <div className="message-text" style={{ position: 'relative' }}>
           {isVoiceMessage && <span className="voice-icon">🎤</span>}
           {displayedContent}
           {!isComplete && message.role === 'assistant' && (
             <span className="cursor-blink" />
+          )}
+          {message.role === 'assistant' && (
+            <div style={{ position: 'absolute', right: '8px', top: '8px' }}>
+              <SpeakerButton
+                messageId={message.id}
+                content={message.content}
+                audioUrl={message.metadata?.audio_url}
+              />
+            </div>
           )}
         </div>
 
@@ -432,11 +441,6 @@ export default function MessageBubble({
                   >
                     <IconEnvelopeWings size={32} />
                   </button>
-                  <SpeakerButton
-                    messageId={message.id}
-                    content={message.content}
-                    audioUrl={message.metadata?.audio_url}
-                  />
                   <button
                     className="action-btn"
                     title="Good response"

@@ -67,19 +67,17 @@ export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonPro
   };
 
   return (
-    <div className="sticky top-0 flex justify-end pointer-events-none" style={{ marginTop: '-2rem' }}>
-      <button
-        onClick={handleSpeak}
-        disabled={isPlaying || isLoading}
-        className="pointer-events-auto w-10 h-10 rounded-full bg-gray-800/90 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-blue-400 transition-colors shadow-lg"
-        aria-label="Listen to message"
-      >
-        {isLoading ? (
-          <Loader2 className="h-5 w-5 animate-spin" />
-        ) : (
-          <Volume2 className={`h-5 w-5 ${isPlaying ? 'text-blue-400' : ''}`} />
-        )}
-      </button>
-    </div>
+    <button
+      onClick={handleSpeak}
+      disabled={isPlaying || isLoading}
+      className="w-10 h-10 rounded-full bg-gray-800/90 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-blue-400 transition-colors shadow-lg"
+      aria-label="Listen to message"
+    >
+      {isLoading ? (
+        <Loader2 className="h-5 w-5 animate-spin" />
+      ) : (
+        <Volume2 className={`h-5 w-5 ${isPlaying ? 'text-blue-400' : ''}`} />
+      )}
+    </button>
   );
 }
