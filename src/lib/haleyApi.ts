@@ -246,11 +246,12 @@ export async function sendAudioMessage(
     // Create form data with audio file
     const formData = new FormData();
     formData.append('audio_file', audioBlob, 'voice_message.webm');
-    formData.append('conversation_id', 'default');
-    formData.append('provider', provider);
 
-    console.log('[API] 🌐 Posting to:', `${BACKEND_URL}/chat/submit/audio`);
-    const submitResponse = await fetch(`${BACKEND_URL}/chat/submit/audio`, {
+    // conversation_id and provider go in URL query params, not form body
+    const audioUrl = `${BACKEND_URL}/chat/submit/audio?conversation_id=default&provider=${provider}`;
+    console.log('[API] 🌐 Posting to:', audioUrl);
+
+    const submitResponse = await fetch(audioUrl, {
       method: 'POST',
       body: formData,
     });
