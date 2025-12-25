@@ -110,9 +110,11 @@ export default function MessageBubble({
     }
   };
 
+  const isVoiceMessage = message.role === 'user' && message.metadata?.isVoiceMessage;
+
   return (
-    <div 
-      className={`message-container ${message.role === 'user' ? 'user-message' : ''}`}
+    <div
+      className={`message-container ${message.role === 'user' ? 'user-message' : ''} ${isVoiceMessage ? 'voice-message' : ''}`}
     >
       <style jsx>{`
         .message-container {
@@ -190,6 +192,29 @@ export default function MessageBubble({
           color: #ffffff;
           display: inline-block;
           max-width: fit-content;
+        }
+
+        /* Voice message styling */
+        .voice-message .message-text {
+          background: linear-gradient(135deg, #4B6CFF 0%, #6B8AFF 100%);
+          font-style: italic;
+          position: relative;
+          padding-left: 40px;
+        }
+
+        :root.light .voice-message .message-text {
+          background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+          color: #1a1a1a;
+          border: 1px solid rgba(75, 108, 255, 0.3);
+        }
+
+        .voice-icon {
+          position: absolute;
+          left: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 18px;
+          opacity: 0.9;
         }
 
         :root.light .user-message .message-text {
@@ -373,6 +398,7 @@ export default function MessageBubble({
 
         {/* Message Content with Streaming Effect - NO BACKGROUND */}
         <div className="message-text">
+          {isVoiceMessage && <span className="voice-icon">🎤</span>}
           {displayedContent}
           {!isComplete && message.role === 'assistant' && (
             <span className="cursor-blink" />

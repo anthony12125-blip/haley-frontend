@@ -165,6 +165,7 @@ export default function ChatPage() {
       role: 'user',
       content: audioBlob ? '[Voice message]' : textToSend,
       timestamp: new Date(),
+      metadata: audioBlob ? { isVoiceMessage: true } : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
