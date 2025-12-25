@@ -217,7 +217,7 @@ export default function ChatPage() {
       // Route to appropriate API function
       if (audioBlob) {
         // VOICE INPUT - Send audio for transcription
-        await sendAudioMessage(
+        const { transcript } = await sendAudioMessage(
           audioBlob,
           resolvedProvider,
           // onToken - stream tokens as they arrive
@@ -283,6 +283,18 @@ export default function ChatPage() {
             setIsLoading(false);
           }
         );
+
+        // Update user message with transcribed text
+        if (transcript) {
+          console.log('[PAGE] 📝 Updating user message with transcript:', transcript);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === userMessage.id
+                ? { ...msg, content: transcript }
+                : msg
+            )
+          );
+        }
       } else {
         // TEXT INPUT - Send regular message
         await sendMessage(

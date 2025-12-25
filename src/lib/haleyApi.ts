@@ -227,7 +227,7 @@ export async function sendAudioMessage(
   onToken?: (token: string) => void,
   onComplete?: (response: OSOperationResponse) => void,
   onError?: (error: string) => void
-): Promise<{ messageId: string; cleanup: () => void }> {
+): Promise<{ messageId: string; transcript?: string; cleanup: () => void }> {
   let eventSource: EventSource | null = null;
 
   try {
@@ -266,8 +266,9 @@ export async function sendAudioMessage(
 
     const responseData = await submitResponse.json();
     console.log('[API] 📦 Response data:', responseData);
-    const { assistant_message_id } = responseData;
+    const { assistant_message_id, transcript } = responseData;
     console.log('[API] ✅ Audio message submitted, ID:', assistant_message_id);
+    console.log('[API] 📝 Transcript received:', transcript);
 
     eventSource = new EventSource(`${BACKEND_URL}/chat/stream/${assistant_message_id}`);
 
@@ -317,7 +318,7 @@ export async function sendAudioMessage(
       }
     };
 
-    return { messageId: assistant_message_id, cleanup };
+    return { messageId: assistant_message_id, transcript, cleanup };
 
   } catch (error) {
     console.error('[HaleyAPI] Audio Error:', error);
