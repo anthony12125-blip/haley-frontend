@@ -174,6 +174,8 @@ export default function ChatPage() {
 
     console.log('[PAGE] messageText param:', messageText);
     console.log('[PAGE] audioBlob param:', audioBlob);
+    console.log('[PAGE] audioBlob present:', !!audioBlob);
+    console.log('[PAGE] audioBlob size:', audioBlob?.size);
     console.log('[PAGE] current input state:', input);
     console.log('[PAGE] 🎯 STATE CHECK:');
     console.log('[PAGE]    multiLLMEnabled:', multiLLMEnabled);
@@ -188,11 +190,14 @@ export default function ChatPage() {
       return;
     }
 
-    // Multi-LLM Mode Check
-    console.log('[PAGE] 🔍 Checking multi-LLM condition...');
-    console.log('[PAGE]    multiLLMEnabled && selectedModels.length > 0 =', multiLLMEnabled && selectedModels.length > 0);
-
-    if (multiLLMEnabled && selectedModels.length > 0) {
+    // VOICE INPUT: Audio blobs bypass multi-LLM mode
+    if (audioBlob) {
+      console.log('[PAGE] 🎙️ VOICE INPUT DETECTED - bypassing multi-LLM mode');
+      console.log('[PAGE] Forcing single-model path for audio transcription');
+      // Fall through to single model mode below
+    }
+    // Multi-LLM Mode Check (only for text messages)
+    else if (multiLLMEnabled && selectedModels.length > 0) {
       console.log('[PAGE] ⚡ Multi-LLM Mode Active');
       console.log('[PAGE] Selected models:', selectedModels);
 
