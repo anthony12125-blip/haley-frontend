@@ -10,6 +10,7 @@ interface SpeakerButtonProps {
 export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [synthesizedUrl, setSynthesizedUrl] = useState<string | undefined>(audioUrl);
 
   const handleSpeak = async () => {
     if (isPlaying) return;
@@ -17,25 +18,58 @@ export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonPro
     try {
       setIsLoading(true);
 
-      if (audioUrl) {
-        // Play existing audio
-        const audio = new Audio(audioUrl);
+      let urlToPlay = synthesizedUrl;
+
+      // If no audio URL exists, request synthesis
+      if (!urlToPlay) {
+        console.log('[SPEAKER] 🎤 Requesting voice synthesis for message:', messageId);
+
+        const response = await fetch('https://module-matrix-409495160162.us-central1.run.app/matrix/execute_module', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            module: 'ttsadapter',
+            action: 'synthesize',
+            params: {
+              text: content
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Synthesis failed: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('[SPEAKER] 📦 Synthesis response:', result);
+
+        if (result.success && result.result?.audio_url) {
+          urlToPlay = result.result.audio_url;
+          setSynthesizedUrl(urlToPlay);
+          console.log('[SPEAKER] ✅ Voice synthesized:', urlToPlay);
+        } else {
+          throw new Error('No audio URL returned');
+        }
+      }
+
+      // Play audio
+      if (urlToPlay) {
+        const audio = new Audio(urlToPlay);
         setIsPlaying(true);
 
         audio.onended = () => setIsPlaying(false);
         audio.onerror = () => {
           setIsPlaying(false);
-          console.error('Audio playback failed');
+          console.error('[SPEAKER] ❌ Audio playback failed');
         };
 
         await audio.play();
-      } else {
-        // Request voice synthesis
-        // TODO: Make API call to synthesize speech
-        console.log('Voice synthesis not yet implemented for:', content);
+        console.log('[SPEAKER] 🔊 Playing Haley voice');
       }
     } catch (error) {
-      console.error('Speech error:', error);
+      console.error('[SPEAKER] ❌ Error:', error);
     } finally {
       setIsLoading(false);
     }
