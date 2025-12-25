@@ -392,12 +392,6 @@ export default function ChatPage() {
     return JSON.stringify(result, null, 2);
   };
 
-  const speakResponse = (text: string) => {
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-    }
-  };
-
   const handleFileUpload = (files: FileList) => {
     console.log('Files uploaded:', files);
     setMagicWindowContent({

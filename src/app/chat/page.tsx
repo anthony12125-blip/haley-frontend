@@ -476,7 +476,6 @@ export default function ChatPage() {
               );
 
               cleanupFunctionsRef.current.delete(assistantMessageId);
-              speakResponse(streamingContent);
             },
             (error) => {
               console.error('[CHAT] ❌ Audio stream error:', error);
@@ -548,15 +547,6 @@ export default function ChatPage() {
 
           cleanupFunctionsRef.current.delete(assistantMessageId);
 
-          // TTS: Speak the response
-          console.log('[PAGE] 🔊 Triggering TTS...');
-          try {
-            speakResponse(streamingContent);
-            console.log('[PAGE] ✅ TTS triggered');
-          } catch (ttsError) {
-            console.error('[PAGE] ❌ TTS failed:', ttsError);
-          }
-
           console.log('[PAGE] 📊 Loading system status...');
           loadSystemStatus().catch(err => console.error('[PAGE] System status load failed:', err));
         },
@@ -612,12 +602,6 @@ export default function ChatPage() {
       return `Result: ${JSON.stringify(result.result)}`;
     }
     return JSON.stringify(result, null, 2);
-  };
-
-  const speakResponse = (text: string) => {
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-    }
   };
 
   const handleFileUpload = (files: FileList) => {

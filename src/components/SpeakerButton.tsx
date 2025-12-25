@@ -28,11 +28,16 @@ export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonPro
         setLocalUrl(url);
       }
       const audio = new Audio(url);
-      audio.onended = () => setPlaying(false);
-      await audio.play();
       setPlaying(true);
-    } catch (err) { console.error(err); }
-    setLoading(false);
+      audio.onended = () => setPlaying(false);
+      audio.onerror = () => setPlaying(false);
+      await audio.play();
+    } catch (err) {
+      console.error('[SPEAKER] Error:', err);
+      setPlaying(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
