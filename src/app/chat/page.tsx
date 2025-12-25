@@ -185,10 +185,15 @@ export default function ChatPage() {
     const textToSend = messageText || input;
     console.log('[PAGE] textToSend resolved to:', textToSend);
 
+    // Allow messages with either text OR audio
     if (!textToSend.trim() && !audioBlob) {
-      console.log('[PAGE] ❌ Empty message, returning early');
+      console.log('[PAGE] ❌ Empty message (no text and no audio), returning early');
       return;
     }
+
+    console.log('[PAGE] ✅ Message validation passed');
+    console.log('[PAGE]    Has text:', !!textToSend.trim());
+    console.log('[PAGE]    Has audio:', !!audioBlob);
 
     // VOICE INPUT: Audio blobs bypass multi-LLM mode
     if (audioBlob) {
@@ -425,8 +430,15 @@ export default function ChatPage() {
       console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
       console.log('[CHAT] activeModel state:', activeModel);
       console.log('[CHAT] audioBlob present:', !!audioBlob);
+      console.log('[CHAT] audioBlob:', audioBlob);
 
       // Use sendAudioMessage for voice, sendMessage for text
+      if (audioBlob) {
+        console.log('[CHAT] 🎙️ ROUTING TO sendAudioMessage()');
+      } else {
+        console.log('[CHAT] 📝 ROUTING TO sendMessage()');
+      }
+
       const { messageId, cleanup } = audioBlob
         ? await sendAudioMessage(
             audioBlob,
