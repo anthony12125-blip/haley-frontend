@@ -7,7 +7,6 @@ import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 import IconEnvelopeWings from './icons/IconEnvelopeWings';
 import { MigrationEngine } from '@/lib/migrationEngine';
 import { useAIClipboard } from '@/contexts/AIClipboardContext';
-import { SpeakerButton } from './SpeakerButton';
 
 interface MessageBubbleProps {
   message: Message;
@@ -406,11 +405,6 @@ export default function MessageBubble({
           )}
           {message.role === 'assistant' && (
             <div style={{ position: 'absolute', right: '8px', top: '8px' }}>
-              <SpeakerButton
-                messageId={message.id}
-                content={message.content}
-                audioUrl={message.metadata?.audio_url}
-              />
             </div>
           )}
         </div>
