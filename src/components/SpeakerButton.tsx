@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { Volume2, Loader2 } from 'lucide-react';
 
-export function SpeakerButton({ messageId, content, audioUrl }) {
+interface SpeakerButtonProps {
+  messageId: string;
+  content: string;
+  audioUrl?: string;
+}
+
+export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonProps) {
   const [loading, setLoading] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [localUrl, setLocalUrl] = useState(audioUrl);
