@@ -228,7 +228,8 @@ export default function ChatPage() {
             setMagicWindowOpen(true);
           }
 
-          loadSystemStatus();
+          // DO NOT reload conversations here - keep streamed messages as source of truth
+          // System status updates on 30s interval from useEffect only
         },
         // onError - handle errors
         (error: string) => {
