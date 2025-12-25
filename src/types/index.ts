@@ -24,6 +24,7 @@ export interface MessageMetadata {
   streaming?: boolean; // Track if message is currently streaming
   error?: boolean; // Track if message encountered an error
   isVoiceMessage?: boolean; // Indicates this message came from voice input
+  audio_url?: string; // URL to synthesized audio from Haley's voice (Eleven Labs)
   // Multi-LLM fields
   isMultiLLM?: boolean; // Indicates this is a multi-LLM query message
   providers?: string[]; // List of provider IDs in multi-LLM query
