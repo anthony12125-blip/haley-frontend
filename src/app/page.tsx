@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
-import { sendMessage, getSystemStatus, loadAllConversations, loadConversation, deleteConversation } from '@/lib/haleyApi';
+import { sendMessage, sendAudioMessage, getSystemStatus, loadAllConversations, loadConversation, deleteConversation } from '@/lib/haleyApi';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -137,8 +137,28 @@ export default function ChatPage() {
   };
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
+    console.log('[PAGE] ========== handleSend CALLED ==========');
+    console.log('[PAGE] messageText:', messageText);
+    console.log('[PAGE] audioBlob present:', !!audioBlob);
+    console.log('[PAGE] input state:', input);
+
     const textToSend = messageText || input;
-    if ((!textToSend.trim() && !audioBlob) || isLoading) return;
+    console.log('[PAGE] textToSend resolved to:', textToSend);
+
+    // Allow messages with either text OR audio
+    if (!textToSend.trim() && !audioBlob) {
+      console.log('[PAGE] ❌ Empty message (no text and no audio), returning early');
+      return;
+    }
+
+    if (isLoading) {
+      console.log('[PAGE] ❌ Already loading, ignoring');
+      return;
+    }
+
+    console.log('[PAGE] ✅ Message validation passed');
+    console.log('[PAGE]    Has text:', !!textToSend.trim());
+    console.log('[PAGE]    Has audio:', !!audioBlob);
 
     const userMessage: Message = {
       id: generateId(),
@@ -150,7 +170,7 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    
+
     // Clear new chat guard when user sends first message
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
@@ -160,10 +180,12 @@ export default function ChatPage() {
       // Resolve provider with proper precedence
       const resolvedProvider = activeProvider || 'haley';
 
-      console.log('[SEND] Using provider:', resolvedProvider);
+      console.log('[PAGE] Using provider:', resolvedProvider);
 
       // Create assistant message placeholder for streaming
       const assistantMessageId = generateId();
+      let streamingContent = '';
+
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
@@ -173,83 +195,166 @@ export default function ChatPage() {
           operation: 'chat',
           model_used: resolvedProvider,
           task: 'general',
+          streaming: true,
           supreme_court: aiMode === 'supreme-court',
           llm_sources: activeModel ? [activeModel] : undefined,
         },
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Call async sendMessage with streaming callbacks
-      await sendMessage(
-        textToSend,
-        resolvedProvider,
-        // onToken - stream tokens as they arrive
-        (token: string) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMessageId
-                ? { ...msg, content: msg.content + token }
-                : msg
-            )
-          );
-        },
-        // onComplete - finalize message
-        (response) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMessageId
-                ? {
-                    ...msg,
-                    metadata: {
-                      ...msg.metadata,
-                      baby_invoked: response.baby_invoked,
-                      model_used: response.model_used,
-                      task: response.task,
-                    },
-                  }
-                : msg
-            )
-          );
-          setIsLoading(false);
+      console.log('[PAGE] ========== ASYNC SENDING MESSAGE ==========');
+      console.log('[PAGE] activeProvider:', resolvedProvider);
+      console.log('[PAGE] audioBlob present:', !!audioBlob);
+      console.log('[PAGE] audioBlob:', audioBlob);
 
-          // If audioBlob was used, speak the response
-          if (audioBlob) {
-            const finalContent = response.result?.response || '';
-            speakResponse(finalContent);
+      // Use sendAudioMessage for voice, sendMessage for text
+      if (audioBlob) {
+        console.log('[PAGE] 🎙️ ROUTING TO sendAudioMessage()');
+      } else {
+        console.log('[PAGE] 📝 ROUTING TO sendMessage()');
+      }
+
+      // Route to appropriate API function
+      if (audioBlob) {
+        // VOICE INPUT - Send audio for transcription
+        await sendAudioMessage(
+          audioBlob,
+          resolvedProvider,
+          // onToken - stream tokens as they arrive
+          (token: string) => {
+            streamingContent += token;
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: streamingContent }
+                  : msg
+              )
+            );
+          },
+          // onComplete - finalize message
+          (response) => {
+            console.log('[PAGE] Audio stream completed');
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? {
+                      ...msg,
+                      content: streamingContent,
+                      metadata: {
+                        ...msg.metadata,
+                        streaming: false,
+                        baby_invoked: response.baby_invoked,
+                        model_used: response.model_used,
+                        task: response.task,
+                      },
+                    }
+                  : msg
+              )
+            );
+            setIsLoading(false);
+
+            // Speak the response
+            speakResponse(streamingContent);
+
+            // Check if response includes visualization data
+            if (response.result?.visualization) {
+              setMagicWindowContent({
+                type: 'visualization',
+                content: response.result.visualization,
+                title: 'Analysis Results',
+              });
+              setMagicWindowOpen(true);
+            }
+          },
+          // onError - handle errors
+          (error: string) => {
+            console.error('[PAGE] ❌ Audio stream error:', error);
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? {
+                      ...msg,
+                      content: `Error: ${error}`,
+                      metadata: { ...msg.metadata, streaming: false, operation: 'error' },
+                    }
+                  : msg
+              )
+            );
+            setIsLoading(false);
           }
+        );
+      } else {
+        // TEXT INPUT - Send regular message
+        await sendMessage(
+          textToSend,
+          resolvedProvider,
+          // onToken - stream tokens as they arrive
+          (token: string) => {
+            streamingContent += token;
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: streamingContent }
+                  : msg
+              )
+            );
+          },
+          // onComplete - finalize message
+          (response) => {
+            console.log('[PAGE] Text stream completed');
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? {
+                      ...msg,
+                      content: streamingContent,
+                      metadata: {
+                        ...msg.metadata,
+                        streaming: false,
+                        baby_invoked: response.baby_invoked,
+                        model_used: response.model_used,
+                        task: response.task,
+                      },
+                    }
+                  : msg
+              )
+            );
+            setIsLoading(false);
 
-          // Check if response includes visualization data
-          if (response.result?.visualization) {
-            setMagicWindowContent({
-              type: 'visualization',
-              content: response.result.visualization,
-              title: 'Analysis Results',
-            });
-            setMagicWindowOpen(true);
+            // Check if response includes visualization data
+            if (response.result?.visualization) {
+              setMagicWindowContent({
+                type: 'visualization',
+                content: response.result.visualization,
+                title: 'Analysis Results',
+              });
+              setMagicWindowOpen(true);
+            }
+
+            // DO NOT reload conversations here - keep streamed messages as source of truth
+            // System status updates on 30s interval from useEffect only
+          },
+          // onError - handle errors
+          (error: string) => {
+            console.error('[PAGE] ❌ Text stream error:', error);
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? {
+                      ...msg,
+                      content: `Error: ${error}`,
+                      metadata: { ...msg.metadata, streaming: false, operation: 'error' },
+                    }
+                  : msg
+              )
+            );
+            setIsLoading(false);
           }
-
-          // DO NOT reload conversations here - keep streamed messages as source of truth
-          // System status updates on 30s interval from useEffect only
-        },
-        // onError - handle errors
-        (error: string) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMessageId
-                ? {
-                    ...msg,
-                    content: `Error: ${error}`,
-                    metadata: { ...msg.metadata, operation: 'error' },
-                  }
-                : msg
-            )
-          );
-          setIsLoading(false);
-        }
-      );
+        );
+      }
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('[PAGE] ❌ Error sending message:', error);
       const errorMessage: Message = {
         id: generateId(),
         role: 'assistant',
