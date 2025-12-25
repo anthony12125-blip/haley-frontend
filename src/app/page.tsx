@@ -254,9 +254,6 @@ export default function ChatPage() {
             );
             setIsLoading(false);
 
-            // Speak the response
-            speakResponse(streamingContent);
-
             // Check if response includes visualization data
             if (response.result?.visualization) {
               setMagicWindowContent({
