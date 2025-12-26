@@ -18,19 +18,26 @@ export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonPro
     try {
       let url = localUrl;
       if (!url) {
+        const requestPayload = { module: 'ttsadapter', action: 'synthesize', params: { text: content } };
         console.log('[SPEAKER] 🎤 Requesting synthesis from Module Matrix...');
+        console.log('[SPEAKER] 📤 Request payload:', requestPayload);
+
         const res = await fetch('https://module-matrix-409495160162.us-central1.run.app/matrix/execute_module', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ module: 'ttsadapter', action: 'synthesize', params: { text: content } })
+          body: JSON.stringify(requestPayload)
         });
 
+        console.log('[SPEAKER] 📥 Response status:', res.status, res.statusText);
+
         if (!res.ok) {
+          const errorText = await res.text();
+          console.error('[SPEAKER] ❌ Error response body:', errorText);
           throw new Error(`Module Matrix returned ${res.status}: ${res.statusText}`);
         }
 
         const data = await res.json();
-        console.log('[SPEAKER] 📦 Response:', data);
+        console.log('[SPEAKER] 📦 Response data:', data);
 
         if (!data.result || !data.result.audio_url) {
           throw new Error('No audio URL in response');
