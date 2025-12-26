@@ -24,6 +24,9 @@ interface ChatMessagesProps {
   onBranchMessage?: (messageId: string) => void;
   onStreamingComplete?: () => void;
   onRetryProvider?: (messageId: string, provider: string) => void;
+  onVoicePlayStart?: () => void;
+  onVoicePlayStop?: () => void;
+  onVoiceError?: (message: string) => void;
 }
 
 export default function ChatMessages({
@@ -33,6 +36,9 @@ export default function ChatMessages({
   onBranchMessage,
   onStreamingComplete,
   onRetryProvider,
+  onVoicePlayStart,
+  onVoicePlayStop,
+  onVoiceError,
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -328,6 +334,9 @@ export default function ChatMessages({
               onShare={() => handleShare(message)}
               onRetry={onRetryMessage ? () => onRetryMessage(message.id) : undefined}
               onBranch={onBranchMessage ? () => onBranchMessage(message.id) : undefined}
+              onVoicePlayStart={onVoicePlayStart}
+              onVoicePlayStop={onVoicePlayStop}
+              onVoiceError={onVoiceError}
             />
           );
         })}

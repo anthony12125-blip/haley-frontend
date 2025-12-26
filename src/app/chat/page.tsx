@@ -17,6 +17,7 @@ import ChatMessages from '@/components/ChatMessages';
 import ChatInputBar from '@/components/ChatInputBar';
 import MagicWindow from '@/components/MagicWindow';
 import ModeSelector from '@/components/ModeSelector';
+import VoiceStatusBar from '@/components/VoiceStatusBar';
 import LLMResponseCard from '@/components/LLMResponseCard';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
 
@@ -78,7 +79,13 @@ export default function ChatPage() {
   
   // System State
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
-  
+
+  // Voice Status
+  const [voiceIsPlaying, setVoiceIsPlaying] = useState(false);
+  const [voiceIsListening, setVoiceIsListening] = useState(false);
+  const [voiceHasError, setVoiceHasError] = useState(false);
+  const [voiceErrorMessage, setVoiceErrorMessage] = useState('');
+
   // Conversation History
   const [conversations, setConversations] = useState<ConversationHistory[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string>('default');
@@ -993,10 +1000,17 @@ export default function ChatPage() {
       />
 
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
-        device.type === 'desktop' 
+        device.type === 'desktop'
           ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
           : 'ml-0'
       }`}>
+        <VoiceStatusBar
+          isPlaying={voiceIsPlaying}
+          isListening={voiceIsListening}
+          hasError={voiceHasError}
+          errorMessage={voiceErrorMessage}
+        />
+
         <ChatHeader
           aiMode={aiMode}
           activeModels={activeModel ? [activeModel] : ['Haley']}
@@ -1018,6 +1032,13 @@ export default function ChatPage() {
           onBranchMessage={handleBranchMessage}
           onStreamingComplete={() => {}}
           onRetryProvider={handleRetryProvider}
+          onVoicePlayStart={() => setVoiceIsPlaying(true)}
+          onVoicePlayStop={() => setVoiceIsPlaying(false)}
+          onVoiceError={(msg) => {
+            setVoiceHasError(true);
+            setVoiceErrorMessage(msg);
+            setTimeout(() => setVoiceHasError(false), 5000);
+          }}
         />
 
         <ChatInputBar
@@ -1028,6 +1049,8 @@ export default function ChatPage() {
           onFileUpload={handleFileUpload}
           onGallerySelect={handleGallerySelect}
           sidebarOpen={sidebarOpen && device.type === 'desktop'}
+          onRecordingStart={() => setVoiceIsListening(true)}
+          onRecordingStop={() => setVoiceIsListening(false)}
         />
 
         <MagicWindow

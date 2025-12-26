@@ -17,16 +17,22 @@ interface MessageBubbleProps {
   onBranch?: () => void;
   isStreaming?: boolean;
   isLastAssistantMessage?: boolean;
+  onVoicePlayStart?: () => void;
+  onVoicePlayStop?: () => void;
+  onVoiceError?: (message: string) => void;
 }
 
-export default function MessageBubble({ 
-  message, 
-  onReadAloud, 
-  onShare, 
-  onRetry, 
+export default function MessageBubble({
+  message,
+  onReadAloud,
+  onShare,
+  onRetry,
   onBranch,
   isStreaming = false,
-  isLastAssistantMessage = false
+  isLastAssistantMessage = false,
+  onVoicePlayStart,
+  onVoicePlayStop,
+  onVoiceError
 }: MessageBubbleProps) {
   const [migrated, setMigrated] = useState(false);
   const [displayedContent, setDisplayedContent] = useState('');
@@ -410,6 +416,9 @@ export default function MessageBubble({
                 messageId={message.id}
                 content={message.content}
                 audioUrl={message.metadata?.audio_url}
+                onPlayStart={onVoicePlayStart}
+                onPlayStop={onVoicePlayStop}
+                onError={onVoiceError}
               />
             </div>
           )}

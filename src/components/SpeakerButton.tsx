@@ -5,9 +5,12 @@ interface SpeakerButtonProps {
   messageId: string;
   content: string;
   audioUrl?: string;
+  onPlayStart?: () => void;
+  onPlayStop?: () => void;
+  onError?: (message: string) => void;
 }
 
-export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonProps) {
+export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPlayStop, onError }: SpeakerButtonProps) {
   const [loading, setLoading] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [localUrl, setLocalUrl] = useState(audioUrl);
@@ -33,7 +36,9 @@ export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonPro
         if (!res.ok) {
           const errorText = await res.text();
           console.error('[SPEAKER] ❌ Error response body:', errorText);
-          throw new Error(`Module Matrix returned ${res.status}: ${res.statusText}`);
+          const errorMsg = `Module Matrix returned ${res.status}: ${res.statusText}`;
+          onError?.(errorMsg);
+          throw new Error(errorMsg);
         }
 
         const data = await res.json();
@@ -49,12 +54,20 @@ export function SpeakerButton({ messageId, content, audioUrl }: SpeakerButtonPro
       }
       const audio = new Audio(url);
       setPlaying(true);
-      audio.onended = () => setPlaying(false);
-      audio.onerror = () => setPlaying(false);
+      onPlayStart?.();
+      audio.onended = () => {
+        setPlaying(false);
+        onPlayStop?.();
+      };
+      audio.onerror = () => {
+        setPlaying(false);
+        onPlayStop?.();
+      };
       await audio.play();
     } catch (err) {
       console.error('[SPEAKER] Error:', err);
       setPlaying(false);
+      onPlayStop?.();
     } finally {
       setLoading(false);
     }

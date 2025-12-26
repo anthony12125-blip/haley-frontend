@@ -11,6 +11,8 @@ interface ChatInputBarProps {
   onFileUpload?: (files: FileList) => void;
   onGallerySelect?: () => void;
   sidebarOpen?: boolean;
+  onRecordingStart?: () => void;
+  onRecordingStop?: () => void;
 }
 
 export default function ChatInputBar({
@@ -21,6 +23,8 @@ export default function ChatInputBar({
   onFileUpload,
   onGallerySelect,
   sidebarOpen = false,
+  onRecordingStart,
+  onRecordingStop,
 }: ChatInputBarProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -94,6 +98,7 @@ export default function ChatInputBar({
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      onRecordingStart?.();
       console.log('[VOICE] ✅ Recording started successfully');
 
       recordingIntervalRef.current = setInterval(() => {
@@ -111,6 +116,7 @@ export default function ChatInputBar({
       console.log('[VOICE] Stopping MediaRecorder...');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      onRecordingStop?.();
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
       }
