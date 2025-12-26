@@ -5,24 +5,16 @@ interface SpeakerButtonProps {
   messageId: string;
   content: string;
   audioUrl?: string;
-  onPlayStart?: () => void;
-  onPlayStop?: () => void;
+  onAudioReady?: (url: string, text: string) => void;
   onError?: (message: string) => void;
 }
 
-export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPlayStop, onError }: SpeakerButtonProps) {
+export function SpeakerButton({ messageId, content, audioUrl, onAudioReady, onError }: SpeakerButtonProps) {
   const [loading, setLoading] = useState(false);
-  const [playing, setPlaying] = useState(false);
   const [localUrl, setLocalUrl] = useState(audioUrl);
 
   const handleSpeak = async () => {
     console.log('[SPEAKER] 🎯 handleSpeak CALLED - Speaker button clicked!');
-    alert('Speaker button clicked!'); // Immediate visual confirmation
-
-    if (playing) {
-      console.log('[SPEAKER] Already playing, returning');
-      return;
-    }
 
     setLoading(true);
     console.log('[SPEAKER] Loading state set to true');
@@ -71,28 +63,13 @@ export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPla
         setLocalUrl(url);
         console.log('[SPEAKER] ✅ Got audio URL:', url);
       }
-      const audio = new Audio(url);
-      console.log('[SPEAKER] 🔊 About to play audio from:', url);
-      setPlaying(true);
-      console.log('[SPEAKER] 🎵 Calling onPlayStart callback');
-      onPlayStart?.();
-      console.log('[SPEAKER] 🎵 onPlayStart callback called');
-      audio.onended = () => {
-        console.log('[SPEAKER] 🔇 Audio ended');
-        setPlaying(false);
-        onPlayStop?.();
-      };
-      audio.onerror = () => {
-        console.log('[SPEAKER] ❌ Audio error');
-        setPlaying(false);
-        onPlayStop?.();
-      };
-      await audio.play();
-      console.log('[SPEAKER] ▶️ Audio.play() called');
+
+      // Pass audio URL to parent for playback control
+      console.log('[SPEAKER] 🎵 Calling onAudioReady with URL and content');
+      onAudioReady?.(url, content);
     } catch (err) {
       console.error('[SPEAKER] Error:', err);
-      setPlaying(false);
-      onPlayStop?.();
+      onError?.(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -100,8 +77,13 @@ export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPla
 
   return (
     <div className="sticky top-4 flex justify-end pr-2 pointer-events-none z-50">
-      <button onClick={handleSpeak} className="pointer-events-auto p-2 bg-gray-800 rounded-full shadow-lg border border-gray-700 hover:bg-gray-700">
-        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <Volume2 className={`h-5 w-5 ${playing ? 'text-blue-400' : ''}`} />}
+      <button
+        onClick={handleSpeak}
+        disabled={loading}
+        className="pointer-events-auto p-2 bg-gray-800 rounded-full shadow-lg border border-gray-700 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Play audio"
+      >
+        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
       </button>
     </div>
   );

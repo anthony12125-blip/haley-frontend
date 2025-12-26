@@ -18,6 +18,7 @@ import ChatInputBar from '@/components/ChatInputBar';
 import MagicWindow from '@/components/MagicWindow';
 import ModeSelector from '@/components/ModeSelector';
 import VoiceStatusBar from '@/components/VoiceStatusBar';
+import AudioPlaybackBar from '@/components/AudioPlaybackBar';
 import LLMResponseCard from '@/components/LLMResponseCard';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
 
@@ -85,6 +86,12 @@ export default function ChatPage() {
   const [voiceIsListening, setVoiceIsListening] = useState(false);
   const [voiceHasError, setVoiceHasError] = useState(false);
   const [voiceErrorMessage, setVoiceErrorMessage] = useState('');
+
+  // Audio Playback
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioText, setAudioText] = useState<string>('');
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Conversation History
   const [conversations, setConversations] = useState<ConversationHistory[]>([]);
@@ -624,6 +631,44 @@ export default function ChatPage() {
     setMagicWindowOpen(true);
   };
 
+  const handleAudioReady = (url: string, text: string) => {
+    console.log('[AUDIO] Audio ready:', url);
+    setAudioUrl(url);
+    setAudioText(text);
+
+    // Create and play audio
+    const audio = new Audio(url);
+    audioRef.current = audio;
+
+    audio.onplay = () => setIsAudioPlaying(true);
+    audio.onpause = () => setIsAudioPlaying(false);
+    audio.onended = () => {
+      setIsAudioPlaying(false);
+      setAudioUrl(null);
+    };
+
+    audio.play();
+  };
+
+  const handleAudioPlayPause = () => {
+    if (!audioRef.current) return;
+
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+  };
+
+  const handleAudioClose = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setAudioUrl(null);
+    setIsAudioPlaying(false);
+  };
+
   const handleGallerySelect = () => {
     console.log('Gallery selection');
   };
@@ -1011,6 +1056,16 @@ export default function ChatPage() {
           errorMessage={voiceErrorMessage}
         />
 
+        {audioUrl && (
+          <AudioPlaybackBar
+            audioUrl={audioUrl}
+            isPlaying={isAudioPlaying}
+            onPlayPause={handleAudioPlayPause}
+            onClose={handleAudioClose}
+            text={audioText}
+          />
+        )}
+
         <ChatHeader
           aiMode={aiMode}
           activeModels={activeModel ? [activeModel] : ['Haley']}
@@ -1032,23 +1087,12 @@ export default function ChatPage() {
           onBranchMessage={handleBranchMessage}
           onStreamingComplete={() => {}}
           onRetryProvider={handleRetryProvider}
-          onVoicePlayStart={() => {
-            console.log('[CHAT PAGE] 🎵 Voice play started - setting voiceIsPlaying=true');
-            setVoiceIsPlaying(true);
-          }}
-          onVoicePlayStop={() => {
-            console.log('[CHAT PAGE] 🔇 Voice play stopped - setting voiceIsPlaying=false');
-            setVoiceIsPlaying(false);
-          }}
+          onAudioReady={handleAudioReady}
           onVoiceError={(msg) => {
             console.log('[CHAT PAGE] 🚨 Voice error received:', msg);
-            console.log('[CHAT PAGE] 🚨 Setting voiceHasError=true, voiceErrorMessage=', msg);
             setVoiceHasError(true);
             setVoiceErrorMessage(msg);
-            setTimeout(() => {
-              console.log('[CHAT PAGE] 🚨 Clearing error state after 5s');
-              setVoiceHasError(false);
-            }, 5000);
+            setTimeout(() => setVoiceHasError(false), 5000);
           }}
         />
 
