@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
 import IconEnvelopeWings from './icons/IconEnvelopeWings';
+import { BUILD_VERSION } from '@/config/buildVersion';
 
 interface ChatHeaderProps {
   aiMode: AIMode;
@@ -77,8 +78,11 @@ export default function ChatHeader({
         <div className="hidden md:block w-10" />
 
         {/* Center: Dynamic Title */}
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center gap-3">
           <h1 className="text-xl font-bold text-gradient">{getDisplayName()}</h1>
+          <span className="text-xs font-mono text-muted opacity-60">
+            #{BUILD_VERSION.toString().padStart(4, '0')}
+          </span>
         </div>
 
         {/* Right: Migrate Chat Button */}
