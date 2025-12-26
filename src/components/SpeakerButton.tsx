@@ -65,8 +65,13 @@ export function SpeakerButton({ messageId, content, audioUrl, onAudioReady, onEr
       }
 
       // Pass audio URL to parent for playback control
-      console.log('[SPEAKER] 🎵 Calling onAudioReady with URL and content');
-      onAudioReady?.(url, content);
+      if (url && onAudioReady) {
+        console.log('[SPEAKER] 🎵 Calling onAudioReady with URL and content');
+        onAudioReady(url, content);
+      } else {
+        console.error('[SPEAKER] ❌ No URL available to pass to onAudioReady');
+        throw new Error('Audio URL is undefined');
+      }
     } catch (err) {
       console.error('[SPEAKER] Error:', err);
       onError?.(err instanceof Error ? err.message : 'Unknown error');
