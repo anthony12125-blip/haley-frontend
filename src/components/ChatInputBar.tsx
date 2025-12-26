@@ -34,6 +34,8 @@ export default function ChatInputBar({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<NodeJS.Timeout>();
+  const recordingStartTimeRef = useRef<number>(0);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     adjustTextareaHeight();
@@ -75,28 +77,42 @@ export default function ChatInputBar({
     try {
       console.log('[VOICE] 🎤 Starting voice recording...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
 
       mediaRecorderRef.current = mediaRecorder;
+      streamRef.current = stream;
       audioChunksRef.current = [];
+      recordingStartTimeRef.current = Date.now();
 
       mediaRecorder.ondataavailable = (event) => {
         console.log('[VOICE] 📊 Audio data chunk received, size:', event.data.size);
-        audioChunksRef.current.push(event.data);
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+          console.log('[VOICE] Pushed chunk, total chunks now:', audioChunksRef.current.length);
+        } else {
+          console.warn('[VOICE] ⚠️ Received empty data chunk');
+        }
       };
 
       mediaRecorder.onstop = () => {
         console.log('[VOICE] ⏹️ onstop event fired');
         console.log('[VOICE]    Chunks collected:', audioChunksRef.current.length);
 
+        const recordingDuration = Date.now() - recordingStartTimeRef.current;
+        console.log('[VOICE]    Recording duration:', recordingDuration, 'ms');
+
         if (audioChunksRef.current.length === 0) {
           console.error('[VOICE] ❌ No audio chunks collected!');
           alert('Recording failed: No audio data captured. Try recording for at least 1 second.');
-          stream.getTracks().forEach(track => track.stop());
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+          }
           return;
         }
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
         console.log('[VOICE] ⏹️ Recording stopped. Audio blob created:');
         console.log('[VOICE]    Blob size:', audioBlob.size, 'bytes');
         console.log('[VOICE]    Blob type:', audioBlob.type);
@@ -104,13 +120,18 @@ export default function ChatInputBar({
         if (audioBlob.size < 1000) {
           console.error('[VOICE] ❌ Audio blob too small (', audioBlob.size, 'bytes) - likely empty');
           alert('Recording too short or failed. Please record for at least 1 second.');
-          stream.getTracks().forEach(track => track.stop());
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+          }
           return;
         }
 
         console.log('[VOICE] 📤 Calling onSend with audioBlob...');
         onSend(undefined, audioBlob);
-        stream.getTracks().forEach(track => track.stop());
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
       };
 
       // Start recording with 100ms timeslice to ensure data is captured
@@ -133,6 +154,21 @@ export default function ChatInputBar({
   const stopRecording = () => {
     console.log('[VOICE] 🛑 Stop recording button clicked');
     if (mediaRecorderRef.current && isRecording) {
+      const recordingDuration = Date.now() - recordingStartTimeRef.current;
+      console.log('[VOICE] Current recording duration:', recordingDuration, 'ms');
+
+      if (recordingDuration < 500) {
+        console.warn('[VOICE] ⚠️ Recording too short (', recordingDuration, 'ms), waiting...');
+        alert('Please record for at least 0.5 seconds');
+        return;
+      }
+
+      console.log('[VOICE] Requesting final data...');
+      // Request any buffered data before stopping
+      if (mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.requestData();
+      }
+
       console.log('[VOICE] Stopping MediaRecorder...');
       mediaRecorderRef.current.stop();
       setIsRecording(false);

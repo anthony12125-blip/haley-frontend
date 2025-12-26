@@ -54,7 +54,16 @@ export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPla
         const data = await res.json();
         console.log('[SPEAKER] 📦 Response data:', data);
 
+        // Check for error in result
+        if (data.result && data.result.error) {
+          const errorMsg = `TTS Error: ${data.result.error}`;
+          console.error('[SPEAKER] ❌ Module returned error:', data.result.error);
+          onError?.(errorMsg);
+          throw new Error(errorMsg);
+        }
+
         if (!data.result || !data.result.audio_url) {
+          console.error('[SPEAKER] ❌ Invalid response structure:', data);
           throw new Error('No audio URL in response');
         }
 
