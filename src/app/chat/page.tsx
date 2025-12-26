@@ -1032,12 +1032,23 @@ export default function ChatPage() {
           onBranchMessage={handleBranchMessage}
           onStreamingComplete={() => {}}
           onRetryProvider={handleRetryProvider}
-          onVoicePlayStart={() => setVoiceIsPlaying(true)}
-          onVoicePlayStop={() => setVoiceIsPlaying(false)}
+          onVoicePlayStart={() => {
+            console.log('[CHAT PAGE] 🎵 Voice play started - setting voiceIsPlaying=true');
+            setVoiceIsPlaying(true);
+          }}
+          onVoicePlayStop={() => {
+            console.log('[CHAT PAGE] 🔇 Voice play stopped - setting voiceIsPlaying=false');
+            setVoiceIsPlaying(false);
+          }}
           onVoiceError={(msg) => {
+            console.log('[CHAT PAGE] 🚨 Voice error received:', msg);
+            console.log('[CHAT PAGE] 🚨 Setting voiceHasError=true, voiceErrorMessage=', msg);
             setVoiceHasError(true);
             setVoiceErrorMessage(msg);
-            setTimeout(() => setVoiceHasError(false), 5000);
+            setTimeout(() => {
+              console.log('[CHAT PAGE] 🚨 Clearing error state after 5s');
+              setVoiceHasError(false);
+            }, 5000);
           }}
         />
 

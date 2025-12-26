@@ -16,8 +16,16 @@ export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPla
   const [localUrl, setLocalUrl] = useState(audioUrl);
 
   const handleSpeak = async () => {
-    if (playing) return;
+    console.log('[SPEAKER] 🎯 handleSpeak CALLED - Speaker button clicked!');
+    alert('Speaker button clicked!'); // Immediate visual confirmation
+
+    if (playing) {
+      console.log('[SPEAKER] Already playing, returning');
+      return;
+    }
+
     setLoading(true);
+    console.log('[SPEAKER] Loading state set to true');
     try {
       let url = localUrl;
       if (!url) {
@@ -37,7 +45,9 @@ export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPla
           const errorText = await res.text();
           console.error('[SPEAKER] ❌ Error response body:', errorText);
           const errorMsg = `Module Matrix returned ${res.status}: ${res.statusText}`;
+          console.log('[SPEAKER] 🚨 Calling onError callback with:', errorMsg);
           onError?.(errorMsg);
+          console.log('[SPEAKER] 🚨 onError callback called');
           throw new Error(errorMsg);
         }
 
@@ -53,17 +63,23 @@ export function SpeakerButton({ messageId, content, audioUrl, onPlayStart, onPla
         console.log('[SPEAKER] ✅ Got audio URL:', url);
       }
       const audio = new Audio(url);
+      console.log('[SPEAKER] 🔊 About to play audio from:', url);
       setPlaying(true);
+      console.log('[SPEAKER] 🎵 Calling onPlayStart callback');
       onPlayStart?.();
+      console.log('[SPEAKER] 🎵 onPlayStart callback called');
       audio.onended = () => {
+        console.log('[SPEAKER] 🔇 Audio ended');
         setPlaying(false);
         onPlayStop?.();
       };
       audio.onerror = () => {
+        console.log('[SPEAKER] ❌ Audio error');
         setPlaying(false);
         onPlayStop?.();
       };
       await audio.play();
+      console.log('[SPEAKER] ▶️ Audio.play() called');
     } catch (err) {
       console.error('[SPEAKER] Error:', err);
       setPlaying(false);

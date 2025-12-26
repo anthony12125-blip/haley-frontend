@@ -15,9 +15,14 @@ export default function VoiceStatusBar({
   hasError = false,
   errorMessage = 'Sorry, no connection available'
 }: VoiceStatusBarProps) {
+  console.log('[VOICE STATUS BAR] Render - isPlaying:', isPlaying, 'isListening:', isListening, 'hasError:', hasError);
+
   if (!isPlaying && !isListening && !hasError) {
+    console.log('[VOICE STATUS BAR] All states false - returning null (hidden)');
     return null;
   }
+
+  console.log('[VOICE STATUS BAR] SHOWING BAR!');
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] safe-top">
