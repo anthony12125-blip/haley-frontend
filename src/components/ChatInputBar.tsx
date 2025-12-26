@@ -86,16 +86,36 @@ export default function ChatInputBar({
       };
 
       mediaRecorder.onstop = () => {
+        console.log('[VOICE] ⏹️ onstop event fired');
+        console.log('[VOICE]    Chunks collected:', audioChunksRef.current.length);
+
+        if (audioChunksRef.current.length === 0) {
+          console.error('[VOICE] ❌ No audio chunks collected!');
+          alert('Recording failed: No audio data captured. Try recording for at least 1 second.');
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         console.log('[VOICE] ⏹️ Recording stopped. Audio blob created:');
         console.log('[VOICE]    Blob size:', audioBlob.size, 'bytes');
         console.log('[VOICE]    Blob type:', audioBlob.type);
+
+        if (audioBlob.size < 1000) {
+          console.error('[VOICE] ❌ Audio blob too small (', audioBlob.size, 'bytes) - likely empty');
+          alert('Recording too short or failed. Please record for at least 1 second.');
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
         console.log('[VOICE] 📤 Calling onSend with audioBlob...');
         onSend(undefined, audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start();
+      // Start recording with 100ms timeslice to ensure data is captured
+      mediaRecorder.start(100);
+      console.log('[VOICE] MediaRecorder.start(100) called - capturing chunks every 100ms');
       setIsRecording(true);
       setRecordingTime(0);
       onRecordingStart?.();
