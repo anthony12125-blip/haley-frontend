@@ -16,7 +16,6 @@ interface SidebarHistoryProps {
 }
 
 export default function SidebarHistory({ onSelectConversation, onNewChat }: SidebarHistoryProps) {
-  // TODO: Load from localStorage or API
   const [conversations] = useState<Conversation[]>([
     {
       id: '1',
@@ -27,32 +26,28 @@ export default function SidebarHistory({ onSelectConversation, onNewChat }: Side
   ]);
 
   return (
-    <div className="w-64 h-full glass border-r border-white/10 flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-white/10">
+    <div className="flex-1 overflow-y-auto">
+      <div className="px-3 py-2">
         <button
           onClick={onNewChat}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-haley-primary hover:bg-haley-secondary rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          New Chat
+          <span className="text-sm font-medium">New Chat</span>
         </button>
       </div>
 
-      {/* Conversations */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="px-3 py-2 space-y-1">
         {conversations.map((conv) => (
           <button
             key={conv.id}
             onClick={() => onSelectConversation(conv.id)}
-            className="w-full p-3 rounded-lg hover:bg-white/5 transition-colors text-left mb-1"
+            className="w-full flex items-start gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors text-left"
           >
-            <div className="flex items-start gap-2">
-              <MessageSquare className="w-4 h-4 mt-1 flex-shrink-0 text-haley-primary" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{conv.title}</p>
-                <p className="text-xs text-gray-400 truncate">{conv.lastMessage}</p>
-              </div>
+            <MessageSquare className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-200 truncate">{conv.title}</p>
+              <p className="text-xs text-gray-400 truncate">{conv.lastMessage}</p>
             </div>
           </button>
         ))}

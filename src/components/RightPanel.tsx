@@ -16,25 +16,25 @@ interface RightPanelProps {
 
 const DEFAULT_ZONES: LandingZone[] = [
   {
-    id: 'zone-1',
-    initials: 'A1',
+    id: 'zone-gemini',
+    initials: 'G',
     color: '#3b82f6',
-    title: 'Agent Zone 1',
-    description: 'Reserved for future agent integration',
+    title: 'Gemini Zone',
+    description: 'Reserved for Gemini LLM integration',
   },
   {
-    id: 'zone-2',
-    initials: 'A2',
-    color: '#10b981',
-    title: 'Agent Zone 2',
-    description: 'Reserved for future agent integration',
-  },
-  {
-    id: 'zone-3',
-    initials: 'T1',
+    id: 'zone-claude',
+    initials: 'A',
     color: '#8b5cf6',
-    title: 'Tool Zone 1',
-    description: 'Reserved for future tool integration',
+    title: 'Claude Zone',
+    description: 'Reserved for Claude LLM integration',
+  },
+  {
+    id: 'zone-gpt',
+    initials: 'C',
+    color: '#10b981',
+    title: 'GPT Zone',
+    description: 'Reserved for GPT LLM integration',
   },
 ];
 
@@ -64,7 +64,7 @@ export default function RightPanel({ zones = DEFAULT_ZONES }: RightPanelProps) {
       {/* Footer Info */}
       <div className="sticky bottom-0 bg-gray-900 border-t border-gray-700 px-4 py-2">
         <p className="text-xs text-gray-500 text-center">
-          Build #17 - Landing Zones v2.0
+          Build #18 - LLM Identity Registry
         </p>
       </div>
     </div>
