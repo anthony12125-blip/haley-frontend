@@ -1,0 +1,1195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* HaleyOS New Space Theme - Dark Mode (Default) */
+  --primary: #2d6ba8;
+  --accent: #4c82c0;
+  --panel-dark: #111418;
+  --panel-medium: #1a1e22;
+  --panel-light: #22262b;
+  --text-primary: #e5f2ff;
+  --text-secondary: #a7b7c9;
+  --border: #2c3339;
+  --error: #ff6b6b;
+  --success: #4fe0b0;
+  --background: #000;
+  --space-bg-start: #1B2735;
+  --space-bg-end: #090A0F;
+  
+  /* Animation variables */
+  --animation-speed: 0.3s;
+  --portal-duration: 0.8s;
+  --magic-rotation: 0deg;
+}
+
+/* Light Mode Theme - Day Theme (Rachel-style White Canvas) */
+:root.light {
+  /* Primary colors */
+  --primary: #4B6CFF;
+  --accent: #4B6CFF;
+  
+  /* Surfaces - Pure white */
+  --panel-dark: #FFFFFF;
+  --panel-medium: #FFFFFF;
+  --panel-light: #F7F7F7;
+  
+  /* Text hierarchy - Black to gray */
+  --text-primary: #000000;
+  --text-secondary: #3A3A3A;
+  --text-muted: #6A6A6A;
+  
+  /* Borders - Subtle */
+  --border: rgba(0, 0, 0, 0.06);
+  --border-strong: rgba(0, 0, 0, 0.08);
+  
+  /* Feedback colors */
+  --error: #ef4444;
+  --success: #10b981;
+  
+  /* Background - Pure white */
+  --background: #FFFFFF;
+  --space-bg-start: #FFFFFF;
+  --space-bg-end: #FFFFFF;
+  
+  /* Animation */
+  --animation-speed: 0.16s;
+  --easing: ease-out;
+  --portal-duration: 0s; /* Disable portal animation in day mode */
+}
+
+/* Light Mode Variant - Anthropic Style (Off-white with pure white bubbles) */
+:root.light.light-anthropic {
+  /* Primary colors */
+  --primary: #4B6CFF;
+  --accent: #4B6CFF;
+  
+  /* Surfaces - Off-white background, pure white panels */
+  --panel-dark: #FFFFFF;
+  --panel-medium: #FFFFFF;
+  --panel-light: #F9F9F9;
+  
+  /* Text hierarchy */
+  --text-primary: #000000;
+  --text-secondary: #3A3A3A;
+  --text-muted: #6A6A6A;
+  
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.06);
+  --border-strong: rgba(0, 0, 0, 0.08);
+  
+  /* Feedback colors */
+  --error: #ef4444;
+  --success: #10b981;
+  
+  /* Background - Off-white */
+  --background: #F5F5F0;
+  --space-bg-start: #F5F5F0;
+  --space-bg-end: #F5F5F0;
+  
+  /* Animation */
+  --animation-speed: 0.16s;
+  --easing: ease-out;
+  --portal-duration: 0s;
+}
+
+/* Light Mode Variant - Inverse Space (White sky with black stars) */
+:root.light.light-space-inverse {
+  /* Primary colors - darker blue for better contrast */
+  --primary: #2B5AA8;
+  --accent: #3B6ABA;
+  
+  /* Surfaces - Blue-tinted panels for sidebar and top bar */
+  --panel-dark: #F0F4FA;
+  --panel-medium: #F5F8FC;
+  --panel-light: #EFF4FB;
+  
+  /* Text hierarchy */
+  --text-primary: #1A1A1A;
+  --text-secondary: #4A4A4A;
+  --text-muted: #6A6A6A;
+  
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  
+  /* Feedback colors */
+  --error: #dc2626;
+  --success: #059669;
+  
+  /* Background - Keep white */
+  --background: #FFFFFF;
+  --space-bg-start: #E8EDF5;
+  --space-bg-end: #F5F7FA;
+  
+  /* Animation */
+  --animation-speed: 0.3s;
+  --easing: ease;
+  --portal-duration: 0.8s;
+}
+
+/* Ensure dark mode variables are explicitly set */
+:root.dark {
+  --primary: #2d6ba8;
+  --accent: #4c82c0;
+  --panel-dark: #111418;
+  --panel-medium: #1a1e22;
+  --panel-light: #22262b;
+  --text-primary: #e5f2ff;
+  --text-secondary: #a7b7c9;
+  --border: #2c3339;
+  --error: #ff6b6b;
+  --success: #4fe0b0;
+  --background: #000;
+  --space-bg-start: #1B2735;
+  --space-bg-end: #090A0F;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--text-primary);
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================================================
+   SPACE BACKGROUND WITH STARS ONLY
+   ============================================================================ */
+.space-bg {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at bottom, var(--space-bg-start) 0%, var(--space-bg-end) 100%);
+  overflow: hidden;
+  z-index: 0;
+  transition: background 0.3s ease;
+}
+
+/* Add subtle noise texture to day mode background */
+:root.light .space-bg {
+  background: #FFFFFF;
+}
+
+:root.light .space-bg::before {
+  display: none; /* No noise texture */
+}
+
+/* Anthropic style - off-white background */
+:root.light.light-anthropic .space-bg {
+  background: #F5F5F0;
+}
+
+/* Inverse Space style - white background with gradient */
+:root.light.light-space-inverse .space-bg {
+  background: radial-gradient(ellipse at top, var(--space-bg-start) 0%, var(--space-bg-end) 100%);
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 60px 70px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 50px 50px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 130px 80px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 90px 10px, #fff, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  animation: twinkle 4s ease-in-out infinite;
+  transition: opacity 0.3s ease;
+}
+
+/* Replace stars with ambient particles in light mode */
+:root.light .stars {
+  display: none; /* Disable background animation in day mode */
+}
+
+/* Inverse space - black stars on white background */
+:root.light.light-space-inverse .stars {
+  display: block;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #333, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 60px 70px, #222, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 50px 50px, #111, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 130px 80px, #000, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 90px 10px, #444, rgba(0,0,0,0));
+  opacity: 0.3;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Shooting stars */
+.shooting-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+  animation: shoot 3s linear infinite;
+  opacity: 0;
+}
+
+/* Inverse space - black shooting stars */
+:root.light.light-space-inverse .shooting-star {
+  background: black;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes shoot {
+  0% {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-300px) translateY(300px);
+    opacity: 0;
+  }
+}
+
+/* ============================================================================
+   AI SELECTION HUE OVERLAYS (20% OPACITY)
+   ============================================================================ */
+.hue-teal {
+  background: linear-gradient(to bottom, rgba(0, 188, 212, 0.20), transparent) !important;
+}
+
+.hue-orange {
+  background: linear-gradient(to bottom, rgba(255, 152, 0, 0.20), transparent) !important;
+}
+
+.hue-blue {
+  background: linear-gradient(to bottom, rgba(33, 150, 243, 0.20), transparent) !important;
+}
+
+.hue-purple {
+  background: linear-gradient(to bottom, rgba(156, 39, 176, 0.20), transparent) !important;
+}
+
+.hue-gold {
+  background: linear-gradient(to bottom, rgba(255, 215, 0, 0.20), transparent) !important;
+}
+
+.hue-red {
+  background: linear-gradient(to bottom, rgba(244, 67, 54, 0.20), transparent) !important;
+}
+
+/* Legacy colors - keeping for compatibility */
+.hue-yellow {
+  background: linear-gradient(to bottom, rgba(255, 235, 59, 0.03), transparent) !important;
+}
+
+.hue-green {
+  background: linear-gradient(to bottom, rgba(76, 175, 80, 0.03), transparent) !important;
+}
+
+.hue-pink {
+  background: linear-gradient(to bottom, rgba(233, 30, 99, 0.03), transparent) !important;
+}
+
+.hue-cyan {
+  background: linear-gradient(to bottom, rgba(0, 188, 212, 0.03), transparent) !important;
+}
+
+/* ============================================================================
+   GLASS EFFECTS
+   ============================================================================ */
+.glass {
+  background: rgba(17, 20, 24, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+}
+
+.glass-light {
+  background: rgba(26, 30, 34, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+}
+
+.glass-strong {
+  background: rgba(17, 20, 24, 0.9);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border);
+}
+
+/* Day theme glass overrides */
+:root.light .glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+:root.light .glass-light {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:root.light .glass-strong {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================================================
+   SCROLLBAR STYLING
+   ============================================================================ */
+
+/* Day theme sidebar enhancements */
+:root.light .glass-strong.border-r {
+  background: #FFFFFF;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.04);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Day theme header styling */
+:root.light .glass-strong.border-b {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Day theme header title color */
+:root.light .text-gradient {
+  background: linear-gradient(135deg, #2B3A67, #4B6CFF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Active item styling for light mode - no left bar, just background */
+:root.light .bg-primary\/20 {
+  background: #F7F7F7 !important;
+  position: relative;
+}
+
+:root.light .bg-primary\/20::before {
+  display: none; /* Remove blue indicator bar */
+}
+
+/* Hover state for sidebar items in day mode */
+:root.light .hover\:bg-panel-light:hover {
+  background: #FAFAFA !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ============================================================================
+   BUTTON STYLES
+   ============================================================================ */
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
+  box-shadow: 0 0 20px rgba(45, 107, 168, 0.3);
+}
+
+.btn-primary:hover {
+  background: var(--accent);
+  box-shadow: 0 0 30px rgba(76, 130, 192, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-secondary {
+  background: var(--panel-medium);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
+}
+
+.btn-secondary:hover {
+  background: var(--panel-light);
+  border-color: var(--primary);
+}
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
+}
+
+.icon-btn:hover {
+  background: var(--panel-light);
+  color: var(--primary);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* ============================================================================
+   INPUT STYLES
+   ============================================================================ */
+.input-field {
+  background: var(--panel-dark);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: all var(--animation-speed, 0.2s) var(--easing, ease);
+  width: 100%;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(45, 107, 168, 0.15);
+}
+
+/* Day theme focus glow */
+:root.light .input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(75, 108, 255, 0.25);
+}
+
+.input-field::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* ============================================================================
+   MESSAGE BUBBLES
+   ============================================================================ */
+.message-bubble {
+  max-width: 75%;
+  width: fit-content;
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin: 6px 0;
+  word-wrap: break-word;
+  animation: slideIn 0.3s ease;
+}
+
+/* Message headers for Day Theme */
+.message-header {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+:root.light .message-header.haley-header {
+  color: #4B6CFF;
+  font-weight: 600;
+}
+
+:root.light .message-header.user-header {
+  color: #111111;
+  font-weight: 500;
+}
+
+/* Hide headers in dark mode (keep existing behavior) */
+:root.dark .message-header {
+  display: none;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Use standardized timing for animations */
+.message-bubble {
+  animation: slideIn var(--animation-speed, 0.3s) var(--easing, ease);
+}
+
+.message-user {
+  background: var(--primary);
+  color: white;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
+
+/* Day theme - white user bubble with subtle border */
+:root.light .message-user {
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.message-assistant {
+  background: var(--panel-medium);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+
+/* Day theme - white assistant bubble with subtle border */
+:root.light .message-assistant {
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.message-system {
+  background: rgba(78, 224, 176, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(78, 224, 176, 0.3);
+  text-align: center;
+  max-width: 90%;
+  margin: 12px auto;
+  font-size: 0.85rem;
+}
+
+/* ============================================================================
+   MAGIC WINDOW - ENHANCED DR. STRANGE PORTAL ANIMATION
+   ============================================================================ */
+.magic-window {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  width: 380px;
+  height: 80px;
+  border-radius: 20px;
+  overflow: visible;
+  z-index: 1000;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Portal animations with random rotation */
+@keyframes portalOpen {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+    filter: blur(10px);
+  }
+  50% {
+    transform: scale(1.1) rotate(var(--magic-rotation));
+    filter: blur(5px);
+  }
+  100% {
+    transform: scale(1) rotate(calc(var(--magic-rotation) * 2));
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes spiralIn {
+  0% {
+    transform: scale(0) rotate(-360deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes dimensionShift {
+  0% {
+    transform: perspective(500px) rotateX(90deg) scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: perspective(500px) rotateX(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes mysticalEntrance {
+  0% {
+    transform: scale(0) rotate(180deg);
+    opacity: 0;
+    filter: hue-rotate(0deg) blur(20px);
+  }
+  50% {
+    filter: hue-rotate(180deg) blur(10px);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+    filter: hue-rotate(360deg) blur(0);
+  }
+}
+
+@keyframes drStrangeRing {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+.magic-window.portalOpen {
+  animation: portalOpen var(--portal-duration) cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.magic-window.spiralIn {
+  animation: spiralIn 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.magic-window.dimensionShift {
+  animation: dimensionShift 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.magic-window.mysticalEntrance {
+  animation: mysticalEntrance 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.magic-window.drStrangeRing {
+  animation: drStrangeRing 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.portal-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 20px;
+  background: conic-gradient(
+    from var(--magic-rotation),
+    var(--primary),
+    var(--accent),
+    #ff6b9d,
+    #c471ed,
+    #12c2e9,
+    var(--primary)
+  );
+  animation: portalSpin 3s linear infinite;
+  z-index: -1;
+}
+
+.portal-ring-outer {
+  position: absolute;
+  inset: -6px;
+  border-radius: 22px;
+  background: conic-gradient(
+    from calc(var(--magic-rotation) + 180deg),
+    transparent 0deg,
+    var(--primary) 90deg,
+    transparent 180deg,
+    var(--accent) 270deg,
+    transparent 360deg
+  );
+  animation: portalSpin 5s linear infinite reverse;
+  z-index: -2;
+  opacity: 0.6;
+}
+
+@keyframes portalSpin {
+  to { transform: rotate(360deg); }
+}
+
+.portal-sparks {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3), transparent);
+  opacity: 0;
+  animation: sparkPulse 2s ease-in-out infinite;
+  border-radius: 20px;
+}
+
+@keyframes sparkPulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.5; }
+}
+
+/* ============================================================================
+   SUPREME COURT MODE
+   ============================================================================ */
+.supreme-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #c471ed, #ff6b9d);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(196, 113, 237, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(196, 113, 237, 0.8);
+  }
+}
+
+/* ============================================================================
+   TOGGLE SWITCHES
+   ============================================================================ */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--panel-medium);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-container:hover {
+  background: var(--panel-light);
+  border-color: var(--primary);
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--panel-dark);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-switch.active .toggle-knob {
+  left: 22px;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+@media (max-width: 768px) {
+  .message-bubble {
+    max-width: 90%;
+  }
+  
+  .magic-window {
+    width: calc(100vw - 40px);
+    left: 20px;
+    right: 20px;
+  }
+}
+
+/* Mobile: Full width chat bubbles */
+@media (max-width: 640px) {
+  .message-bubble {
+    max-width: 95%;
+  }
+}
+
+/* ============================================================================
+   MOBILE KEYBOARD FIX & SIDEBAR OFFSET
+   ============================================================================ */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Fix for mobile keyboard pushing content */
+.input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 100;
+  transition: left 0.3s ease;
+}
+
+/* Desktop: offset input based on sidebar state */
+@media (min-width: 768px) {
+  .input-container {
+    /* Dynamic left margin controlled by inline style based on sidebar state */
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .input-container {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+}
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+.text-gradient {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.smooth-transition {
+  transition: all var(--animation-speed) ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.prevent-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.full-screen {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+/* ============================================================================
+   DAY THEME - INPUT BAR STYLING
+   ============================================================================ */
+:root.light .input-container {
+  background: transparent;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:root.light .input-container .glass-strong {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Input bubble styling in day mode */
+:root.light .input-container .bg-panel-dark {
+  background: #FFFFFF !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+:root.light .input-container .bg-panel-dark:focus-within {
+  border-color: #4B6CFF !important;
+  box-shadow: 0 0 0 3px rgba(75, 108, 255, 0.1) !important;
+}
+
+/* ============================================================================
+   DAY THEME - BUTTONS AND ICONS
+   ============================================================================ */
+:root.light .btn-primary {
+  background: #4B6CFF;
+  color: #FFFFFF;
+}
+
+:root.light .btn-primary:hover {
+  background: #3B5CE6;
+}
+
+:root.light .btn-secondary {
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+:root.light .btn-secondary:hover {
+  background: #F7F7F7;
+  border-color: #4B6CFF;
+}
+
+:root.light .icon-btn {
+  color: #3A3A3A;
+}
+
+:root.light .icon-btn:hover {
+  background: #F7F7F7;
+  color: #4B6CFF;
+}
+
+/* ============================================================================
+   DAY THEME - SELECTION AND HIGHLIGHTS
+   ============================================================================ */
+:root.light ::selection {
+  background: #F7F7F7;
+  color: #000000;
+}
+
+:root.light ::-moz-selection {
+  background: #F7F7F7;
+  color: #000000;
+}
+
+/* ============================================================================
+   DAY THEME - ANIMATION TIMING
+   ============================================================================ */
+:root.light * {
+  transition-duration: 0.16s !important;
+  transition-timing-function: ease-out !important;
+}
+
+/* ============================================================================
+   DAY MODE - SIDEBAR COLOR CONSISTENCY FIX
+   ============================================================================ */
+
+/* Collapsed Mini Sidebar - Pure white background */
+:root.light .sidebar-container {
+  background: #FFFFFF !important;
+}
+
+:root.light .sidebar-mini {
+  background: #FFFFFF !important;
+}
+
+/* Inverse Space - Blue-tinted sidebar */
+:root.light.light-space-inverse .sidebar-container {
+  background: #F0F4FA !important;
+}
+
+:root.light.light-space-inverse .sidebar-mini {
+  background: #F0F4FA !important;
+}
+
+/* Mini sidebar buttons - white hover in day mode */
+:root.light .sidebar-mini-btn {
+  background: transparent;
+}
+
+:root.light .sidebar-mini-btn:hover {
+  background: #FAFAFA !important;
+}
+
+:root.light.light-space-inverse .sidebar-mini-btn:hover {
+  background: #E8EDF5 !important;
+}
+
+/* Mini sidebar icons - black in day mode */
+:root.light .sidebar-mini-icon {
+  color: #000000 !important;
+}
+
+:root.light .sidebar-mini-btn:hover .sidebar-mini-icon {
+  color: #000000 !important;
+}
+
+/* Expanded sidebar menu headers - white background in day mode */
+:root.light .sidebar-menu-header {
+  background: #FFFFFF !important;
+}
+
+:root.light .sidebar-menu-header:hover {
+  background: #FAFAFA !important;
+}
+
+:root.light.light-space-inverse .sidebar-menu-header {
+  background: #F0F4FA !important;
+}
+
+:root.light.light-space-inverse .sidebar-menu-header:hover {
+  background: #E8EDF5 !important;
+}
+
+/* Active/expanded menu header - white background, no gray */
+:root.light .sidebar-menu-header-active {
+  background: #FFFFFF !important;
+}
+
+:root.light.light-space-inverse .sidebar-menu-header-active {
+  background: #F0F4FA !important;
+}
+
+/* R&D hover glow - remove in day mode */
+:root.light .sidebar-hover-glow {
+  display: none;
+}
+
+/* Back button - white background */
+:root.light .sidebar-back-button {
+  background: transparent !important;
+}
+
+:root.light .sidebar-back-button:hover {
+  background: #FAFAFA !important;
+}
+
+:root.light.light-space-inverse .sidebar-back-button:hover {
+  background: #E8EDF5 !important;
+}
+
+/* Sidebar borders in day mode */
+:root.light .sidebar-container.border-r {
+  border-right-color: #EDEDED !important;
+}
+
+:root.light.light-space-inverse .sidebar-container.border-r {
+  border-right-color: #D8E2F0 !important;
+}
