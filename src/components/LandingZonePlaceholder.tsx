@@ -10,7 +10,7 @@ interface LandingZonePlaceholderProps {
   color?: string;
   title?: string;
   description?: string;
-  providerName?: string; // Optional: Auto-lookup from LLM registry
+  providerName?: string;
 }
 
 export default function LandingZonePlaceholder({
@@ -23,21 +23,18 @@ export default function LandingZonePlaceholder({
 }: LandingZonePlaceholderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Use LLM identity registry if providerName is provided
   const identity = providerName ? getLLMIdentity(providerName) : null;
   const initials = identity?.initial || providedInitials || '?';
   const color = identity?.color || providedColor || '#6b7280';
 
   return (
     <>
-      {/* Compact Card */}
       <button
         onClick={() => setIsExpanded(true)}
         className="relative w-full h-20 bg-gray-800 rounded-lg hover:bg-gray-750 transition-colors"
         style={{ border: `2px solid ${color}` }}
         aria-label={`Expand ${title}`}
       >
-        {/* Initials Badge - Top Left */}
         <div
           className="absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
           style={{ backgroundColor: color }}
@@ -45,20 +42,17 @@ export default function LandingZonePlaceholder({
           {initials}
         </div>
 
-        {/* Title - Center */}
         <div className="flex items-center justify-center h-full">
           <span className="text-sm text-gray-300 font-medium">{title}</span>
         </div>
       </button>
 
-      {/* Expanded Modal */}
       {isExpanded && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div
             className="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4"
             style={{ border: `2px solid ${color}` }}
           >
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div
@@ -78,7 +72,6 @@ export default function LandingZonePlaceholder({
               </button>
             </div>
 
-            {/* Content */}
             <div className="text-gray-300 text-sm">
               <p>{description}</p>
               <div className="mt-4 p-3 bg-gray-800 rounded">
