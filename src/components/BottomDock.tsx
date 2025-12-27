@@ -16,25 +16,25 @@ interface BottomDockProps {
 
 const DEFAULT_ZONES: LandingZone[] = [
   {
-    id: 'zone-1',
-    initials: 'A1',
+    id: 'zone-gemini',
+    initials: 'G',
     color: '#3b82f6',
-    title: 'Agent Zone 1',
-    description: 'Reserved for future agent integration',
+    title: 'Gemini Zone',
+    description: 'Reserved for Gemini LLM integration',
   },
   {
-    id: 'zone-2',
-    initials: 'A2',
-    color: '#10b981',
-    title: 'Agent Zone 2',
-    description: 'Reserved for future agent integration',
-  },
-  {
-    id: 'zone-3',
-    initials: 'T1',
+    id: 'zone-claude',
+    initials: 'A',
     color: '#8b5cf6',
-    title: 'Tool Zone 1',
-    description: 'Reserved for future tool integration',
+    title: 'Claude Zone',
+    description: 'Reserved for Claude LLM integration',
+  },
+  {
+    id: 'zone-gpt',
+    initials: 'C',
+    color: '#10b981',
+    title: 'GPT Zone',
+    description: 'Reserved for GPT LLM integration',
   },
 ];
 
@@ -60,7 +60,7 @@ export default function BottomDock({ zones = DEFAULT_ZONES }: BottomDockProps) {
 
       {/* Build Info Badge - Top Right */}
       <div className="absolute top-2 right-2 bg-gray-800 px-2 py-1 rounded text-xs text-gray-400">
-        Build #17
+        Build #18
       </div>
     </div>
   );

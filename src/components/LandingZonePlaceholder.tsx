@@ -2,23 +2,31 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import { getLLMIdentity } from '@/config/llmIdentity';
 
 interface LandingZonePlaceholderProps {
   id: string;
-  initials: string;
-  color: string;
+  initials?: string;
+  color?: string;
   title?: string;
   description?: string;
+  providerName?: string; // Optional: Auto-lookup from LLM registry
 }
 
 export default function LandingZonePlaceholder({
   id,
-  initials,
-  color,
+  initials: providedInitials,
+  color: providedColor,
   title = 'Landing Zone',
   description = 'Placeholder for future agent/tool integration',
+  providerName,
 }: LandingZonePlaceholderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Use LLM identity registry if providerName is provided
+  const identity = providerName ? getLLMIdentity(providerName) : null;
+  const initials = identity?.initial || providedInitials || '?';
+  const color = identity?.color || providedColor || '#6b7280';
 
   return (
     <>
