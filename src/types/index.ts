@@ -31,6 +31,7 @@ export interface MessageMetadata {
   providerResponses?: Record<string, string>; // Provider ID to response content mapping
   completedProviders?: string[]; // List of providers that have completed
   allProvidersComplete?: boolean; // True when all providers have finished
+  summaryOffered?: boolean; // True when Haley summary has been offered
 }
 
 export interface SystemStatus {
@@ -104,4 +105,15 @@ export interface ConversationHistory {
   messageCount: number;
   modelMode?: string | null;  // Active AI model for this conversation
   provider?: string;  // Provider for this conversation (haley, gemini, gpt, etc.)
+}
+
+export interface Artifact {
+  id: string;
+  type: 'code' | 'data' | 'table' | 'llm-response';
+  content: string;
+  language?: string;
+  title?: string;
+  messageId: string;
+  modelId?: string; // For multi-LLM artifacts (gemini, gpt, claude, etc.)
+  isStreaming?: boolean; // Track if this LLM response is still streaming
 }

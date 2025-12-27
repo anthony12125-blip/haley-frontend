@@ -222,97 +222,34 @@ export default function ChatMessages({
 
       <div className="messages-container">
         {messages.map((message) => {
-          // Check if this is a multi-LLM message
+          // Check if this is a multi-LLM message - redirect to Artifacts Panel
           if (message.metadata?.isMultiLLM) {
-            console.log('[ChatMessages] 🎨 Rendering multi-LLM message:', message.id);
+            console.log('[ChatMessages] Multi-LLM message - showing in Artifacts Panel');
             const providers = message.metadata.providers || [];
-            const providerResponses = message.metadata.providerResponses || {};
             const completedProviders = message.metadata.completedProviders || [];
             const allComplete = message.metadata.allProvidersComplete || false;
-            const isStreaming = message.metadata.streaming || false;
-            console.log('[ChatMessages]   providers:', providers);
-            console.log('[ChatMessages]   providerResponses:', providerResponses);
-            console.log('[ChatMessages]   completedProviders:', completedProviders);
 
             return (
               <div key={message.id} className="mb-4">
-                {/* User message for context */}
-                {message.content && (
-                  <div className="max-w-3xl mx-auto px-4 mb-2">
-                    <div className="text-sm text-secondary italic">
-                      Querying {providers.length} models in parallel...
-                    </div>
-                  </div>
-                )}
-
-                {/* Multi-LLM Response Cards */}
-                <div className="max-w-3xl mx-auto px-4 space-y-3">
-                  {providers.map((provider: string) => {
-                    const response = providerResponses[provider] || '';
-                    const isComplete = completedProviders.includes(provider);
-                    const isProviderStreaming = !isComplete && response.length > 0;
-
-                    return (
-                      <LLMResponseCard
-                        key={`${message.id}-${provider}`}
-                        modelId={provider}
-                        modelName={MODEL_NAMES[provider] || provider}
-                        content={response}
-                        isStreaming={isProviderStreaming}
-                        isComplete={isComplete}
-                        onRetry={onRetryProvider ? () => onRetryProvider(message.id, provider) : undefined}
-                      />
-                    );
-                  })}
-
-                  {/* Haley Summarization Offer */}
-                  {allComplete && (() => {
-                    // Check for failed providers
-                    const failedProviders = providers.filter(p => {
-                      const response = providerResponses[p] || '';
-                      return response.startsWith('Error:');
-                    });
-                    const hasFailures = failedProviders.length > 0;
-                    const successCount = providers.length - failedProviders.length;
-
-                    return (
-                      <div className="mt-4 p-4 glass-medium rounded-lg border border-primary/30">
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-semibold text-primary mb-1">
-                                {hasFailures
-                                  ? `${successCount} of ${providers.length} models responded`
-                                  : `All ${providers.length} models have responded`
-                                }
-                              </div>
-                              <div className="text-sm text-secondary">
-                                {hasFailures
-                                  ? 'Retry failed providers or generate summary with available results?'
-                                  : 'Do you want a summary?'
-                                }
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => {
-                                // TODO: Implement summarization
-                                console.log('Summarize requested for message:', message.id);
-                                alert('Summarization feature coming soon!');
-                              }}
-                              className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors whitespace-nowrap"
-                            >
-                              {hasFailures ? 'Summarize Available' : 'Summarize'}
-                            </button>
-                          </div>
-                          {hasFailures && (
-                            <div className="text-xs text-error">
-                              Failed: {failedProviders.map(p => MODEL_NAMES[p] || p).join(', ')}
-                            </div>
-                          )}
+                <div className="max-w-3xl mx-auto px-4">
+                  <div className="text-sm text-secondary p-4 bg-gray-800 rounded-lg border border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold mb-1">
+                          Querying {providers.length} models in parallel...
+                        </div>
+                        <div className="text-xs opacity-70">
+                          {allComplete
+                            ? `All ${providers.length} models completed`
+                            : `${completedProviders.length}/${providers.length} models completed`
+                          }
                         </div>
                       </div>
-                    );
-                  })()}
+                      <div className="text-blue-400 text-sm">
+                        View responses in Artifacts Panel →
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             );

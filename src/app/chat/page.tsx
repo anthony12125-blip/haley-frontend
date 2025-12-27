@@ -11,6 +11,7 @@ import { loadAllConversations, loadConversation, deleteConversation } from "@/li
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { MigrationEngine } from '@/lib/migrationEngine';
 import { useAIClipboard } from '@/contexts/AIClipboardContext';
+import { extractArtifacts } from '@/lib/artifactsUtils';
 import Sidebar from '@/components/Sidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
@@ -20,7 +21,8 @@ import ModeSelector from '@/components/ModeSelector';
 import VoiceStatusBar from '@/components/VoiceStatusBar';
 import AudioPlaybackBar from '@/components/AudioPlaybackBar';
 import LLMResponseCard from '@/components/LLMResponseCard';
-import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory } from '@/types';
+import ArtifactsPanel from '@/components/ArtifactsPanel';
+import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
 export default function ChatPage() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -37,6 +39,10 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [magicWindowOpen, setMagicWindowOpen] = useState(false);
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
+  const [artifactsPanelOpen, setArtifactsPanelOpen] = useState(false);
+
+  // Artifacts
+  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
 
   // Initialize sidebar state from localStorage, with desktop default
   useEffect(() => {
@@ -149,6 +155,84 @@ export default function ChatPage() {
     console.log('[CHAT] New activeModel value:', activeModel);
     console.log('[CHAT] ======================================');
   }, [activeModel]);
+
+  // Extract artifacts from assistant messages (code blocks AND multi-LLM responses)
+  useEffect(() => {
+    const newArtifacts: Artifact[] = [];
+
+    messages.forEach(msg => {
+      // Regular code block artifacts
+      if (msg.role === 'assistant' && !msg.metadata?.streaming && !msg.metadata?.isMultiLLM) {
+        const { artifacts: extractedArtifacts } = extractArtifacts(msg.content, msg.id);
+        newArtifacts.push(...extractedArtifacts);
+      }
+
+      // Multi-LLM artifacts
+      if (msg.metadata?.isMultiLLM && msg.metadata?.providers) {
+        const providers = msg.metadata.providers;
+        const providerResponses = msg.metadata.providerResponses || {};
+        const completedProviders = msg.metadata.completedProviders || [];
+
+        providers.forEach((provider: string) => {
+          const response = providerResponses[provider] || '';
+          const isComplete = completedProviders.includes(provider);
+          const isStreaming = !isComplete && response.length > 0;
+
+          newArtifacts.push({
+            id: `${msg.id}-${provider}`,
+            type: 'llm-response',
+            content: response,
+            title: provider.charAt(0).toUpperCase() + provider.slice(1),
+            messageId: msg.id,
+            modelId: provider,
+            isStreaming: isStreaming,
+          });
+        });
+      }
+    });
+
+    if (newArtifacts.length > 0) {
+      console.log('[ARTIFACTS] Extracted', newArtifacts.length, 'artifacts from messages');
+      setArtifacts(newArtifacts);
+      setArtifactsPanelOpen(true); // Auto-open panel when artifacts are detected
+    }
+  }, [messages]);
+
+  // Orchestrator: Monitor multi-LLM completion and trigger Haley summary
+  useEffect(() => {
+    const multiLLMMessage = messages.find(msg =>
+      msg.metadata?.isMultiLLM &&
+      msg.metadata?.allProvidersComplete &&
+      !msg.metadata?.summaryOffered
+    );
+
+    if (multiLLMMessage) {
+      console.log('[ORCHESTRATOR] All providers complete, offering summary');
+
+      // Add Haley summary offer to chat
+      const summaryOffer: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: 'All models have completed their responses. Would you like me to provide a summary comparing their outputs?',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'summary-offer',
+          model_used: 'haley',
+        },
+      };
+
+      setMessages(prev => {
+        // Mark the multi-LLM message as summary offered
+        const updated = prev.map(msg =>
+          msg.id === multiLLMMessage.id
+            ? { ...msg, metadata: { ...msg.metadata, summaryOffered: true } }
+            : msg
+        );
+        // Add summary offer
+        return [...updated, summaryOffer];
+      });
+    }
+  }, [messages]);
 
   const loadConversationsFromStorage = async () => {
     if (!user?.uid) return;
@@ -1126,6 +1210,13 @@ export default function ChatPage() {
           availableModels={availableModels}
           availableAgents={availableAgents}
         />
+
+        {artifactsPanelOpen && artifacts.length > 0 && (
+          <ArtifactsPanel
+            artifacts={artifacts}
+            onClose={() => setArtifactsPanelOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
