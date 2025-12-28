@@ -274,6 +274,7 @@ export default function ChatPage() {
   };
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
+    console.log('[DEBUG] Hitting send button');
     console.log('[PAGE] ========== handleSend CALLED ==========');
 
     console.log('[PAGE] messageText param:', messageText);
@@ -281,6 +282,7 @@ export default function ChatPage() {
     console.log('[PAGE] audioBlob present:', !!audioBlob);
     console.log('[PAGE] audioBlob size:', audioBlob?.size);
     console.log('[PAGE] current input state:', input);
+    console.log('[DEBUG] pendingUploads:', pendingUploads);
     console.log('[PAGE] 🎯 STATE CHECK:');
     console.log('[PAGE]    multiLLMEnabled:', multiLLMEnabled);
     console.log('[PAGE]    selectedModels:', selectedModels);
@@ -358,7 +360,11 @@ export default function ChatPage() {
       console.log('[PAGE]    selectedModels:', selectedModels);
 
       try {
+        const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
+        console.log('[DEBUG] Payload before sendMultiLLMMessage:', filesToSend);
+        console.log('[DEBUG] Files count:', pendingUploads.length);
         console.log('[PAGE] 🌐 Calling sendMultiLLMMessage NOW...');
+
         const streams = await sendMultiLLMMessage(
           textToSend,
           selectedModels,
@@ -449,7 +455,7 @@ export default function ChatPage() {
             );
           },
           // Include files in multi-LLM message payload
-          pendingUploads.length > 0 ? pendingUploads : undefined
+          filesToSend
         );
 
         // Store cleanup functions
@@ -467,6 +473,11 @@ export default function ChatPage() {
         }
 
       } catch (error) {
+        console.error('[DEBUG] ❌❌❌ CRITICAL ERROR IN MULTI-LLM ❌❌❌');
+        console.error('[DEBUG] Error object:', error);
+        console.error('[DEBUG] Error type:', typeof error);
+        console.error('[DEBUG] Error message:', error instanceof Error ? error.message : String(error));
+        console.error('[DEBUG] Stack trace:', error instanceof Error ? error.stack : 'No stack');
         console.error('[MULTI-LLM] ❌ Failed to initialize streams:', error);
 
         // Create error artifacts for ALL providers
@@ -550,6 +561,10 @@ export default function ChatPage() {
       } else {
         console.log('[CHAT] 📝 ROUTING TO sendMessage()');
       }
+
+      const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
+      console.log('[DEBUG] Payload before single-model send:', filesToSend);
+      console.log('[DEBUG] Files count:', pendingUploads.length);
 
       const { messageId, cleanup } = audioBlob
         ? await sendAudioMessage(
@@ -681,7 +696,7 @@ export default function ChatPage() {
           );
         },
         // Include files in message payload
-        pendingUploads.length > 0 ? pendingUploads : undefined
+        filesToSend
       );
 
       cleanupFunctionsRef.current.set(assistantMessageId, cleanup);
@@ -696,6 +711,11 @@ export default function ChatPage() {
       console.log('[CHAT] ============================================');
 
     } catch (error) {
+      console.error('[DEBUG] ❌❌❌ CRITICAL ERROR IN CHAT PAGE HANDLESEND ❌❌❌');
+      console.error('[DEBUG] Error object:', error);
+      console.error('[DEBUG] Error type:', typeof error);
+      console.error('[DEBUG] Error message:', error instanceof Error ? error.message : String(error));
+      console.error('[DEBUG] Stack trace:', error instanceof Error ? error.stack : 'No stack');
       console.error('[CHAT] Fatal error:', error);
       setMessages((prev) =>
         prev.map((msg) =>
