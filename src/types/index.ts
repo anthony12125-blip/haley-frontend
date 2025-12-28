@@ -7,6 +7,7 @@ export interface Message {
   content: string;
   timestamp: Date;
   metadata?: MessageMetadata;
+  attachments?: File[];
 }
 
 export interface MessageMetadata {

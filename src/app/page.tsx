@@ -311,7 +311,6 @@ export default function ChatPage() {
         // TEXT INPUT - Send regular message
         const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
         console.log('[DEBUG] Payload before sendMessage:', filesToSend);
-        console.log('[DEBUG] Files count:', pendingUploads.length);
 
         await sendMessage(
           textToSend,

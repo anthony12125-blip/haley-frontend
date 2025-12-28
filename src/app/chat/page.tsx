@@ -364,7 +364,6 @@ export default function ChatPage() {
       try {
         const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
         console.log('[DEBUG] Payload before sendMultiLLMMessage:', filesToSend);
-        console.log('[DEBUG] Files count:', pendingUploads.length);
         console.log('[PAGE] 🌐 Calling sendMultiLLMMessage NOW...');
 
         const streams = await sendMultiLLMMessage(
@@ -567,7 +566,6 @@ export default function ChatPage() {
 
       const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
       console.log('[DEBUG] Payload before single-model send:', filesToSend);
-      console.log('[DEBUG] Files count:', pendingUploads.length);
 
       const { messageId, cleanup } = audioBlob
         ? await sendAudioMessage(
