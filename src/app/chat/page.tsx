@@ -16,6 +16,7 @@ import Sidebar from '@/components/Sidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInputBar from '@/components/ChatInputBar';
+import UploadPreviewZone from '@/components/UploadPreviewZone';
 import MagicWindow from '@/components/MagicWindow';
 import ModeSelector from '@/components/ModeSelector';
 import VoiceStatusBar from '@/components/VoiceStatusBar';
@@ -78,7 +79,10 @@ export default function ChatPage() {
   // Chat State
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  
+
+  // Outbound Artifacts State
+  const [pendingUploads, setPendingUploads] = useState<File[]>([]);
+
   // Feature Toggles
   const [researchEnabled, setResearchEnabled] = useState(false);
   const [logicEngineEnabled, setLogicEngineEnabled] = useState(false);
@@ -316,6 +320,12 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, userMessage]);
       setInput('');
 
+      // Clear pending uploads after send
+      if (pendingUploads.length > 0) {
+        console.log('[UPLOAD] Clearing uploads after send');
+        setPendingUploads([]);
+      }
+
       if (hasActiveNewChat) {
         setHasActiveNewChat(false);
       }
@@ -504,7 +514,13 @@ export default function ChatPage() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
-    
+
+    // Clear pending uploads after send
+    if (pendingUploads.length > 0) {
+      console.log('[UPLOAD] Clearing uploads after send');
+      setPendingUploads([]);
+    }
+
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
     }
@@ -705,16 +721,26 @@ export default function ChatPage() {
   };
 
   const handleFileUpload = (files: FileList) => {
-    console.log('Files uploaded:', files);
-    setMagicWindowContent({
-      type: 'data',
-      content: {
-        files: files.length,
-        names: Array.from(files).map(f => f.name).join(', '),
-      },
-      title: 'Uploaded Files',
+    // Convert FileList to File array
+    const newFiles = Array.from(files);
+
+    // Log for debugging
+    console.log('[UPLOAD] Files selected:', newFiles.length);
+    newFiles.forEach(f => console.log(`  - ${f.name} (${f.size} bytes)`));
+
+    // Append to existing uploads (not replace)
+    setPendingUploads(prev => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    console.log('[UPLOAD] Removing file at index:', index);
+
+    setPendingUploads(prev => {
+      const updated = [...prev];
+      const removed = updated.splice(index, 1);
+      console.log(`[UPLOAD] Removed: ${removed[0]?.name}`);
+      return updated;
     });
-    setMagicWindowOpen(true);
   };
 
   const handleAudioReady = (url: string, text: string) => {
@@ -1181,6 +1207,14 @@ export default function ChatPage() {
             setTimeout(() => setVoiceHasError(false), 5000);
           }}
         />
+
+        {pendingUploads.length > 0 && (
+          <UploadPreviewZone
+            files={pendingUploads}
+            onRemoveFile={handleRemoveFile}
+            sidebarOpen={sidebarOpen && device.type === 'desktop'}
+          />
+        )}
 
         <ChatInputBar
           input={input}
