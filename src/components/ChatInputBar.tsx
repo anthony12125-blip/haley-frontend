@@ -13,6 +13,7 @@ interface ChatInputBarProps {
   sidebarOpen?: boolean;
   onRecordingStart?: () => void;
   onRecordingStop?: () => void;
+  pendingUploads?: File[];
 }
 
 export default function ChatInputBar({
@@ -25,6 +26,7 @@ export default function ChatInputBar({
   sidebarOpen = false,
   onRecordingStart,
   onRecordingStop,
+  pendingUploads = [],
 }: ChatInputBarProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -57,12 +59,12 @@ export default function ChatInputBar({
   };
 
   const handleSend = () => {
-    if (input.trim()) {
+    if (input.trim() || pendingUploads.length > 0) {
       onSend(input);
       setInput('');
       console.log('[CHATINPUT] onSend completed, input cleared');
     } else {
-      console.log('[CHATINPUT] Input empty or whitespace, not sending');
+      console.log('[CHATINPUT] Input empty and no files, not sending');
     }
   };
 
@@ -317,9 +319,9 @@ export default function ChatInputBar({
                   {/* Send button */}
                   <button
                     onClick={handleSend}
-                    disabled={!input.trim()}
+                    disabled={!input.trim() && pendingUploads.length === 0}
                     className={`icon-btn !w-8 !h-8 flex-shrink-0 ${
-                      input.trim()
+                      input.trim() || pendingUploads.length > 0
                         ? 'bg-primary text-white hover:bg-accent'
                         : 'opacity-50 cursor-not-allowed'
                     }`}

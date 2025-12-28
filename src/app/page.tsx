@@ -173,6 +173,7 @@ export default function ChatPage() {
       content: audioBlob ? '[Voice message]' : textToSend,
       timestamp: new Date(),
       metadata: audioBlob ? { isVoiceMessage: true } : undefined,
+      attachments: pendingUploads.length > 0 ? [...pendingUploads] : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -686,6 +687,7 @@ export default function ChatPage() {
           onFileUpload={handleFileUpload}
           onGallerySelect={handleGallerySelect}
           sidebarOpen={sidebarOpen && device.type === 'desktop'}
+          pendingUploads={pendingUploads}
         />
 
         {/* Magic Window - bottom right, translucent */}

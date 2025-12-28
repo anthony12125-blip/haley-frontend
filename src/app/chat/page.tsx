@@ -318,6 +318,7 @@ export default function ChatPage() {
         role: 'user',
         content: textToSend,
         timestamp: new Date(),
+        attachments: pendingUploads.length > 0 ? [...pendingUploads] : undefined,
       };
 
       setMessages((prev) => [...prev, userMessage]);
@@ -524,6 +525,7 @@ export default function ChatPage() {
       role: 'user',
       content: audioBlob ? '[Voice message]' : textToSend,
       timestamp: new Date(),
+      attachments: pendingUploads.length > 0 ? [...pendingUploads] : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -1251,6 +1253,7 @@ export default function ChatPage() {
           sidebarOpen={sidebarOpen && device.type === 'desktop'}
           onRecordingStart={() => setVoiceIsListening(true)}
           onRecordingStop={() => setVoiceIsListening(false)}
+          pendingUploads={pendingUploads}
         />
 
         <MagicWindow
