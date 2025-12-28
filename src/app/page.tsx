@@ -11,6 +11,7 @@ import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInputBar from '@/components/ChatInputBar';
+import UploadPreviewZone from '@/components/UploadPreviewZone';
 import MagicWindow from '@/components/MagicWindow';
 import ModeSelector from '@/components/ModeSelector';
 import Sidebar from '@/components/Sidebar';
@@ -59,7 +60,10 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
+  // Outbound Artifacts State
+  const [pendingUploads, setPendingUploads] = useState<File[]>([]);
+
   // Feature Toggles
   const [researchEnabled, setResearchEnabled] = useState(false);
   const [logicEngineEnabled, setLogicEngineEnabled] = useState(false);
@@ -171,6 +175,12 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+
+    // Clear pending uploads after send
+    if (pendingUploads.length > 0) {
+      console.log('[UPLOAD] Clearing uploads after send');
+      setPendingUploads([]);
+    }
 
     // Clear new chat guard when user sends first message
     if (hasActiveNewChat) {
@@ -397,8 +407,19 @@ export default function ChatPage() {
     console.log('[UPLOAD] Files selected:', newFiles.length);
     newFiles.forEach(f => console.log(`  - ${f.name} (${f.size} bytes)`));
 
-    // Note: Root page doesn't have pendingUploads state
-    // File upload preview only available in /chat route
+    // Append to existing uploads (not replace)
+    setPendingUploads(prev => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    console.log('[UPLOAD] Removing file at index:', index);
+
+    setPendingUploads(prev => {
+      const updated = [...prev];
+      const removed = updated.splice(index, 1);
+      console.log(`[UPLOAD] Removed: ${removed[0]?.name}`);
+      return updated;
+    });
   };
 
   const handleGallerySelect = () => {
@@ -625,6 +646,15 @@ export default function ChatPage() {
           onBranchMessage={handleBranchMessage}
           onStreamingComplete={() => setIsLoading(false)}
         />
+
+        {/* Upload Preview Zone */}
+        {pendingUploads.length > 0 && (
+          <UploadPreviewZone
+            files={pendingUploads}
+            onRemoveFile={handleRemoveFile}
+            sidebarOpen={sidebarOpen && device.type === 'desktop'}
+          />
+        )}
 
         {/* Input Bar */}
         <ChatInputBar
