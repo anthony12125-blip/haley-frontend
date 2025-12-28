@@ -67,39 +67,54 @@ export async function sendMessage(
     console.log('[API] ====== ASYNC SEND MESSAGE ======');
     console.log('[API] Provider:', provider);
     console.log('[API] Files attached:', files?.length || 0);
+    console.log('[DEBUG] Files array:', files);
     console.log('[API] 🌐 About to fetch:', `${BACKEND_URL}/chat/submit`);
 
     let submitResponse: Response;
 
-    // Use FormData if files are present, otherwise JSON
-    if (files && files.length > 0) {
-      const formData = new FormData();
-      formData.append('conversation_id', 'default');
-      formData.append('user_id', 'user');
-      formData.append('message', message);
-      formData.append('provider', provider || 'haley');
+    try {
+      // Use FormData if files are present, otherwise JSON
+      if (files && files.length > 0) {
+        console.log('[DEBUG] Using FormData path');
+        const formData = new FormData();
+        formData.append('conversation_id', 'default');
+        formData.append('user_id', 'user');
+        formData.append('message', message);
+        formData.append('provider', provider || 'haley');
 
-      // Append each file
-      files.forEach((file, index) => {
-        formData.append(`file_${index}`, file, file.name);
-        console.log(`[API] Attached file ${index}: ${file.name} (${file.size} bytes)`);
-      });
+        // Append each file
+        files.forEach((file, index) => {
+          console.log(`[DEBUG] Processing file ${index}:`, file);
+          formData.append(`file_${index}`, file, file.name);
+          console.log(`[API] Attached file ${index}: ${file.name} (${file.size} bytes)`);
+        });
 
-      submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
-        method: 'POST',
-        body: formData,
-      });
-    } else {
-      submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversation_id: 'default',
-          user_id: 'user',
-          message: message,
-          provider: provider
-        }),
-      });
+        console.log('[DEBUG] FormData prepared, calling fetch...');
+        submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
+          method: 'POST',
+          body: formData,
+        });
+        console.log('[DEBUG] Fetch with FormData completed');
+      } else {
+        console.log('[DEBUG] Using JSON path (no files)');
+        submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: 'default',
+            user_id: 'user',
+            message: message,
+            provider: provider
+          }),
+        });
+        console.log('[DEBUG] Fetch with JSON completed');
+      }
+    } catch (fetchError) {
+      console.error('[DEBUG] ❌ FETCH OPERATION FAILED ❌');
+      console.error('[DEBUG] Fetch error:', fetchError);
+      console.error('[DEBUG] Fetch error type:', typeof fetchError);
+      console.error('[DEBUG] Fetch error message:', fetchError instanceof Error ? fetchError.message : String(fetchError));
+      throw fetchError;
     }
 
     console.log('[API] ✅ Fetch completed. Status:', submitResponse.status, submitResponse.statusText);
@@ -223,10 +238,12 @@ export async function sendMultiLLMMessage(
   console.log('[API] Providers:', providers);
   console.log('[API] Message:', message);
   console.log('[API] Files attached:', files?.length || 0);
+  console.log('[DEBUG] Files array in multi-LLM:', files);
 
   const streams = await Promise.all(
     providers.map(async (provider) => {
       try {
+        console.log(`[DEBUG] Sending to provider ${provider} with files:`, files?.length || 0);
         const { messageId, cleanup } = await sendMessage(
           message,
           provider,
@@ -235,6 +252,7 @@ export async function sendMultiLLMMessage(
           (error) => onProviderError?.(provider, error),
           files
         );
+        console.log(`[DEBUG] Provider ${provider} initialized successfully`);
 
         return { provider, messageId, cleanup };
       } catch (error) {

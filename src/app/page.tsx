@@ -141,10 +141,12 @@ export default function ChatPage() {
   };
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
+    console.log('[DEBUG] Hitting send button');
     console.log('[PAGE] ========== handleSend CALLED ==========');
     console.log('[PAGE] messageText:', messageText);
     console.log('[PAGE] audioBlob present:', !!audioBlob);
     console.log('[PAGE] input state:', input);
+    console.log('[DEBUG] pendingUploads:', pendingUploads);
 
     const textToSend = messageText || input;
     console.log('[PAGE] textToSend resolved to:', textToSend);
@@ -305,6 +307,10 @@ export default function ChatPage() {
         }
       } else {
         // TEXT INPUT - Send regular message
+        const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
+        console.log('[DEBUG] Payload before sendMessage:', filesToSend);
+        console.log('[DEBUG] Files count:', pendingUploads.length);
+
         await sendMessage(
           textToSend,
           resolvedProvider,
@@ -371,7 +377,7 @@ export default function ChatPage() {
             setIsLoading(false);
           },
           // Include files in message payload
-          pendingUploads.length > 0 ? pendingUploads : undefined
+          filesToSend
         );
 
         // Clear pending uploads after message packaged for backend
@@ -382,7 +388,13 @@ export default function ChatPage() {
       }
 
     } catch (error) {
+      console.error('[DEBUG] ❌❌❌ CRITICAL ERROR IN HANDLESEND ❌❌❌');
+      console.error('[DEBUG] Error object:', error);
+      console.error('[DEBUG] Error type:', typeof error);
+      console.error('[DEBUG] Error message:', error instanceof Error ? error.message : String(error));
+      console.error('[DEBUG] Stack trace:', error instanceof Error ? error.stack : 'No stack');
       console.error('[PAGE] ❌ Error sending message:', error);
+
       const errorMessage: Message = {
         id: generateId(),
         role: 'assistant',
