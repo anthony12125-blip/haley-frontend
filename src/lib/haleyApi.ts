@@ -72,40 +72,57 @@ export async function sendMessage(
 
     let submitResponse: Response;
 
-    // Log payload type before fetch
-    console.log(`[DEBUG] Attempting fetch with ${files && files.length > 0 ? 'FormData' : 'JSON'} payload`);
-
     try {
-      // Use FormData if files are present, otherwise JSON
+      // Convert files to Base64 if present
       if (files && files.length > 0) {
-        console.log('[DEBUG] Using FormData path');
-        const formData = new FormData();
+        console.log('[DEBUG] Sending Hybrid JSON with Base64 attachments');
 
-        // Append standard fields FIRST
-        formData.append('conversation_id', 'default');
-        formData.append('user_id', 'user');
-        formData.append('message', message);
-        formData.append('provider', provider || 'haley');
+        // Helper function to convert File to Base64
+        const fileToBase64 = (file: File): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+              const result = reader.result as string;
+              // Remove data URL prefix (e.g., "data:image/png;base64,")
+              const base64 = result.split(',')[1];
+              resolve(base64);
+            };
+            reader.onerror = (error) => reject(error);
+          });
+        };
 
-        // Append files using same key 'files' for backend list parsing
-        files.forEach((file, index) => {
-          console.log(`[DEBUG] Processing file ${index}:`, file);
-          formData.append('files', file, file.name);
-          console.log(`[API] Attached file ${index}: ${file.name} (${file.size} bytes)`);
-        });
+        // Convert all files to Base64
+        console.log('[DEBUG] Converting files to Base64...');
+        const attachments = await Promise.all(
+          files.map(async (file, index) => {
+            console.log(`[DEBUG] Processing file ${index}: ${file.name} (${file.size} bytes)`);
+            const base64Data = await fileToBase64(file);
+            console.log(`[DEBUG] File ${index} converted to Base64 (length: ${base64Data.length})`);
+            return {
+              filename: file.name,
+              data: base64Data,
+              contentType: file.type || 'application/octet-stream'
+            };
+          })
+        );
+        console.log('[DEBUG] All files converted. Total attachments:', attachments.length);
 
-        console.log('[DEBUG] FormData prepared, calling fetch...');
-        console.log('[DEBUG] FormData structure - standard fields + files array');
-        // IMPORTANT: Do NOT set Content-Type header for FormData
-        // Browser will auto-set it with correct multipart/form-data boundary
+        // Send JSON with Base64 attachments
         submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
           method: 'POST',
-          body: formData,
-          // NO headers - let browser handle Content-Type with boundary
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: 'default',
+            user_id: 'user',
+            message: message,
+            provider: provider,
+            attachments: attachments
+          }),
         });
-        console.log('[DEBUG] Fetch with FormData completed');
+        console.log('[DEBUG] Hybrid JSON fetch completed');
       } else {
-        console.log('[DEBUG] Using JSON path (no files)');
+        console.log('[DEBUG] Using standard JSON (no files)');
         submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -116,7 +133,7 @@ export async function sendMessage(
             provider: provider
           }),
         });
-        console.log('[DEBUG] Fetch with JSON completed');
+        console.log('[DEBUG] Standard JSON fetch completed');
       }
     } catch (fetchError) {
       console.error('[DEBUG] ❌ FETCH OPERATION FAILED ❌');
