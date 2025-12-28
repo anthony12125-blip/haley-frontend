@@ -80,19 +80,22 @@ export async function sendMessage(
       if (files && files.length > 0) {
         console.log('[DEBUG] Using FormData path');
         const formData = new FormData();
+
+        // Append standard fields FIRST
         formData.append('conversation_id', 'default');
         formData.append('user_id', 'user');
         formData.append('message', message);
         formData.append('provider', provider || 'haley');
 
-        // Append each file
+        // Append files using same key 'files' for backend list parsing
         files.forEach((file, index) => {
           console.log(`[DEBUG] Processing file ${index}:`, file);
-          formData.append(`file_${index}`, file, file.name);
+          formData.append('files', file, file.name);
           console.log(`[API] Attached file ${index}: ${file.name} (${file.size} bytes)`);
         });
 
         console.log('[DEBUG] FormData prepared, calling fetch...');
+        console.log('[DEBUG] FormData structure - standard fields + files array');
         // IMPORTANT: Do NOT set Content-Type header for FormData
         // Browser will auto-set it with correct multipart/form-data boundary
         submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
