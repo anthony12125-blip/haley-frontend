@@ -291,15 +291,16 @@ export default function ChatPage() {
     const textToSend = messageText || input;
     console.log('[PAGE] textToSend resolved to:', textToSend);
 
-    // Allow messages with either text OR audio
-    if (!textToSend.trim() && !audioBlob) {
-      console.log('[PAGE] ❌ Empty message (no text and no audio), returning early');
+    // Allow messages with text OR audio OR files
+    if (!textToSend.trim() && !audioBlob && pendingUploads.length === 0) {
+      console.log('[PAGE] ❌ Empty message (no text, no audio, and no files), returning early');
       return;
     }
 
     console.log('[PAGE] ✅ Message validation passed');
     console.log('[PAGE]    Has text:', !!textToSend.trim());
     console.log('[PAGE]    Has audio:', !!audioBlob);
+    console.log('[PAGE]    Has files:', pendingUploads.length);
 
     // VOICE INPUT: Audio blobs bypass multi-LLM mode
     if (audioBlob) {

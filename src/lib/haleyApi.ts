@@ -72,6 +72,9 @@ export async function sendMessage(
 
     let submitResponse: Response;
 
+    // Log payload type before fetch
+    console.log(`[DEBUG] Attempting fetch with ${files && files.length > 0 ? 'FormData' : 'JSON'} payload`);
+
     try {
       // Use FormData if files are present, otherwise JSON
       if (files && files.length > 0) {
@@ -90,9 +93,12 @@ export async function sendMessage(
         });
 
         console.log('[DEBUG] FormData prepared, calling fetch...');
+        // IMPORTANT: Do NOT set Content-Type header for FormData
+        // Browser will auto-set it with correct multipart/form-data boundary
         submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
           method: 'POST',
           body: formData,
+          // NO headers - let browser handle Content-Type with boundary
         });
         console.log('[DEBUG] Fetch with FormData completed');
       } else {
