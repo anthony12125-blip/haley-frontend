@@ -151,9 +151,9 @@ export default function ChatPage() {
     const textToSend = messageText || input;
     console.log('[PAGE] textToSend resolved to:', textToSend);
 
-    // Allow messages with text OR audio OR files
-    if (!textToSend.trim() && !audioBlob && pendingUploads.length === 0) {
-      console.log('[PAGE] ❌ Empty message (no text, no audio, and no files), returning early');
+    // Allow send if input has text OR files are attached OR audio is present
+    if (!input.trim() && !audioBlob && pendingUploads.length === 0) {
+      console.log('[PAGE] ❌ Empty message (no input text, no audio, and no files), returning early');
       return;
     }
 
