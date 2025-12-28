@@ -176,12 +176,6 @@ export default function ChatPage() {
     setInput('');
     setIsLoading(true);
 
-    // Clear pending uploads after send
-    if (pendingUploads.length > 0) {
-      console.log('[UPLOAD] Clearing uploads after send');
-      setPendingUploads([]);
-    }
-
     // Clear new chat guard when user sends first message
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
@@ -303,6 +297,12 @@ export default function ChatPage() {
             )
           );
         }
+
+        // Clear pending uploads after voice message sent
+        if (pendingUploads.length > 0) {
+          console.log('[UPLOAD] Clearing uploads after voice message sent');
+          setPendingUploads([]);
+        }
       } else {
         // TEXT INPUT - Send regular message
         await sendMessage(
@@ -369,8 +369,16 @@ export default function ChatPage() {
               )
             );
             setIsLoading(false);
-          }
+          },
+          // Include files in message payload
+          pendingUploads.length > 0 ? pendingUploads : undefined
         );
+
+        // Clear pending uploads after message packaged for backend
+        if (pendingUploads.length > 0) {
+          console.log('[UPLOAD] Clearing uploads after message sent');
+          setPendingUploads([]);
+        }
       }
 
     } catch (error) {

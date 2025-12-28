@@ -46,7 +46,8 @@ export async function sendMessage(
   provider?: string | null,
   onToken?: (token: string) => void,
   onComplete?: (response: OSOperationResponse) => void,
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
+  files?: File[]
 ): Promise<{ messageId: string; cleanup: () => void }> {
   let eventSource: EventSource | null = null;
 
@@ -65,18 +66,41 @@ export async function sendMessage(
 
     console.log('[API] ====== ASYNC SEND MESSAGE ======');
     console.log('[API] Provider:', provider);
+    console.log('[API] Files attached:', files?.length || 0);
     console.log('[API] 🌐 About to fetch:', `${BACKEND_URL}/chat/submit`);
 
-    const submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        conversation_id: 'default',
-        user_id: 'user',
-        message: message,
-        provider: provider
-      }),
-    });
+    let submitResponse: Response;
+
+    // Use FormData if files are present, otherwise JSON
+    if (files && files.length > 0) {
+      const formData = new FormData();
+      formData.append('conversation_id', 'default');
+      formData.append('user_id', 'user');
+      formData.append('message', message);
+      formData.append('provider', provider || 'haley');
+
+      // Append each file
+      files.forEach((file, index) => {
+        formData.append(`file_${index}`, file, file.name);
+        console.log(`[API] Attached file ${index}: ${file.name} (${file.size} bytes)`);
+      });
+
+      submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
+        method: 'POST',
+        body: formData,
+      });
+    } else {
+      submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: 'default',
+          user_id: 'user',
+          message: message,
+          provider: provider
+        }),
+      });
+    }
 
     console.log('[API] ✅ Fetch completed. Status:', submitResponse.status, submitResponse.statusText);
 
@@ -192,11 +216,13 @@ export async function sendMultiLLMMessage(
   providers: string[],
   onProviderToken?: (provider: string, token: string) => void,
   onProviderComplete?: (provider: string, response: OSOperationResponse) => void,
-  onProviderError?: (provider: string, error: string) => void
+  onProviderError?: (provider: string, error: string) => void,
+  files?: File[]
 ): Promise<Array<{ provider: string; messageId: string; cleanup: () => void }>> {
   console.log('[API] ====== MULTI-LLM QUERY ======');
   console.log('[API] Providers:', providers);
   console.log('[API] Message:', message);
+  console.log('[API] Files attached:', files?.length || 0);
 
   const streams = await Promise.all(
     providers.map(async (provider) => {
@@ -206,7 +232,8 @@ export async function sendMultiLLMMessage(
           provider,
           (token) => onProviderToken?.(provider, token),
           (response) => onProviderComplete?.(provider, response),
-          (error) => onProviderError?.(provider, error)
+          (error) => onProviderError?.(provider, error),
+          files
         );
 
         return { provider, messageId, cleanup };

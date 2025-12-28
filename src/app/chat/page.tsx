@@ -320,12 +320,6 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, userMessage]);
       setInput('');
 
-      // Clear pending uploads after send
-      if (pendingUploads.length > 0) {
-        console.log('[UPLOAD] Clearing uploads after send');
-        setPendingUploads([]);
-      }
-
       if (hasActiveNewChat) {
         setHasActiveNewChat(false);
       }
@@ -453,7 +447,9 @@ export default function ChatPage() {
                 return msg;
               })
             );
-          }
+          },
+          // Include files in multi-LLM message payload
+          pendingUploads.length > 0 ? pendingUploads : undefined
         );
 
         // Store cleanup functions
@@ -463,6 +459,12 @@ export default function ChatPage() {
             stream.cleanup
           );
         });
+
+        // Clear pending uploads after message packaged for backend
+        if (pendingUploads.length > 0) {
+          console.log('[UPLOAD] Clearing uploads after multi-LLM message sent');
+          setPendingUploads([]);
+        }
 
       } catch (error) {
         console.error('[MULTI-LLM] ❌ Failed to initialize streams:', error);
@@ -514,12 +516,6 @@ export default function ChatPage() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
-
-    // Clear pending uploads after send
-    if (pendingUploads.length > 0) {
-      console.log('[UPLOAD] Clearing uploads after send');
-      setPendingUploads([]);
-    }
 
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
@@ -683,10 +679,18 @@ export default function ChatPage() {
                 : msg
             )
           );
-        }
+        },
+        // Include files in message payload
+        pendingUploads.length > 0 ? pendingUploads : undefined
       );
 
       cleanupFunctionsRef.current.set(assistantMessageId, cleanup);
+
+      // Clear pending uploads after message packaged for backend
+      if (pendingUploads.length > 0) {
+        console.log('[UPLOAD] Clearing uploads after single-model message sent');
+        setPendingUploads([]);
+      }
       
       console.log('[CHAT] Message submitted (non-blocking)');
       console.log('[CHAT] ============================================');
