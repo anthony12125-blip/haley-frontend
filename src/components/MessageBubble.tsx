@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Share2, RotateCcw, GitBranch, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Share2, RotateCcw, GitBranch, ThumbsUp, ThumbsDown, FileText, Image as ImageIcon, File, Table, Archive, Video, Music } from 'lucide-react';
 import type { Message } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
 import IconEnvelopeWings from './icons/IconEnvelopeWings';
@@ -113,6 +113,24 @@ export default function MessageBubble({
       // Fallback to migration instead of copy
       handleMigrate();
     }
+  };
+
+  // Helper functions for file attachments
+  const getFileIcon = (file: File) => {
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension)) return ImageIcon;
+    if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(extension)) return FileText;
+    if (['xls', 'xlsx', 'csv'].includes(extension)) return Table;
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) return Archive;
+    if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(extension)) return Video;
+    if (['mp3', 'wav', 'm4a', 'ogg', 'flac'].includes(extension)) return Music;
+    return File;
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const isVoiceMessage = message.role === 'user' && message.metadata?.isVoiceMessage;
@@ -350,6 +368,59 @@ export default function MessageBubble({
           color: var(--text-secondary);
         }
 
+        .attachments-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 12px;
+        }
+
+        .attachment-card {
+          display: flex;
+          flex-direction: column;
+          min-width: 180px;
+          max-width: 180px;
+          height: 80px;
+          background: var(--panel-dark);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 12px;
+          transition: all 0.2s;
+        }
+
+        .attachment-card:hover {
+          border-color: var(--primary);
+        }
+
+        .attachment-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
+        .attachment-icon {
+          flex-shrink: 0;
+          color: var(--accent);
+        }
+
+        .attachment-name {
+          flex: 1;
+          font-size: 13px;
+          font-weight: 500;
+          color: var(--text-primary);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          line-height: 1.3;
+        }
+
+        .attachment-size {
+          font-size: 11px;
+          color: var(--text-secondary);
+          margin-top: auto;
+        }
+
         :root.light .metadata-section {
           border-top: 1px solid rgba(0, 0, 0, 0.1);
           color: #6A6A6A;
@@ -420,6 +491,28 @@ export default function MessageBubble({
             </div>
           )}
         </div>
+
+        {/* File Attachments */}
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="attachments-container">
+            {message.attachments.map((file, index) => {
+              const Icon = getFileIcon(file);
+              return (
+                <div key={`${file.name}-${index}`} className="attachment-card">
+                  <div className="attachment-header">
+                    <Icon size={18} className="attachment-icon" />
+                    <div className="attachment-name" title={file.name}>
+                      {file.name}
+                    </div>
+                  </div>
+                  <div className="attachment-size">
+                    {formatFileSize(file.size)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Metadata */}
         {message.metadata && isComplete && (
