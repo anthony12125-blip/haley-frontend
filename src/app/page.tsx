@@ -390,16 +390,15 @@ export default function ChatPage() {
   };
 
   const handleFileUpload = (files: FileList) => {
-    console.log('Files uploaded:', files);
-    setMagicWindowContent({
-      type: 'data',
-      content: {
-        files: files.length,
-        names: Array.from(files).map(f => f.name).join(', '),
-      },
-      title: 'Uploaded Files',
-    });
-    setMagicWindowOpen(true);
+    // Convert FileList to File array
+    const newFiles = Array.from(files);
+
+    // Log for debugging
+    console.log('[UPLOAD] Files selected:', newFiles.length);
+    newFiles.forEach(f => console.log(`  - ${f.name} (${f.size} bytes)`));
+
+    // Note: Root page doesn't have pendingUploads state
+    // File upload preview only available in /chat route
   };
 
   const handleGallerySelect = () => {
