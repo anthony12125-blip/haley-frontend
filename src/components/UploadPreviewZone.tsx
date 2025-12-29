@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { X, FileText, Image as ImageIcon, File, Table, Archive, Video, Music } from 'lucide-react';
 
 interface UploadPreviewZoneProps {
@@ -13,7 +14,35 @@ export default function UploadPreviewZone({
   onRemoveFile,
   sidebarOpen = false,
 }: UploadPreviewZoneProps) {
+  const [previewUrls, setPreviewUrls] = useState<Map<number, string>>(new Map());
+
+  // Create object URLs for image files
+  useEffect(() => {
+    const newPreviewUrls = new Map<number, string>();
+
+    files.forEach((file, index) => {
+      if (isImageFile(file)) {
+        const url = URL.createObjectURL(file);
+        newPreviewUrls.set(index, url);
+      }
+    });
+
+    setPreviewUrls(newPreviewUrls);
+
+    // Cleanup function to revoke all URLs
+    return () => {
+      newPreviewUrls.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+    };
+  }, [files]);
+
   if (files.length === 0) return null;
+
+  const isImageFile = (file: File): boolean => {
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension);
+  };
 
   const getFileIcon = (file: File) => {
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
@@ -94,10 +123,29 @@ export default function UploadPreviewZone({
           padding: 12px;
           position: relative;
           transition: all 0.2s;
+          overflow: hidden;
         }
 
         .file-card:hover {
           border-color: var(--primary);
+        }
+
+        .image-thumbnail {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 8px;
+          opacity: 0.3;
+        }
+
+        .file-card.has-image .file-header,
+        .file-card.has-image .file-size {
+          position: relative;
+          z-index: 1;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
         }
 
         .file-header {
@@ -132,13 +180,14 @@ export default function UploadPreviewZone({
           display: flex;
           align-items: center;
           justify-content: center;
-          background: transparent;
+          background: rgba(0, 0, 0, 0.6);
           border: none;
           border-radius: 4px;
-          color: var(--text-secondary);
+          color: white;
           cursor: pointer;
           transition: all 0.2s;
           padding: 0;
+          z-index: 2;
         }
 
         .remove-btn:hover {
@@ -164,9 +213,22 @@ export default function UploadPreviewZone({
         <div className="preview-scroll">
           {files.map((file, index) => {
             const Icon = getFileIcon(file);
+            const isImage = isImageFile(file);
+            const previewUrl = previewUrls.get(index);
 
             return (
-              <div key={`${file.name}-${index}`} className="file-card">
+              <div
+                key={`${file.name}-${index}`}
+                className={`file-card ${isImage ? 'has-image' : ''}`}
+              >
+                {isImage && previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt={file.name}
+                    className="image-thumbnail"
+                  />
+                )}
+
                 <button
                   onClick={() => onRemoveFile(index)}
                   className="remove-btn"
