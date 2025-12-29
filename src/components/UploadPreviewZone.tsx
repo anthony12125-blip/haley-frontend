@@ -138,14 +138,34 @@ export default function UploadPreviewZone({
           height: 100%;
           object-fit: cover;
           border-radius: 8px;
-          opacity: 0.3;
+          opacity: 1;
         }
 
-        .file-card.has-image .file-header,
-        .file-card.has-image .file-size {
-          position: relative;
+        .image-overlay {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: rgba(0, 0, 0, 0.6);
+          padding: 6px 8px;
           z-index: 1;
-          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(4px);
+        }
+
+        .image-overlay .file-name {
+          font-size: 11px;
+          font-weight: 500;
+          color: white;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          line-height: 1.2;
+          margin-bottom: 2px;
+        }
+
+        .image-overlay .file-size {
+          font-size: 10px;
+          color: rgba(255, 255, 255, 0.8);
         }
 
         .file-header {
@@ -221,12 +241,34 @@ export default function UploadPreviewZone({
                 key={`${file.name}-${index}`}
                 className={`file-card ${isImage ? 'has-image' : ''}`}
               >
-                {isImage && previewUrl && (
-                  <img
-                    src={previewUrl}
-                    alt={file.name}
-                    className="image-thumbnail"
-                  />
+                {isImage && previewUrl ? (
+                  <>
+                    <img
+                      src={previewUrl}
+                      alt={file.name}
+                      className="image-thumbnail"
+                    />
+                    <div className="image-overlay">
+                      <div className="file-name" title={file.name}>
+                        {file.name}
+                      </div>
+                      <div className="file-size">
+                        {formatFileSize(file.size)}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="file-header">
+                      <Icon size={18} className="file-icon" />
+                      <div className="file-name" title={file.name}>
+                        {file.name}
+                      </div>
+                    </div>
+                    <div className="file-size">
+                      {formatFileSize(file.size)}
+                    </div>
+                  </>
                 )}
 
                 <button
@@ -237,17 +279,6 @@ export default function UploadPreviewZone({
                 >
                   <X size={14} />
                 </button>
-
-                <div className="file-header">
-                  <Icon size={18} className="file-icon" />
-                  <div className="file-name" title={file.name}>
-                    {file.name}
-                  </div>
-                </div>
-
-                <div className="file-size">
-                  {formatFileSize(file.size)}
-                </div>
               </div>
             );
           })}
