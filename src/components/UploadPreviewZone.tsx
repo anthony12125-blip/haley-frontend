@@ -1,17 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, FileText, Image as ImageIcon, File, Table, Archive, Video, Music } from 'lucide-react';
+import { X, FileText, Image as ImageIcon, File, Table, Archive, Video, Music, Code, Database, Sparkles } from 'lucide-react';
+import { Artifact } from '@/types';
 
 interface UploadPreviewZoneProps {
   files: File[];
+  artifacts?: Artifact[];
   onRemoveFile: (index: number) => void;
+  onRemoveArtifact?: (id: string) => void;
   sidebarOpen?: boolean;
 }
 
+type PreviewItem =
+  | { type: 'file'; data: File; index: number }
+  | { type: 'artifact'; data: Artifact };
+
 export default function UploadPreviewZone({
   files,
+  artifacts = [],
   onRemoveFile,
+  onRemoveArtifact,
   sidebarOpen = false,
 }: UploadPreviewZoneProps) {
   const [previewUrls, setPreviewUrls] = useState<Map<number, string>>(new Map());
@@ -37,7 +46,13 @@ export default function UploadPreviewZone({
     };
   }, [files]);
 
-  if (files.length === 0) return null;
+  // Combine files and artifacts into unified preview items
+  const previewItems: PreviewItem[] = [
+    ...files.map((file, index) => ({ type: 'file' as const, data: file, index })),
+    ...artifacts.map((artifact) => ({ type: 'artifact' as const, data: artifact })),
+  ];
+
+  if (previewItems.length === 0) return null;
 
   const isImageFile = (file: File): boolean => {
     const extension = file.name.split('.').pop()?.toLowerCase() || '';
@@ -79,6 +94,52 @@ export default function UploadPreviewZone({
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getArtifactIcon = (artifact: Artifact) => {
+    switch (artifact.type) {
+      case 'code':
+        return Code;
+      case 'data':
+      case 'table':
+        return Database;
+      case 'llm-response':
+        return Sparkles;
+      default:
+        return FileText;
+    }
+  };
+
+  const getModelLabel = (modelId?: string): string => {
+    if (!modelId) return 'Unknown';
+
+    // Map model IDs to display names
+    const modelMap: Record<string, string> = {
+      'gemini': 'Gemini',
+      'gpt': 'GPT',
+      'claude': 'Claude',
+      'grok': 'Grok',
+      'perplexity': 'Perplexity',
+      'meta': 'Meta',
+      'mistral': 'Mistral',
+      'haley': 'Haley',
+    };
+
+    return modelMap[modelId] || modelId.charAt(0).toUpperCase() + modelId.slice(1);
+  };
+
+  const getArtifactTitle = (artifact: Artifact): string => {
+    if (artifact.title) return artifact.title;
+    if (artifact.type === 'llm-response') return 'LLM Response';
+    if (artifact.type === 'code') return `Code (${artifact.language || 'text'})`;
+    if (artifact.type === 'table') return 'Data Table';
+    return 'Artifact';
+  };
+
+  const getArtifactSize = (artifact: Artifact): string => {
+    const size = artifact.content?.length || 0;
+    if (size < 1024) return `${size} chars`;
+    return `${(size / 1024).toFixed(1)} KB`;
   };
 
   return (
@@ -168,6 +229,30 @@ export default function UploadPreviewZone({
           color: rgba(255, 255, 255, 0.8);
         }
 
+        .model-badge {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          background: rgba(75, 108, 255, 0.9);
+          color: white;
+          font-size: 9px;
+          font-weight: 600;
+          padding: 2px 6px;
+          border-radius: 4px;
+          z-index: 2;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .artifact-card {
+          background: linear-gradient(135deg, rgba(75, 108, 255, 0.1) 0%, rgba(75, 108, 255, 0.05) 100%);
+          border-color: rgba(75, 108, 255, 0.3);
+        }
+
+        .artifact-card:hover {
+          border-color: rgba(75, 108, 255, 0.6);
+        }
+
         .file-header {
           display: flex;
           align-items: flex-start;
@@ -231,56 +316,99 @@ export default function UploadPreviewZone({
 
       <div className="preview-container">
         <div className="preview-scroll">
-          {files.map((file, index) => {
-            const Icon = getFileIcon(file);
-            const isImage = isImageFile(file);
-            const previewUrl = previewUrls.get(index);
+          {previewItems.map((item, itemIndex) => {
+            if (item.type === 'file') {
+              const file = item.data;
+              const fileIndex = item.index;
+              const Icon = getFileIcon(file);
+              const isImage = isImageFile(file);
+              const previewUrl = previewUrls.get(fileIndex);
 
-            return (
-              <div
-                key={`${file.name}-${index}`}
-                className={`file-card ${isImage ? 'has-image' : ''}`}
-              >
-                {isImage && previewUrl ? (
-                  <>
-                    <img
-                      src={previewUrl}
-                      alt={file.name}
-                      className="image-thumbnail"
-                    />
-                    <div className="image-overlay">
-                      <div className="file-name" title={file.name}>
-                        {file.name}
+              return (
+                <div
+                  key={`file-${file.name}-${fileIndex}`}
+                  className={`file-card ${isImage ? 'has-image' : ''}`}
+                >
+                  {isImage && previewUrl ? (
+                    <>
+                      <img
+                        src={previewUrl}
+                        alt={file.name}
+                        className="image-thumbnail"
+                      />
+                      <div className="image-overlay">
+                        <div className="file-name" title={file.name}>
+                          {file.name}
+                        </div>
+                        <div className="file-size">
+                          {formatFileSize(file.size)}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="file-header">
+                        <Icon size={18} className="file-icon" />
+                        <div className="file-name" title={file.name}>
+                          {file.name}
+                        </div>
                       </div>
                       <div className="file-size">
                         {formatFileSize(file.size)}
                       </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="file-header">
-                      <Icon size={18} className="file-icon" />
-                      <div className="file-name" title={file.name}>
-                        {file.name}
-                      </div>
-                    </div>
-                    <div className="file-size">
-                      {formatFileSize(file.size)}
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
 
-                <button
-                  onClick={() => onRemoveFile(index)}
-                  className="remove-btn"
-                  aria-label="Remove file"
-                  title="Remove file"
+                  <button
+                    onClick={() => onRemoveFile(fileIndex)}
+                    className="remove-btn"
+                    aria-label="Remove file"
+                    title="Remove file"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            } else {
+              // Artifact rendering
+              const artifact = item.data;
+              const Icon = getArtifactIcon(artifact);
+              const title = getArtifactTitle(artifact);
+              const size = getArtifactSize(artifact);
+              const modelLabel = getModelLabel(artifact.modelId);
+
+              return (
+                <div
+                  key={`artifact-${artifact.id}`}
+                  className="file-card artifact-card"
                 >
-                  <X size={14} />
-                </button>
-              </div>
-            );
+                  {artifact.modelId && (
+                    <div className="model-badge">{modelLabel}</div>
+                  )}
+
+                  <div className="file-header">
+                    <Icon size={18} className="file-icon" />
+                    <div className="file-name" title={title}>
+                      {title}
+                    </div>
+                  </div>
+                  <div className="file-size">
+                    {size}
+                  </div>
+
+                  {onRemoveArtifact && (
+                    <button
+                      onClick={() => onRemoveArtifact(artifact.id)}
+                      className="remove-btn"
+                      aria-label="Remove artifact"
+                      title="Remove artifact"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              );
+            }
           })}
         </div>
       </div>
