@@ -141,31 +141,16 @@ export default function ChatPage() {
   };
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
-    console.log('[DEBUG] Hitting send button');
-    console.log('[PAGE] ========== handleSend CALLED ==========');
-    console.log('[PAGE] messageText:', messageText);
-    console.log('[PAGE] audioBlob present:', !!audioBlob);
-    console.log('[PAGE] input state:', input);
-    console.log('[DEBUG] pendingUploads:', pendingUploads);
-
     const textToSend = messageText || input;
-    console.log('[PAGE] textToSend resolved to:', textToSend);
 
     // Allow send if input has text OR files are attached OR audio is present
     if (!input.trim() && !audioBlob && pendingUploads.length === 0) {
-      console.log('[PAGE] ❌ Empty message (no input text, no audio, and no files), returning early');
       return;
     }
 
     if (isLoading) {
-      console.log('[PAGE] ❌ Already loading, ignoring');
       return;
     }
-
-    console.log('[PAGE] ✅ Message validation passed');
-    console.log('[PAGE]    Has text:', !!textToSend.trim());
-    console.log('[PAGE]    Has audio:', !!audioBlob);
-    console.log('[PAGE]    Has files:', pendingUploads.length);
 
     const userMessage: Message = {
       id: generateId(),
@@ -189,8 +174,6 @@ export default function ChatPage() {
       // Resolve provider with proper precedence
       const resolvedProvider = activeProvider || 'haley';
 
-      console.log('[PAGE] Using provider:', resolvedProvider);
-
       // Create assistant message placeholder for streaming
       const assistantMessageId = generateId();
       let streamingContent = '';
@@ -211,18 +194,6 @@ export default function ChatPage() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      console.log('[PAGE] ========== ASYNC SENDING MESSAGE ==========');
-      console.log('[PAGE] activeProvider:', resolvedProvider);
-      console.log('[PAGE] audioBlob present:', !!audioBlob);
-      console.log('[PAGE] audioBlob:', audioBlob);
-
-      // Use sendAudioMessage for voice, sendMessage for text
-      if (audioBlob) {
-        console.log('[PAGE] 🎙️ ROUTING TO sendAudioMessage()');
-      } else {
-        console.log('[PAGE] 📝 ROUTING TO sendMessage()');
-      }
-
       // Route to appropriate API function
       if (audioBlob) {
         // VOICE INPUT - Send audio for transcription
@@ -242,7 +213,6 @@ export default function ChatPage() {
           },
           // onComplete - finalize message
           (response) => {
-            console.log('[PAGE] Audio stream completed');
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -274,7 +244,6 @@ export default function ChatPage() {
           },
           // onError - handle errors
           (error: string) => {
-            console.error('[PAGE] ❌ Audio stream error:', error);
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -292,7 +261,6 @@ export default function ChatPage() {
 
         // Update user message with transcribed text
         if (transcript) {
-          console.log('[PAGE] 📝 Updating user message with transcript:', transcript);
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === userMessage.id
@@ -304,13 +272,11 @@ export default function ChatPage() {
 
         // Clear pending uploads after voice message sent
         if (pendingUploads.length > 0) {
-          console.log('[UPLOAD] Clearing uploads after voice message sent');
           setPendingUploads([]);
         }
       } else {
         // TEXT INPUT - Send regular message
         const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
-        console.log('[DEBUG] Payload before sendMessage:', filesToSend);
 
         await sendMessage(
           textToSend,
@@ -328,7 +294,6 @@ export default function ChatPage() {
           },
           // onComplete - finalize message
           (response) => {
-            console.log('[PAGE] Text stream completed');
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -363,7 +328,6 @@ export default function ChatPage() {
           },
           // onError - handle errors
           (error: string) => {
-            console.error('[PAGE] ❌ Text stream error:', error);
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -383,19 +347,11 @@ export default function ChatPage() {
 
         // Clear pending uploads after message packaged for backend
         if (pendingUploads.length > 0) {
-          console.log('[UPLOAD] Clearing uploads after message sent');
           setPendingUploads([]);
         }
       }
 
     } catch (error) {
-      console.error('[DEBUG] ❌❌❌ CRITICAL ERROR IN HANDLESEND ❌❌❌');
-      console.error('[DEBUG] Error object:', error);
-      console.error('[DEBUG] Error type:', typeof error);
-      console.error('[DEBUG] Error message:', error instanceof Error ? error.message : String(error));
-      console.error('[DEBUG] Stack trace:', error instanceof Error ? error.stack : 'No stack');
-      console.error('[PAGE] ❌ Error sending message:', error);
-
       const errorMessage: Message = {
         id: generateId(),
         role: 'assistant',
@@ -424,21 +380,14 @@ export default function ChatPage() {
     // Convert FileList to File array
     const newFiles = Array.from(files);
 
-    // Log for debugging
-    console.log('[UPLOAD] Files selected:', newFiles.length);
-    newFiles.forEach(f => console.log(`  - ${f.name} (${f.size} bytes)`));
-
     // Append to existing uploads (not replace)
     setPendingUploads(prev => [...prev, ...newFiles]);
   };
 
   const handleRemoveFile = (index: number) => {
-    console.log('[UPLOAD] Removing file at index:', index);
-
     setPendingUploads(prev => {
       const updated = [...prev];
-      const removed = updated.splice(index, 1);
-      console.log(`[UPLOAD] Removed: ${removed[0]?.name}`);
+      updated.splice(index, 1);
       return updated;
     });
   };
@@ -475,8 +424,6 @@ export default function ChatPage() {
     setActiveModel(justice);
     setActiveProvider(modelKey); // CRITICAL: Set provider when model changes
     setAiMode('single');
-    
-    console.log(`Switched to ${modelKey} - loaded ${loadedMessages?.length || 0} messages`);
   };
 
   const handleRetryMessage = (messageId: string) => {
@@ -496,7 +443,6 @@ export default function ChatPage() {
   const handleNewConversation = async () => {
     // NEW CHAT GUARD: Ignore if there's already an active fresh/empty chat
     if (hasActiveNewChat) {
-      console.log('New chat already active - ignoring additional clicks');
       return;
     }
     
@@ -534,8 +480,6 @@ export default function ChatPage() {
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
     }
-    
-    console.log('New chat created (temp, not saved):', newId);
   };
 
   const handleSelectConversation = async (id: string) => {

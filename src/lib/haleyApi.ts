@@ -52,31 +52,17 @@ export async function sendMessage(
   let eventSource: EventSource | null = null;
 
   try {
-    console.log('[API] 🔵 sendMessage() ENTRY');
-    console.log('[API]    provider:', provider);
-    console.log('[API]    message:', message);
-    console.log('[API]    BACKEND_URL:', BACKEND_URL);
-
     if (!provider) {
       const error = 'Provider must be specified - no model selected';
-      console.error('[API] ❌ FATAL:', error);
       onError?.(error);
       throw new Error(error);
     }
-
-    console.log('[API] ====== ASYNC SEND MESSAGE ======');
-    console.log('[API] Provider:', provider);
-    console.log('[API] Files attached:', files?.length || 0);
-    console.log('[DEBUG] Files array:', files);
-    console.log('[API] 🌐 About to fetch:', `${BACKEND_URL}/chat/submit`);
 
     let submitResponse: Response;
 
     try {
       // Convert files to Base64 if present
       if (files && files.length > 0) {
-        console.log('[DEBUG] Sending Hybrid JSON with Base64 attachments');
-
         // Helper function to convert File to Base64
         const fileToBase64 = (file: File): Promise<string> => {
           return new Promise((resolve, reject) => {
@@ -93,12 +79,9 @@ export async function sendMessage(
         };
 
         // Convert all files to Base64
-        console.log('[DEBUG] Converting files to Base64...');
         const attachments = await Promise.all(
           files.map(async (file, index) => {
-            console.log(`[DEBUG] Processing file ${index}: ${file.name} (${file.size} bytes)`);
             const base64Data = await fileToBase64(file);
-            console.log(`[DEBUG] File ${index} converted to Base64 (length: ${base64Data.length})`);
             return {
               filename: file.name,
               data: base64Data,
@@ -106,7 +89,6 @@ export async function sendMessage(
             };
           })
         );
-        console.log('[DEBUG] All files converted. Total attachments:', attachments.length);
 
         // Send JSON with Base64 attachments
         submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
@@ -120,9 +102,7 @@ export async function sendMessage(
             attachments: attachments
           }),
         });
-        console.log('[DEBUG] Hybrid JSON fetch completed');
       } else {
-        console.log('[DEBUG] Using standard JSON (no files)');
         submitResponse = await fetch(`${BACKEND_URL}/chat/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -133,57 +113,37 @@ export async function sendMessage(
             provider: provider
           }),
         });
-        console.log('[DEBUG] Standard JSON fetch completed');
       }
     } catch (fetchError) {
-      console.error('[DEBUG] ❌ FETCH OPERATION FAILED ❌');
-      console.error('[DEBUG] Fetch error:', fetchError);
-      console.error('[DEBUG] Fetch error type:', typeof fetchError);
-      console.error('[DEBUG] Fetch error message:', fetchError instanceof Error ? fetchError.message : String(fetchError));
       throw fetchError;
     }
 
-    console.log('[API] ✅ Fetch completed. Status:', submitResponse.status, submitResponse.statusText);
-
     if (!submitResponse.ok) {
       const errorText = await submitResponse.text();
-      console.error('[API] ❌ Submit failed:', submitResponse.status, errorText);
       throw new Error(`Submit failed: ${submitResponse.status}`);
     }
 
     const responseData = await submitResponse.json();
     const { assistant_message_id } = responseData;
-    console.log('[API] ✅ Message submitted successfully');
-    console.log('[API]    assistant_message_id:', assistant_message_id);
-    console.log('[API] 📡 Creating EventSource...');
 
     const streamUrl = `${BACKEND_URL}/chat/stream/${assistant_message_id}`;
-    console.log('[API]    Stream URL:', streamUrl);
 
     eventSource = new EventSource(streamUrl);
-    console.log('[API] ✅ EventSource created, waiting for connection...');
 
     let fullResponse = '';
     let metadata: any = {};
 
     eventSource.onopen = () => {
-      console.log('[API] ✅✅✅ EventSource CONNECTED - stream is live! ✅✅✅');
+      // Connected
     };
 
     eventSource.onmessage = (event) => {
-      console.log('[API] 📨 EventSource message event fired');
-      console.log('[API]    Raw data:', event.data);
       try {
         const data = JSON.parse(event.data);
-        console.log('[API]    Parsed type:', data.type);
 
         if (data.type === 'token') {
           fullResponse += data.content;
-          console.log('[API] 🔤 TOKEN RECEIVED - calling onToken()');
-          console.log('[API]    Content:', data.content);
-          console.log('[API]    Full response so far:', fullResponse.substring(0, 50) + '...');
           onToken?.(data.content);
-          console.log('[API] ✅ onToken() called');
         } else if (data.type === 'done') {
           metadata = data.metadata || {};
 
@@ -193,13 +153,10 @@ export async function sendMessage(
           // If final response differs from accumulated response, send final token update
           if (finalResponse && finalResponse !== fullResponse && finalResponse.length > fullResponse.length) {
             const remainingContent = finalResponse.substring(fullResponse.length);
-            console.log('[API] 📝 Sending final token update with remaining content');
             onToken?.(remainingContent);
             fullResponse = finalResponse;
           }
 
-          console.log('[API] ✅✅✅ STREAM COMPLETE - calling onComplete() ✅✅✅');
-          console.log('[API]    Final response length:', fullResponse.length);
           eventSource?.close();
           onComplete?.({
             status: 'completed',
@@ -209,30 +166,24 @@ export async function sendMessage(
             operation: 'chat',
             baby_invoked: metadata.baby_invoked || false
           });
-          console.log('[API] ✅ onComplete() called');
         } else if (data.type === 'error') {
-          console.error('[API] ❌ Stream error:', data.error);
           eventSource?.close();
           onError?.(data.error);
         } else if (data.type === 'status') {
-          console.log('[API] ℹ️ Status update:', data.status);
+          // Status update
         }
       } catch (error) {
-        console.error('[API] ❌ Parse error:', error);
+        // Parse error
       }
     };
 
     eventSource.onerror = (error) => {
-      console.error('[API] ❌❌❌ EventSource ERROR ❌❌❌');
-      console.error('[API]    Error object:', error);
-      console.error('[API]    ReadyState:', eventSource?.readyState);
       eventSource?.close();
       onError?.('Connection lost');
     };
 
     const cleanup = () => {
       if (eventSource) {
-        console.log('[API] Cleaning up EventSource');
         eventSource.close();
         eventSource = null;
       }
@@ -260,16 +211,9 @@ export async function sendMultiLLMMessage(
   onProviderError?: (provider: string, error: string) => void,
   files?: File[]
 ): Promise<Array<{ provider: string; messageId: string; cleanup: () => void }>> {
-  console.log('[API] ====== MULTI-LLM QUERY ======');
-  console.log('[API] Providers:', providers);
-  console.log('[API] Message:', message);
-  console.log('[API] Files attached:', files?.length || 0);
-  console.log('[DEBUG] Files array in multi-LLM:', files);
-
   const streams = await Promise.all(
     providers.map(async (provider) => {
       try {
-        console.log(`[DEBUG] Sending to provider ${provider} with files:`, files?.length || 0);
         const { messageId, cleanup } = await sendMessage(
           message,
           provider,
@@ -278,11 +222,9 @@ export async function sendMultiLLMMessage(
           (error) => onProviderError?.(provider, error),
           files
         );
-        console.log(`[DEBUG] Provider ${provider} initialized successfully`);
 
         return { provider, messageId, cleanup };
       } catch (error) {
-        console.error(`[API] Failed to initialize stream for ${provider}:`, error);
         onProviderError?.(provider, error instanceof Error ? error.message : 'Failed to start stream');
         return { provider, messageId: '', cleanup: () => {} };
       }
@@ -304,15 +246,9 @@ export async function sendAudioMessage(
   try {
     if (!provider) {
       const error = 'Provider must be specified - no model selected';
-      console.error('[API] ❌ FATAL:', error);
       onError?.(error);
       throw new Error(error);
     }
-
-    console.log('[API] ====== ASYNC SEND AUDIO MESSAGE ======');
-    console.log('[API] Provider:', provider);
-    console.log('[API] Audio blob size:', audioBlob.size, 'bytes');
-    console.log('[API] Audio blob type:', audioBlob.type);
 
     // Create form data with audio file
     const formData = new FormData();
@@ -320,26 +256,19 @@ export async function sendAudioMessage(
 
     // conversation_id and provider go in URL query params, not form body
     const audioUrl = `${BACKEND_URL}/chat/submit/audio?conversation_id=default&provider=${provider}`;
-    console.log('[API] 🌐 Posting to:', audioUrl);
 
     const submitResponse = await fetch(audioUrl, {
       method: 'POST',
       body: formData,
     });
 
-    console.log('[API] 📥 Response status:', submitResponse.status, submitResponse.statusText);
-
     if (!submitResponse.ok) {
       const errorText = await submitResponse.text();
-      console.error('[API] ❌ Audio submit failed:', errorText);
       throw new Error(`Audio submit failed: ${submitResponse.status} - ${errorText}`);
     }
 
     const responseData = await submitResponse.json();
-    console.log('[API] 📦 Response data:', responseData);
     const { assistant_message_id, transcript } = responseData;
-    console.log('[API] ✅ Audio message submitted, ID:', assistant_message_id);
-    console.log('[API] 📝 Transcript received:', transcript);
 
     eventSource = new EventSource(`${BACKEND_URL}/chat/stream/${assistant_message_id}`);
 
@@ -355,7 +284,6 @@ export async function sendAudioMessage(
           onToken?.(data.content);
         } else if (data.type === 'done') {
           metadata = data.metadata || {};
-          console.log('[API] Stream complete');
           eventSource?.close();
           onComplete?.({
             status: 'completed',
@@ -366,24 +294,21 @@ export async function sendAudioMessage(
             baby_invoked: metadata.baby_invoked || false
           });
         } else if (data.type === 'error') {
-          console.error('[API] Stream error:', data.error);
           eventSource?.close();
           onError?.(data.error);
         }
       } catch (error) {
-        console.error('[API] Parse error:', error);
+        // Parse error
       }
     };
 
     eventSource.onerror = (error) => {
-      console.error('[API] EventSource error:', error);
       eventSource?.close();
       onError?.('Connection lost');
     };
 
     const cleanup = () => {
       if (eventSource) {
-        console.log('[API] Cleaning up EventSource');
         eventSource.close();
         eventSource = null;
       }

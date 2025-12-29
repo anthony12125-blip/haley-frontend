@@ -62,9 +62,6 @@ export default function ChatInputBar({
     if (input.trim() || pendingUploads.length > 0) {
       onSend(input);
       setInput('');
-      console.log('[CHATINPUT] onSend completed, input cleared');
-    } else {
-      console.log('[CHATINPUT] Input empty and no files, not sending');
     }
   };
 
@@ -77,7 +74,6 @@ export default function ChatInputBar({
 
   const startRecording = async () => {
     try {
-      console.log('[VOICE] 🎤 Starting voice recording...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
@@ -89,24 +85,15 @@ export default function ChatInputBar({
       recordingStartTimeRef.current = Date.now();
 
       mediaRecorder.ondataavailable = (event) => {
-        console.log('[VOICE] 📊 Audio data chunk received, size:', event.data.size);
         if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
-          console.log('[VOICE] Pushed chunk, total chunks now:', audioChunksRef.current.length);
-        } else {
-          console.warn('[VOICE] ⚠️ Received empty data chunk');
         }
       };
 
       mediaRecorder.onstop = () => {
-        console.log('[VOICE] ⏹️ onstop event fired');
-        console.log('[VOICE]    Chunks collected:', audioChunksRef.current.length);
-
         const recordingDuration = Date.now() - recordingStartTimeRef.current;
-        console.log('[VOICE]    Recording duration:', recordingDuration, 'ms');
 
         if (audioChunksRef.current.length === 0) {
-          console.error('[VOICE] ❌ No audio chunks collected!');
           alert('Recording failed: No audio data captured. Try recording for at least 1 second.');
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
@@ -115,12 +102,8 @@ export default function ChatInputBar({
         }
 
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
-        console.log('[VOICE] ⏹️ Recording stopped. Audio blob created:');
-        console.log('[VOICE]    Blob size:', audioBlob.size, 'bytes');
-        console.log('[VOICE]    Blob type:', audioBlob.type);
 
         if (audioBlob.size < 1000) {
-          console.error('[VOICE] ❌ Audio blob too small (', audioBlob.size, 'bytes) - likely empty');
           alert('Recording too short or failed. Please record for at least 1 second.');
           if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
@@ -128,7 +111,6 @@ export default function ChatInputBar({
           return;
         }
 
-        console.log('[VOICE] 📤 Calling onSend with audioBlob...');
         onSend(undefined, audioBlob);
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
@@ -138,47 +120,38 @@ export default function ChatInputBar({
 
       // Start recording with 100ms timeslice to ensure data is captured
       mediaRecorder.start(100);
-      console.log('[VOICE] MediaRecorder.start(100) called - capturing chunks every 100ms');
       setIsRecording(true);
       setRecordingTime(0);
       onRecordingStart?.();
-      console.log('[VOICE] ✅ Recording started successfully');
 
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
     } catch (error) {
-      console.error('[VOICE] ❌ Error accessing microphone:', error);
       alert('Could not access microphone. Please check permissions.');
     }
   };
 
   const stopRecording = () => {
-    console.log('[VOICE] 🛑 Stop recording button clicked');
     if (mediaRecorderRef.current && isRecording) {
       const recordingDuration = Date.now() - recordingStartTimeRef.current;
-      console.log('[VOICE] Current recording duration:', recordingDuration, 'ms');
 
       if (recordingDuration < 500) {
-        console.warn('[VOICE] ⚠️ Recording too short (', recordingDuration, 'ms), waiting...');
         alert('Please record for at least 0.5 seconds');
         return;
       }
 
-      console.log('[VOICE] Requesting final data...');
       // Request any buffered data before stopping
       if (mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.requestData();
       }
 
-      console.log('[VOICE] Stopping MediaRecorder...');
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       onRecordingStop?.();
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
       }
-      console.log('[VOICE] MediaRecorder stopped, waiting for onstop event...');
     }
   };
 

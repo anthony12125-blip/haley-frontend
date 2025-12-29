@@ -150,17 +150,10 @@ export default function ChatPage() {
 
   useEffect(() => {
     return () => {
-      console.log('[CHAT] Component unmounting, cleaning up streams');
       cleanupFunctionsRef.current.forEach((cleanup) => cleanup());
       cleanupFunctionsRef.current.clear();
     };
   }, []);
-
-  useEffect(() => {
-    console.log('[CHAT] ===== activeModel STATE CHANGED =====');
-    console.log('[CHAT] New activeModel value:', activeModel);
-    console.log('[CHAT] ======================================');
-  }, [activeModel]);
 
   // Extract artifacts from assistant messages (code blocks AND multi-LLM responses)
   useEffect(() => {
@@ -198,7 +191,6 @@ export default function ChatPage() {
     });
 
     if (newArtifacts.length > 0) {
-      console.log('[ARTIFACTS] Extracted', newArtifacts.length, 'artifacts from messages');
       setArtifacts(newArtifacts);
       setArtifactsPanelOpen(true); // Auto-open panel when artifacts are detected
     }
@@ -213,8 +205,6 @@ export default function ChatPage() {
     );
 
     if (multiLLMMessage) {
-      console.log('[ORCHESTRATOR] All providers complete, offering summary');
-
       // Add Haley summary offer to chat
       const summaryOffer: Message = {
         id: generateId(),
@@ -274,44 +264,16 @@ export default function ChatPage() {
   };
 
   const handleSend = async (messageText?: string, audioBlob?: Blob) => {
-    console.log('[DEBUG] Hitting send button');
-    console.log('[PAGE] ========== handleSend CALLED ==========');
-
-    console.log('[PAGE] messageText param:', messageText);
-    console.log('[PAGE] audioBlob param:', audioBlob);
-    console.log('[PAGE] audioBlob present:', !!audioBlob);
-    console.log('[PAGE] audioBlob size:', audioBlob?.size);
-    console.log('[PAGE] current input state:', input);
-    console.log('[DEBUG] pendingUploads:', pendingUploads);
-    console.log('[PAGE] 🎯 STATE CHECK:');
-    console.log('[PAGE]    multiLLMEnabled:', multiLLMEnabled);
-    console.log('[PAGE]    selectedModels:', selectedModels);
-    console.log('[PAGE]    selectedModels.length:', selectedModels.length);
-
     const textToSend = messageText || input;
-    console.log('[PAGE] textToSend resolved to:', textToSend);
 
     // Allow send if input has text OR files are attached OR audio is present
     if (!input.trim() && !audioBlob && pendingUploads.length === 0) {
-      console.log('[PAGE] ❌ Empty message (no input text, no audio, and no files), returning early');
       return;
     }
 
-    console.log('[PAGE] ✅ Message validation passed');
-    console.log('[PAGE]    Has text:', !!textToSend.trim());
-    console.log('[PAGE]    Has audio:', !!audioBlob);
-    console.log('[PAGE]    Has files:', pendingUploads.length);
-
     // VOICE INPUT: Audio blobs bypass multi-LLM mode
-    if (audioBlob) {
-      console.log('[PAGE] 🎙️ VOICE INPUT DETECTED - bypassing multi-LLM mode');
-      console.log('[PAGE] Forcing single-model path for audio transcription');
-      // Fall through to single model mode below
-    }
     // Multi-LLM Mode Check (only for text messages)
-    else if (multiLLMEnabled && selectedModels.length > 0) {
-      console.log('[PAGE] ⚡ Multi-LLM Mode Active');
-      console.log('[PAGE] Selected models:', selectedModels);
+    if (!audioBlob && multiLLMEnabled && selectedModels.length > 0) {
 
       const userMessage: Message = {
         id: generateId(),
@@ -346,8 +308,6 @@ export default function ChatPage() {
       };
 
       setMessages((prev) => [...prev, multiLLMMessage]);
-      console.log('[PAGE] ✅ Multi-LLM message added to state:', multiLLMMessageId);
-      console.log('[PAGE]    metadata:', multiLLMMessage.metadata);
 
       // Initialize response tracking
       const providerResponses: Record<string, string> = {};
@@ -357,14 +317,8 @@ export default function ChatPage() {
         providerStreamingContent[model] = '';
       });
 
-      console.log('[PAGE] 🚀 ABOUT TO CALL sendMultiLLMMessage');
-      console.log('[PAGE]    textToSend:', textToSend);
-      console.log('[PAGE]    selectedModels:', selectedModels);
-
       try {
         const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
-        console.log('[DEBUG] Payload before sendMultiLLMMessage:', filesToSend);
-        console.log('[PAGE] 🌐 Calling sendMultiLLMMessage NOW...');
 
         const streams = await sendMultiLLMMessage(
           textToSend,
@@ -392,7 +346,6 @@ export default function ChatPage() {
           },
           (provider: string, response) => {
             // Mark provider as completed
-            console.log(`[MULTI-LLM] ${provider} completed`);
 
             setMessages((prev) =>
               prev.map((msg) => {
@@ -469,17 +422,10 @@ export default function ChatPage() {
 
         // Clear pending uploads after message packaged for backend
         if (pendingUploads.length > 0) {
-          console.log('[UPLOAD] Clearing uploads after multi-LLM message sent');
           setPendingUploads([]);
         }
 
       } catch (error) {
-        console.error('[DEBUG] ❌❌❌ CRITICAL ERROR IN MULTI-LLM ❌❌❌');
-        console.error('[DEBUG] Error object:', error);
-        console.error('[DEBUG] Error type:', typeof error);
-        console.error('[DEBUG] Error message:', error instanceof Error ? error.message : String(error));
-        console.error('[DEBUG] Stack trace:', error instanceof Error ? error.stack : 'No stack');
-        console.error('[MULTI-LLM] ❌ Failed to initialize streams:', error);
 
         // Create error artifacts for ALL providers
         const errorMessage = error instanceof Error ? error.message : 'Failed to start multi-LLM query';
@@ -511,13 +457,10 @@ export default function ChatPage() {
 
     // Single Model Mode (existing logic)
     if (!activeModel) {
-      console.error('[CHAT] ❌ CRITICAL: No model selected');
       setActiveModel('gemini');
       alert('Please select an AI model first. Defaulting to Gemini.');
       return;
     }
-
-    console.log('[PAGE] ✅ Proceeding with message send');
 
     const userMessage: Message = {
       id: generateId(),
@@ -552,20 +495,7 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, assistantMessage]);
 
     try {
-      console.log('[CHAT] ========== ASYNC SENDING MESSAGE ==========');
-      console.log('[CHAT] activeModel state:', activeModel);
-      console.log('[CHAT] audioBlob present:', !!audioBlob);
-      console.log('[CHAT] audioBlob:', audioBlob);
-
-      // Use sendAudioMessage for voice, sendMessage for text
-      if (audioBlob) {
-        console.log('[CHAT] 🎙️ ROUTING TO sendAudioMessage()');
-      } else {
-        console.log('[CHAT] 📝 ROUTING TO sendMessage()');
-      }
-
       const filesToSend = pendingUploads.length > 0 ? pendingUploads : undefined;
-      console.log('[DEBUG] Payload before single-model send:', filesToSend);
 
       const { messageId, cleanup } = audioBlob
         ? await sendAudioMessage(
@@ -582,7 +512,6 @@ export default function ChatPage() {
               );
             },
             (response) => {
-              console.log('[CHAT] Stream completed');
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg.id === assistantMessageId
@@ -606,7 +535,6 @@ export default function ChatPage() {
               cleanupFunctionsRef.current.delete(assistantMessageId);
             },
             (error) => {
-              console.error('[CHAT] ❌ Audio stream error:', error);
               setMessages((prev) =>
                 prev.map((msg) =>
                   msg.id === assistantMessageId
@@ -625,33 +553,18 @@ export default function ChatPage() {
             textToSend,
             activeModel,
             (token: string) => {
-          console.log('[PAGE] 🔤 onToken CALLBACK FIRED IN PAGE.TSX');
-          console.log('[PAGE]    Token:', token);
-          console.log('[PAGE]    streamingContent before:', streamingContent.substring(0, 30));
           streamingContent += token;
-          console.log('[PAGE]    streamingContent after:', streamingContent.substring(0, 30));
-          console.log('[PAGE]    Calling setMessages to update UI...');
-          setMessages((prev) => {
-            console.log('[PAGE]    setMessages updater function executing');
-            console.log('[PAGE]    Current messages count:', prev.length);
-            const updated = prev.map((msg) =>
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === assistantMessageId
                 ? { ...msg, content: streamingContent }
                 : msg
-            );
-            console.log('[PAGE]    Updated messages created, returning to React');
-            return updated;
-          });
-          console.log('[PAGE] ✅ setMessages called, React should re-render');
+            )
+          );
         },
         (response) => {
-          console.log('[PAGE] ✅✅✅ onComplete CALLBACK FIRED IN PAGE.TSX ✅✅✅');
-          console.log('[PAGE]    Response:', response);
-          console.log('[PAGE]    Final streamingContent:', streamingContent);
-          console.log('[PAGE]    Calling setMessages to mark complete...');
-          setMessages((prev) => {
-            console.log('[PAGE]    setMessages (complete) updater executing');
-            const updated = prev.map((msg) =>
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === assistantMessageId
                 ? {
                     ...msg,
@@ -667,20 +580,13 @@ export default function ChatPage() {
                     },
                   }
                 : msg
-            );
-            console.log('[PAGE]    Message marked as streaming:false');
-            return updated;
-          });
-          console.log('[PAGE] ✅ Stream marked complete, spinner should stop');
+            )
+          );
 
           cleanupFunctionsRef.current.delete(assistantMessageId);
-
-          console.log('[PAGE] 📊 Loading system status...');
-          loadSystemStatus().catch(err => console.error('[PAGE] System status load failed:', err));
+          loadSystemStatus();
         },
         (error) => {
-          console.error('[PAGE] ❌ onError CALLBACK FIRED IN PAGE.TSX');
-          console.error('[PAGE]    Error:', error);
 
           cleanupFunctionsRef.current.delete(assistantMessageId);
 
@@ -704,20 +610,10 @@ export default function ChatPage() {
 
       // Clear pending uploads after message packaged for backend
       if (pendingUploads.length > 0) {
-        console.log('[UPLOAD] Clearing uploads after single-model message sent');
         setPendingUploads([]);
       }
-      
-      console.log('[CHAT] Message submitted (non-blocking)');
-      console.log('[CHAT] ============================================');
 
     } catch (error) {
-      console.error('[DEBUG] ❌❌❌ CRITICAL ERROR IN CHAT PAGE HANDLESEND ❌❌❌');
-      console.error('[DEBUG] Error object:', error);
-      console.error('[DEBUG] Error type:', typeof error);
-      console.error('[DEBUG] Error message:', error instanceof Error ? error.message : String(error));
-      console.error('[DEBUG] Stack trace:', error instanceof Error ? error.stack : 'No stack');
-      console.error('[CHAT] Fatal error:', error);
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMessageId
@@ -749,27 +645,19 @@ export default function ChatPage() {
     // Convert FileList to File array
     const newFiles = Array.from(files);
 
-    // Log for debugging
-    console.log('[UPLOAD] Files selected:', newFiles.length);
-    newFiles.forEach(f => console.log(`  - ${f.name} (${f.size} bytes)`));
-
     // Append to existing uploads (not replace)
     setPendingUploads(prev => [...prev, ...newFiles]);
   };
 
   const handleRemoveFile = (index: number) => {
-    console.log('[UPLOAD] Removing file at index:', index);
-
     setPendingUploads(prev => {
       const updated = [...prev];
-      const removed = updated.splice(index, 1);
-      console.log(`[UPLOAD] Removed: ${removed[0]?.name}`);
+      updated.splice(index, 1);
       return updated;
     });
   };
 
   const handleAudioReady = (url: string, text: string) => {
-    console.log('[AUDIO] Audio ready:', url);
     setAudioUrl(url);
     setAudioText(text);
 
@@ -817,20 +705,13 @@ export default function ChatPage() {
   };
 
   const handleModelSelect = (justice: string | null) => {
-
     const modelKey = justice || 'haley';
-
-    console.log('[CHAT] ========== MODEL SELECTION ==========');
-    console.log('[CHAT] Switching from:', activeModel || 'haley');
-    console.log('[CHAT] Switching to:', modelKey);
-    console.log('[CHAT] Parameter received (justice):', justice);
-
     const currentModelKey = activeModel || 'haley';
     setConversationsByJustice(prev => ({
       ...prev,
       [currentModelKey]: messages
     }));
-    
+
     const loadedMessages = conversationsByModel[modelKey];
     if (loadedMessages && loadedMessages.length > 0) {
       setMessages(loadedMessages);
@@ -838,7 +719,7 @@ export default function ChatPage() {
       const systemMessage: Message = {
         id: generateId(),
         role: 'system',
-        content: justice 
+        content: justice
           ? `Switched to ${justice.charAt(0).toUpperCase() + justice.slice(1)}. Ready to assist.`
           : 'Haley OS initialized. Multi-LLM router active. Ready to assist.',
         timestamp: new Date(),
@@ -849,29 +730,21 @@ export default function ChatPage() {
       };
       setMessages([systemMessage]);
     }
-    
+
     setActiveModel(justice);
-    
+
     if (currentConversationId) {
-      setConversations(prev => prev.map(conv => 
-        conv.id === currentConversationId 
+      setConversations(prev => prev.map(conv =>
+        conv.id === currentConversationId
           ? { ...conv, modelMode: justice }
           : conv
       ));
     }
-    
+
     setAiMode('single');
-    
-    console.log(`[CHAT] Model switched to: ${modelKey}`);
-    console.log('[CHAT] Loaded messages:', loadedMessages?.length || 0);
-    console.log('[CHAT] activeModel should now be:', justice);
-    console.log('[CHAT] ========================================');
   };
 
   const handleMultiLLMChange = useCallback((enabled: boolean, models: string[]) => {
-    console.log('[PAGE] 🔄 onMultiLLMChange CALLBACK FIRED');
-    console.log('[PAGE]    enabled:', enabled);
-    console.log('[PAGE]    models:', models);
     setMultiLLMEnabled(enabled);
     setSelectedModels(models);
   }, []);
@@ -891,7 +764,6 @@ export default function ChatPage() {
   };
 
   const handleRetryProvider = async (messageId: string, provider: string) => {
-    console.log('[RETRY] Retrying provider:', provider, 'for message:', messageId);
 
     // Find the original user message
     const msgIndex = messages.findIndex(m => m.id === messageId);
@@ -950,7 +822,6 @@ export default function ChatPage() {
         },
         (response) => {
           // Completion callback
-          console.log(`[RETRY] ${provider} completed`);
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.id === messageId) {
@@ -978,7 +849,6 @@ export default function ChatPage() {
         },
         (error) => {
           // Error callback
-          console.error(`[RETRY] ${provider} error:`, error);
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.id === messageId) {
@@ -1013,7 +883,6 @@ export default function ChatPage() {
       cleanupFunctionsRef.current.set(`${messageId}-${provider}-retry`, cleanup);
 
     } catch (error) {
-      console.error(`[RETRY] Failed to retry ${provider}:`, error);
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === messageId
@@ -1055,14 +924,12 @@ export default function ChatPage() {
   };
 
   const handleNewConversation = async () => {
-
     if (hasActiveNewChat) {
-      console.log('New chat already active - ignoring additional clicks');
       return;
     }
 
     const newId = generateId();
-    
+
     const newChat: ConversationHistory = {
       id: newId,
       title: 'New Chat',
@@ -1072,17 +939,15 @@ export default function ChatPage() {
       messageCount: 0,
       modelMode: activeModel || undefined,
     };
-    
+
     setConversations(prev => [newChat, ...prev]);
     setCurrentConversationId(newId);
     initializeChat();
     setHasActiveNewChat(true);
-    
+
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
     }
-    
-    console.log('New chat created (temp, not saved):', newId);
   };
 
   const handleSelectConversation = async (id: string) => {
@@ -1226,7 +1091,6 @@ export default function ChatPage() {
           onRetryProvider={handleRetryProvider}
           onAudioReady={handleAudioReady}
           onVoiceError={(msg) => {
-            console.log('[CHAT PAGE] 🚨 Voice error received:', msg);
             setVoiceHasError(true);
             setVoiceErrorMessage(msg);
             setTimeout(() => setVoiceHasError(false), 5000);
