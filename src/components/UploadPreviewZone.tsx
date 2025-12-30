@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, FileText, Image as ImageIcon, File, Table, Archive, Video, Music, Code, Database, Sparkles } from 'lucide-react';
+import { X, FileText, Image as ImageIcon, File, Table, Archive, Video, Music, Code, Database, Sparkles, Copy, Check } from 'lucide-react';
 import { Artifact } from '@/types';
 
 interface UploadPreviewZoneProps {
@@ -24,6 +24,8 @@ export default function UploadPreviewZone({
   sidebarOpen = false,
 }: UploadPreviewZoneProps) {
   const [previewUrls, setPreviewUrls] = useState<Map<number, string>>(new Map());
+  const [expandedArtifact, setExpandedArtifact] = useState<Artifact | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Create object URLs for image files
   useEffect(() => {
@@ -140,6 +142,16 @@ export default function UploadPreviewZone({
     const size = artifact.content?.length || 0;
     if (size < 1024) return `${size} chars`;
     return `${(size / 1024).toFixed(1)} KB`;
+  };
+
+  const handleCopyArtifact = async (artifact: Artifact) => {
+    try {
+      await navigator.clipboard.writeText(artifact.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy artifact content:', err);
+    }
   };
 
   return (
@@ -306,10 +318,136 @@ export default function UploadPreviewZone({
           margin-top: auto;
         }
 
+        .artifact-card {
+          cursor: pointer;
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+          background: var(--panel-dark);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          max-width: 800px;
+          width: 100%;
+          max-height: 80vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px 24px;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+
+        .modal-actions {
+          display: flex;
+          gap: 8px;
+        }
+
+        .modal-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 16px;
+          background: var(--primary);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .modal-btn:hover {
+          background: var(--primary-hover);
+        }
+
+        .modal-btn.copied {
+          background: var(--success);
+        }
+
+        .modal-close {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: none;
+          border-radius: 6px;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+          background: var(--panel);
+          color: var(--text-primary);
+        }
+
+        .modal-body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+        }
+
+        .artifact-content {
+          background: var(--panel);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 16px;
+          font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+          font-size: 13px;
+          line-height: 1.6;
+          color: var(--text-primary);
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
         @media (max-width: 768px) {
           .upload-preview-zone {
             bottom: 90px;
             left: 0 !important;
+          }
+
+          .modal-content {
+            max-height: 90vh;
+          }
+
+          .modal-header {
+            padding: 16px;
+          }
+
+          .modal-body {
+            padding: 16px;
           }
         }
       `}</style>
@@ -381,6 +519,7 @@ export default function UploadPreviewZone({
                 <div
                   key={`artifact-${artifact.id}`}
                   className="file-card artifact-card"
+                  onClick={() => setExpandedArtifact(artifact)}
                 >
                   {artifact.modelId && (
                     <div className="model-badge">{modelLabel}</div>
@@ -398,7 +537,10 @@ export default function UploadPreviewZone({
 
                   {onRemoveArtifact && (
                     <button
-                      onClick={() => onRemoveArtifact(artifact.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveArtifact(artifact.id);
+                      }}
                       className="remove-btn"
                       aria-label="Remove artifact"
                       title="Remove artifact"
@@ -412,6 +554,64 @@ export default function UploadPreviewZone({
           })}
         </div>
       </div>
+
+      {/* Expanded Artifact Modal */}
+      {expandedArtifact && (
+        <div
+          className="modal-overlay"
+          onClick={() => setExpandedArtifact(null)}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div className="modal-title">
+                {(() => {
+                  const Icon = getArtifactIcon(expandedArtifact);
+                  return <Icon size={20} />;
+                })()}
+                <span>{getArtifactTitle(expandedArtifact)}</span>
+                {expandedArtifact.modelId && (
+                  <span className="model-badge">
+                    {getModelLabel(expandedArtifact.modelId)}
+                  </span>
+                )}
+              </div>
+              <div className="modal-actions">
+                <button
+                  className={`modal-btn ${copied ? 'copied' : ''}`}
+                  onClick={() => handleCopyArtifact(expandedArtifact)}
+                >
+                  {copied ? (
+                    <>
+                      <Check size={16} />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={16} />
+                      Copy
+                    </>
+                  )}
+                </button>
+                <button
+                  className="modal-close"
+                  onClick={() => setExpandedArtifact(null)}
+                  aria-label="Close modal"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            <div className="modal-body">
+              <div className="artifact-content">
+                {expandedArtifact.content}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
