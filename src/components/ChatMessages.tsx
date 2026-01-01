@@ -99,21 +99,22 @@ export default function ChatMessages({
         setStreamingMessageId(newMessage.id);
         // Force scroll to bottom on new assistant message
         scrollToBottom(true);
-        
-        // Clear streaming after message is complete
-        const timeoutDuration = newMessage.content.length * 15 + 500;
-        setTimeout(() => {
-          console.log('✅ STREAMING COMPLETE - Clearing streamingMessageId');
-          setStreamingMessageId(null);
-          // Tell parent that streaming is done so it can turn off isLoading
-          if (onStreamingComplete) {
-            onStreamingComplete();
-          }
-        }, timeoutDuration);
       }
     }
     prevMessagesLengthRef.current = messages.length;
   }, [messages, scrollToBottom, isLoading, onStreamingComplete]);
+
+  // Detect streaming completion by watching metadata.streaming flag
+  useEffect(() => {
+    if (streamingMessageId) {
+      const streamingMessage = messages.find(m => m.id === streamingMessageId);
+      if (streamingMessage && streamingMessage.metadata?.streaming === false) {
+        console.log('✅ STREAMING COMPLETE - metadata.streaming set to false');
+        setStreamingMessageId(null);
+        onStreamingComplete?.();
+      }
+    }
+  }, [messages, streamingMessageId, onStreamingComplete]);
 
   // Smooth scrolling during streaming - only when content height actually changes
   useEffect(() => {
