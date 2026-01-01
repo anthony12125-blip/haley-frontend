@@ -192,7 +192,8 @@ export default function ChatPage() {
 
     if (newArtifacts.length > 0) {
       setArtifacts(newArtifacts);
-      setArtifactsPanelOpen(true); // Auto-open panel when artifacts are detected
+      // Artifacts now render in bottom UploadPreviewZone instead of right sidebar
+      // setArtifactsPanelOpen(true);
     }
   }, [messages]);
 
@@ -657,6 +658,10 @@ export default function ChatPage() {
     });
   };
 
+  const handleRemoveArtifact = (artifactId: string) => {
+    setArtifacts(prev => prev.filter(artifact => artifact.id !== artifactId));
+  };
+
   const handleAudioReady = (url: string, text: string) => {
     setAudioUrl(url);
     setAudioText(text);
@@ -1097,10 +1102,12 @@ export default function ChatPage() {
           }}
         />
 
-        {pendingUploads.length > 0 && (
+        {(pendingUploads.length > 0 || artifacts.length > 0) && (
           <UploadPreviewZone
             files={pendingUploads}
+            artifacts={artifacts}
             onRemoveFile={handleRemoveFile}
+            onRemoveArtifact={handleRemoveArtifact}
             sidebarOpen={sidebarOpen && device.type === 'desktop'}
           />
         )}
