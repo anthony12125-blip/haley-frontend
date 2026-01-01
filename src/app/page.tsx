@@ -23,8 +23,6 @@ import VoiceStatusBar from '@/components/VoiceStatusBar';
 import AudioPlaybackBar from '@/components/AudioPlaybackBar';
 import LLMResponseCard from '@/components/LLMResponseCard';
 import ArtifactsPanel from '@/components/ArtifactsPanel';
-import RightPanel from '@/components/RightPanel';
-import BottomDock from '@/components/BottomDock';
 import LoginPage from '@/components/LoginPage';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
@@ -1051,7 +1049,7 @@ export default function ChatPage() {
         device.type === 'desktop'
           ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
           : 'ml-0'
-      } ${device.type === 'desktop' ? 'mr-[350px]' : 'mb-[90px]'}`}>
+      } ${device.type === 'mobile' ? 'mb-[90px]' : ''}`}>
         <VoiceStatusBar
           isPlaying={voiceIsPlaying}
           isListening={voiceIsListening}
@@ -1147,13 +1145,6 @@ export default function ChatPage() {
           />
         )}
       </div>
-
-      {/* Landing Zones - Desktop: RightPanel, Mobile: BottomDock */}
-      {device.type === 'desktop' ? (
-        <RightPanel />
-      ) : (
-        <BottomDock />
-      )}
     </div>
   );
 }
