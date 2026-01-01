@@ -134,17 +134,22 @@ export async function sendMessage(
     let metadata: any = {};
 
     eventSource.onopen = () => {
-      // Connected
+      console.log('[STREAM] ✅ EventSource connected to:', streamUrl);
     };
 
     eventSource.onmessage = (event) => {
+      console.log('[STREAM] 📨 Received SSE event:', event.data);
+
       try {
         const data = JSON.parse(event.data);
+        console.log('[STREAM] 📦 Parsed data:', data);
 
         if (data.type === 'token') {
+          console.log('[STREAM] 🔥 Token received:', data.content?.substring(0, 50));
           fullResponse += data.content;
           onToken?.(data.content);
         } else if (data.type === 'done') {
+          console.log('[STREAM] ✅ Done event received, fullResponse length:', fullResponse.length);
           metadata = data.metadata || {};
 
           // Extract final response from done event (backend may send complete text)
@@ -153,10 +158,12 @@ export async function sendMessage(
           // If final response differs from accumulated response, send final token update
           if (finalResponse && finalResponse !== fullResponse && finalResponse.length > fullResponse.length) {
             const remainingContent = finalResponse.substring(fullResponse.length);
+            console.log('[STREAM] 📝 Emitting remaining content:', remainingContent.length, 'chars');
             onToken?.(remainingContent);
             fullResponse = finalResponse;
           }
 
+          console.log('[STREAM] 🏁 Closing stream, final response length:', fullResponse.length);
           eventSource?.close();
           onComplete?.({
             status: 'completed',
@@ -167,19 +174,27 @@ export async function sendMessage(
             baby_invoked: metadata.baby_invoked || false
           });
         } else if (data.type === 'error') {
+          console.error('[STREAM] ❌ Error event received:', data.error);
           eventSource?.close();
           onError?.(data.error);
         } else if (data.type === 'status') {
+          console.log('[STREAM] 📊 Status event:', data.status);
           // Status update
+        } else {
+          console.warn('[STREAM] ⚠️ Unknown event type:', data.type, data);
         }
       } catch (error) {
-        // Parse error
+        console.error('[STREAM] ❌ Parse error:', error, 'Raw data:', event.data);
+        onError?.(`Failed to parse stream data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        eventSource?.close();
       }
     };
 
     eventSource.onerror = (error) => {
+      console.error('[STREAM] ❌ EventSource error:', error);
+      console.error('[STREAM] EventSource readyState:', eventSource?.readyState);
       eventSource?.close();
-      onError?.('Connection lost');
+      onError?.(`Connection error - stream readyState: ${eventSource?.readyState}`);
     };
 
     const cleanup = () => {
@@ -276,13 +291,18 @@ export async function sendAudioMessage(
     let metadata: any = {};
 
     eventSource.onmessage = (event) => {
+      console.log('[AUDIO-STREAM] 📨 Received SSE event:', event.data);
+
       try {
         const data = JSON.parse(event.data);
+        console.log('[AUDIO-STREAM] 📦 Parsed data:', data);
 
         if (data.type === 'token') {
+          console.log('[AUDIO-STREAM] 🔥 Token received');
           fullResponse += data.content;
           onToken?.(data.content);
         } else if (data.type === 'done') {
+          console.log('[AUDIO-STREAM] ✅ Done event, length:', fullResponse.length);
           metadata = data.metadata || {};
           eventSource?.close();
           onComplete?.({
@@ -294,17 +314,23 @@ export async function sendAudioMessage(
             baby_invoked: metadata.baby_invoked || false
           });
         } else if (data.type === 'error') {
+          console.error('[AUDIO-STREAM] ❌ Error event:', data.error);
           eventSource?.close();
           onError?.(data.error);
         }
       } catch (error) {
-        // Parse error
+        console.error('[AUDIO-STREAM] ❌ Parse error:', error, 'Raw data:', event.data);
+        onError?.(`Audio stream parse error: ${error instanceof Error ? error.message : 'Unknown'}`);
+        eventSource?.close();
       }
     };
 
+
     eventSource.onerror = (error) => {
+      console.error('[AUDIO-STREAM] ❌ EventSource error:', error);
+      console.error('[AUDIO-STREAM] readyState:', eventSource?.readyState);
       eventSource?.close();
-      onError?.('Connection lost');
+      onError?.(`Audio stream connection error - readyState: ${eventSource?.readyState}`);
     };
 
     const cleanup = () => {
