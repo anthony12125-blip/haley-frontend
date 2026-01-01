@@ -1,1 +1,1 @@
-export const BUILD_VERSION = 39;
+export const BUILD_VERSION = 40;
