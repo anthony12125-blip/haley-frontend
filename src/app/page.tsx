@@ -67,7 +67,7 @@ export default function ChatPage() {
 
   // AI State
   const [aiMode, setAiMode] = useState<AIMode>('single');
-  const [activeModel, setActiveModel] = useState<string | null>('gemini');
+  const [activeModel, setActiveModel] = useState<string | null>(null);
 
   // Multi-LLM State
   const [multiLLMEnabled, setMultiLLMEnabled] = useState(false);
@@ -131,6 +131,21 @@ export default function ChatPage() {
   ];
 
   const availableAgents: Array<{ id: string; name: string; description: string }> = [];
+
+  // Initialize activeModel from localStorage or default to 'haley'
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const lastUsedModel = localStorage.getItem('haley_lastUsedModel') || 'haley';
+      setActiveModel(lastUsedModel);
+    }
+  }, []);
+
+  // Save activeModel to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && activeModel) {
+      localStorage.setItem('haley_lastUsedModel', activeModel);
+    }
+  }, [activeModel]);
 
   useEffect(() => {
     if (user) {
