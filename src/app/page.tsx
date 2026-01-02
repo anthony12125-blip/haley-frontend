@@ -24,6 +24,7 @@ import AudioPlaybackBar from '@/components/AudioPlaybackBar';
 import LLMResponseCard from '@/components/LLMResponseCard';
 import ArtifactsPanel from '@/components/ArtifactsPanel';
 import LoginPage from '@/components/LoginPage';
+import SuggestedReplies from '@/components/SuggestedReplies';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
 export default function ChatPage() {
@@ -1023,6 +1024,17 @@ export default function ChatPage() {
 
   const isAnyMessageStreaming = messages.some(msg => msg.metadata?.streaming === true);
 
+  // Check if we should show suggested replies (multi-LLM complete, summary not offered yet)
+  const shouldShowSuggestedReplies = messages.some(msg =>
+    msg.metadata?.isMultiLLM &&
+    msg.metadata?.allProvidersComplete &&
+    !msg.metadata?.summaryOffered
+  );
+
+  const handleSuggestionSelect = (suggestion: string) => {
+    handleSend(suggestion);
+  };
+
   return (
     <div className="full-screen flex overflow-hidden">
       <div className="space-bg">
@@ -1117,6 +1129,14 @@ export default function ChatPage() {
             artifacts={artifacts}
             onRemoveFile={handleRemoveFile}
             onRemoveArtifact={handleRemoveArtifact}
+            sidebarOpen={sidebarOpen && device.type === 'desktop'}
+          />
+        )}
+
+        {shouldShowSuggestedReplies && (
+          <SuggestedReplies
+            suggestions={['Yes']}
+            onSelect={handleSuggestionSelect}
             sidebarOpen={sidebarOpen && device.type === 'desktop'}
           />
         )}
