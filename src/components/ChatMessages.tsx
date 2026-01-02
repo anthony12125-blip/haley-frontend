@@ -26,6 +26,7 @@ interface ChatMessagesProps {
   onRetryProvider?: (messageId: string, provider: string) => void;
   onAudioReady?: (url: string, text: string) => void;
   onVoiceError?: (message: string) => void;
+  onMultiLLMSummary?: () => void;
 }
 
 export default function ChatMessages({
@@ -37,6 +38,7 @@ export default function ChatMessages({
   onRetryProvider,
   onAudioReady,
   onVoiceError,
+  onMultiLLMSummary,
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -234,22 +236,42 @@ export default function ChatMessages({
               <div key={message.id} className="mb-4">
                 <div className="max-w-3xl mx-auto px-4">
                   <div className="text-sm text-secondary p-4 bg-gray-800 rounded-lg border border-gray-700">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold mb-1">
-                          Querying {providers.length} models in parallel...
-                        </div>
-                        <div className="text-xs opacity-70">
-                          {allComplete
-                            ? `All ${providers.length} models completed`
-                            : `${completedProviders.length}/${providers.length} models completed`
-                          }
+                    {allComplete ? (
+                      <button
+                        onClick={onMultiLLMSummary}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          width: '100%',
+                          padding: '20px',
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
+                          <path d="M1 8C1 8 4 5 7 5" strokeLinecap="round"/>
+                          <path d="M23 8C23 8 20 5 17 5" strokeLinecap="round"/>
+                          <rect x="4" y="8" width="16" height="12" rx="2"/>
+                          <path d="M4 8L12 14L20 8"/>
+                        </svg>
+                        <span style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: 500 }}>AI Summary</span>
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold mb-1">
+                            Querying {providers.length} models in parallel...
+                          </div>
+                          <div className="text-xs opacity-70">
+                            {completedProviders.length}/{providers.length} models completed
+                          </div>
                         </div>
                       </div>
-                      <div className="text-blue-400 text-sm">
-                        View responses in Artifacts Panel →
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>

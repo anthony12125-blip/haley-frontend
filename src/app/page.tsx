@@ -1101,6 +1101,7 @@ export default function ChatPage() {
             setVoiceErrorMessage(msg);
             setTimeout(() => setVoiceHasError(false), 5000);
           }}
+          onMultiLLMSummary={handleMultiLLMSummary}
         />
 
         {(pendingUploads.length > 0 || artifacts.length > 0) && (
