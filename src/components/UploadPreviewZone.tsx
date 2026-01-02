@@ -27,6 +27,26 @@ export default function UploadPreviewZone({
   const [expandedArtifact, setExpandedArtifact] = useState<Artifact | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // ESC key handler to close modal
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && expandedArtifact) {
+        setExpandedArtifact(null);
+      }
+    };
+
+    if (expandedArtifact) {
+      document.addEventListener('keydown', handleEscKey);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = '';
+    };
+  }, [expandedArtifact]);
+
   // Create object URLs for image files
   useEffect(() => {
     const newPreviewUrls = new Map<number, string>();
@@ -328,40 +348,63 @@ export default function UploadPreviewZone({
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.8);
+          background: rgba(0, 0, 0, 0.92);
           z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 20px;
-          backdrop-filter: blur(4px);
+          padding: 0;
+          backdrop-filter: blur(8px);
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .modal-content {
           background: var(--panel-dark);
           border: 1px solid var(--border);
-          border-radius: 12px;
-          max-width: 800px;
-          width: 100%;
-          max-height: 80vh;
+          border-radius: 16px;
+          width: 90vw;
+          height: 90vh;
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          animation: slideUp 0.3s ease-out;
         }
 
         .modal-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 20px 24px;
+          padding: 24px 32px;
           border-bottom: 1px solid var(--border);
+          background: var(--panel);
         }
 
         .modal-title {
           display: flex;
           align-items: center;
-          gap: 12px;
-          font-size: 16px;
+          gap: 16px;
+          font-size: 20px;
           font-weight: 600;
           color: var(--text-primary);
         }
@@ -395,41 +438,69 @@ export default function UploadPreviewZone({
         }
 
         .modal-close {
-          width: 32px;
-          height: 32px;
+          width: 40px;
+          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: transparent;
-          border: none;
-          border-radius: 6px;
-          color: var(--text-secondary);
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          color: var(--text-primary);
           cursor: pointer;
           transition: all 0.2s;
         }
 
         .modal-close:hover {
-          background: var(--panel);
-          color: var(--text-primary);
+          background: rgba(255, 255, 255, 0.1);
+          border-color: var(--primary);
+          color: var(--primary);
+          transform: scale(1.05);
+        }
+
+        .modal-close:active {
+          transform: scale(0.95);
         }
 
         .modal-body {
           flex: 1;
           overflow-y: auto;
-          padding: 24px;
+          padding: 32px;
+          background: var(--panel-dark);
+        }
+
+        .modal-body::-webkit-scrollbar {
+          width: 12px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 6px;
+          border: 3px solid transparent;
+          background-clip: padding-box;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+          background-clip: padding-box;
         }
 
         .artifact-content {
           background: var(--panel);
           border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 16px;
+          border-radius: 12px;
+          padding: 24px;
           font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-          font-size: 13px;
-          line-height: 1.6;
+          font-size: 14px;
+          line-height: 1.7;
           color: var(--text-primary);
           white-space: pre-wrap;
           word-break: break-word;
+          min-height: 100%;
         }
 
         @media (max-width: 768px) {
@@ -439,15 +510,32 @@ export default function UploadPreviewZone({
           }
 
           .modal-content {
-            max-height: 90vh;
+            width: 95vw;
+            height: 95vh;
+            border-radius: 12px;
           }
 
           .modal-header {
-            padding: 16px;
+            padding: 16px 20px;
+          }
+
+          .modal-title {
+            font-size: 18px;
+            gap: 12px;
           }
 
           .modal-body {
+            padding: 20px;
+          }
+
+          .artifact-content {
             padding: 16px;
+            font-size: 13px;
+          }
+
+          .modal-close {
+            width: 36px;
+            height: 36px;
           }
         }
       `}</style>
@@ -569,7 +657,7 @@ export default function UploadPreviewZone({
               <div className="modal-title">
                 {(() => {
                   const Icon = getArtifactIcon(expandedArtifact);
-                  return <Icon size={20} />;
+                  return <Icon size={24} />;
                 })()}
                 <span>{getArtifactTitle(expandedArtifact)}</span>
                 {expandedArtifact.modelId && (
@@ -585,12 +673,12 @@ export default function UploadPreviewZone({
                 >
                   {copied ? (
                     <>
-                      <Check size={16} />
+                      <Check size={18} />
                       Copied
                     </>
                   ) : (
                     <>
-                      <Copy size={16} />
+                      <Copy size={18} />
                       Copy
                     </>
                   )}
@@ -599,8 +687,9 @@ export default function UploadPreviewZone({
                   className="modal-close"
                   onClick={() => setExpandedArtifact(null)}
                   aria-label="Close modal"
+                  title="Close (ESC)"
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </button>
               </div>
             </div>
