@@ -1024,11 +1024,9 @@ export default function ChatPage() {
 
   const isAnyMessageStreaming = messages.some(msg => msg.metadata?.streaming === true);
 
-  // Check if we should show suggested replies (multi-LLM complete, summary not offered yet)
+  // Check if we should show suggested replies (when Haley offers the summary)
   const shouldShowSuggestedReplies = messages.some(msg =>
-    msg.metadata?.isMultiLLM &&
-    msg.metadata?.allProvidersComplete &&
-    !msg.metadata?.summaryOffered
+    msg.metadata?.operation === 'summary-offer'
   );
 
   const handleSuggestionSelect = (suggestion: string) => {
