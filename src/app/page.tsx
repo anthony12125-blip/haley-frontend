@@ -1049,7 +1049,7 @@ export default function ChatPage() {
         device.type === 'desktop'
           ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
           : 'ml-0'
-      } ${device.type === 'mobile' ? 'mb-[90px]' : ''}`}>
+      } ${device.type !== 'desktop' ? 'mb-[90px]' : ''}`}>
         <VoiceStatusBar
           isPlaying={voiceIsPlaying}
           isListening={voiceIsListening}
