@@ -25,6 +25,7 @@ import LLMResponseCard from '@/components/LLMResponseCard';
 import ArtifactsPanel from '@/components/ArtifactsPanel';
 import LoginPage from '@/components/LoginPage';
 import SuggestedReplies from '@/components/SuggestedReplies';
+import SummarizeButton from '@/components/SummarizeButton';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
 export default function ChatPage() {
@@ -46,6 +47,7 @@ export default function ChatPage() {
 
   // Artifacts
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [shouldShowSummarizeIcon, setShouldShowSummarizeIcon] = useState(false);
 
   // Initialize sidebar state from localStorage, with desktop default
   useEffect(() => {
@@ -207,38 +209,13 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  // Orchestrator: Monitor multi-LLM completion and trigger Haley summary
+  // Monitor multi-LLM completion and show summarize icon
   useEffect(() => {
-    const multiLLMMessage = messages.find(msg =>
+    const hasCompleteMultiLLM = messages.some(msg =>
       msg.metadata?.isMultiLLM &&
-      msg.metadata?.allProvidersComplete &&
-      !msg.metadata?.summaryOffered
+      msg.metadata?.allProvidersComplete === true
     );
-
-    if (multiLLMMessage) {
-      // Add Haley summary offer to chat
-      const summaryOffer: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: 'All models have completed their responses. Would you like me to provide a summary comparing their outputs?',
-        timestamp: new Date(),
-        metadata: {
-          operation: 'summary-offer',
-          model_used: 'haley',
-        },
-      };
-
-      setMessages(prev => {
-        // Mark the multi-LLM message as summary offered
-        const updated = prev.map(msg =>
-          msg.id === multiLLMMessage.id
-            ? { ...msg, metadata: { ...msg.metadata, summaryOffered: true } }
-            : msg
-        );
-        // Add summary offer
-        return [...updated, summaryOffer];
-      });
-    }
+    setShouldShowSummarizeIcon(hasCompleteMultiLLM);
   }, [messages]);
 
   const loadConversationsFromStorage = async () => {
@@ -1033,6 +1010,11 @@ export default function ChatPage() {
     handleSend(suggestion);
   };
 
+  const handleMultiLLMSummary = async () => {
+    await handleSend('Please summarize all the multi-LLM responses above.');
+    setShouldShowSummarizeIcon(false);
+  };
+
   return (
     <div className="full-screen flex overflow-hidden">
       <div className="space-bg">
@@ -1135,6 +1117,13 @@ export default function ChatPage() {
           <SuggestedReplies
             suggestions={['Yes']}
             onSelect={handleSuggestionSelect}
+            sidebarOpen={sidebarOpen && device.type === 'desktop'}
+          />
+        )}
+
+        {shouldShowSummarizeIcon && (
+          <SummarizeButton
+            onClick={handleMultiLLMSummary}
             sidebarOpen={sidebarOpen && device.type === 'desktop'}
           />
         )}
