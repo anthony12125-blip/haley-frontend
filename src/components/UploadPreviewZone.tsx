@@ -175,480 +175,483 @@ export default function UploadPreviewZone({
   };
 
   return (
-    <div
-      className={`upload-preview-zone glass-strong border-t border-border safe-bottom transition-all duration-300 ${
-        sidebarOpen ? 'md:left-80' : 'md:left-[60px]'
-      }`}
-    >
-      <style jsx>{`
-        .upload-preview-zone {
-          position: fixed;
-          bottom: 70px;
-          left: 0;
-          right: 0;
-          z-index: 30;
-        }
-
-        .preview-container {
-          max-width: 48rem;
-          margin: 0 auto;
-          padding: 12px 16px;
-          overflow-x: auto;
-          overflow-y: hidden;
-          max-height: 120px;
-        }
-
-        .preview-scroll {
-          display: flex;
-          gap: 12px;
-          min-width: min-content;
-        }
-
-        .file-card {
-          display: flex;
-          flex-direction: column;
-          min-width: 180px;
-          max-width: 180px;
-          height: 80px;
-          background: var(--panel-dark);
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 12px;
-          position: relative;
-          transition: all 0.2s;
-          overflow: hidden;
-        }
-
-        .file-card:hover {
-          border-color: var(--primary);
-        }
-
-        .image-thumbnail {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          border-radius: 8px;
-          opacity: 1;
-        }
-
-        .image-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: rgba(0, 0, 0, 0.6);
-          padding: 6px 8px;
-          z-index: 1;
-          backdrop-filter: blur(4px);
-        }
-
-        .image-overlay .file-name {
-          font-size: 11px;
-          font-weight: 500;
-          color: white;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          line-height: 1.2;
-          margin-bottom: 2px;
-        }
-
-        .image-overlay .file-size {
-          font-size: 10px;
-          color: rgba(255, 255, 255, 0.8);
-        }
-
-        .model-badge {
-          position: absolute;
-          top: 8px;
-          left: 8px;
-          background: rgba(75, 108, 255, 0.9);
-          color: white;
-          font-size: 9px;
-          font-weight: 600;
-          padding: 2px 6px;
-          border-radius: 4px;
-          z-index: 2;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .artifact-card {
-          background: linear-gradient(135deg, rgba(75, 108, 255, 0.1) 0%, rgba(75, 108, 255, 0.05) 100%);
-          border-color: rgba(75, 108, 255, 0.3);
-        }
-
-        .artifact-card:hover {
-          border-color: rgba(75, 108, 255, 0.6);
-        }
-
-        .file-header {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-
-        .file-icon {
-          flex-shrink: 0;
-          color: var(--accent);
-        }
-
-        .file-name {
-          flex: 1;
-          font-size: 13px;
-          font-weight: 500;
-          color: var(--text-primary);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          line-height: 1.3;
-        }
-
-        .remove-btn {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          width: 20px;
-          height: 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(0, 0, 0, 0.6);
-          border: none;
-          border-radius: 4px;
-          color: white;
-          cursor: pointer;
-          transition: all 0.2s;
-          padding: 0;
-          z-index: 2;
-        }
-
-        .remove-btn:hover {
-          background: var(--error);
-          color: white;
-        }
-
-        .file-size {
-          font-size: 11px;
-          color: var(--text-secondary);
-          margin-top: auto;
-        }
-
-        .artifact-card {
-          cursor: pointer;
-        }
-
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.92);
-          z-index: 9999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-          backdrop-filter: blur(8px);
-          animation: fadeIn 0.2s ease-out;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .modal-content {
-          background: var(--panel-dark);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          width: 90vw;
-          height: 90vh;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-          animation: slideUp 0.3s ease-out;
-        }
-
-        .modal-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px 32px;
-          border-bottom: 1px solid var(--border);
-          background: var(--panel);
-        }
-
-        .modal-title {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          font-size: 20px;
-          font-weight: 600;
-          color: var(--text-primary);
-        }
-
-        .modal-actions {
-          display: flex;
-          gap: 8px;
-        }
-
-        .modal-btn {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          background: var(--primary);
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .modal-btn:hover {
-          background: var(--primary-hover);
-        }
-
-        .modal-btn.copied {
-          background: var(--success);
-        }
-
-        .modal-close {
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          color: var(--text-primary);
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: var(--primary);
-          color: var(--primary);
-          transform: scale(1.05);
-        }
-
-        .modal-close:active {
-          transform: scale(0.95);
-        }
-
-        .modal-body {
-          flex: 1;
-          overflow-y: auto;
-          padding: 32px;
-          background: var(--panel-dark);
-        }
-
-        .modal-body::-webkit-scrollbar {
-          width: 12px;
-        }
-
-        .modal-body::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 6px;
-          border: 3px solid transparent;
-          background-clip: padding-box;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
-          background-clip: padding-box;
-        }
-
-        .artifact-content {
-          background: var(--panel);
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          padding: 24px;
-          font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-          font-size: 14px;
-          line-height: 1.7;
-          color: var(--text-primary);
-          white-space: pre-wrap;
-          word-break: break-word;
-          min-height: 100%;
-        }
-
-        @media (max-width: 768px) {
+    <>
+      <div
+        className={`upload-preview-zone glass-strong border-t border-border safe-bottom transition-all duration-300 ${
+          sidebarOpen ? 'md:left-80' : 'md:left-[60px]'
+        }`}
+      >
+        <style jsx>{`
           .upload-preview-zone {
-            bottom: 90px;
-            left: 0 !important;
+            position: fixed;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            z-index: 30;
           }
 
-          .modal-content {
-            width: 95vw;
-            height: 95vh;
-            border-radius: 12px;
+          .preview-container {
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: 12px 16px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            max-height: 120px;
           }
 
-          .modal-header {
-            padding: 16px 20px;
-          }
-
-          .modal-title {
-            font-size: 18px;
+          .preview-scroll {
+            display: flex;
             gap: 12px;
+            min-width: min-content;
           }
 
-          .modal-body {
-            padding: 20px;
+          .file-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 180px;
+            max-width: 180px;
+            height: 80px;
+            background: var(--panel-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+            transition: all 0.2s;
+            overflow: hidden;
           }
 
-          .artifact-content {
-            padding: 16px;
+          .file-card:hover {
+            border-color: var(--primary);
+          }
+
+          .image-thumbnail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            opacity: 1;
+          }
+
+          .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 6px 8px;
+            z-index: 1;
+            backdrop-filter: blur(4px);
+          }
+
+          .image-overlay .file-name {
+            font-size: 11px;
+            font-weight: 500;
+            color: white;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.2;
+            margin-bottom: 2px;
+          }
+
+          .image-overlay .file-size {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.8);
+          }
+
+          .model-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(75, 108, 255, 0.9);
+            color: white;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            z-index: 2;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+
+          .artifact-card {
+            background: linear-gradient(135deg, rgba(75, 108, 255, 0.1) 0%, rgba(75, 108, 255, 0.05) 100%);
+            border-color: rgba(75, 108, 255, 0.3);
+          }
+
+          .artifact-card:hover {
+            border-color: rgba(75, 108, 255, 0.6);
+          }
+
+          .file-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 8px;
+          }
+
+          .file-icon {
+            flex-shrink: 0;
+            color: var(--accent);
+          }
+
+          .file-name {
+            flex: 1;
             font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1.3;
           }
 
-          .modal-close {
-            width: 36px;
-            height: 36px;
+          .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 0;
+            z-index: 2;
           }
-        }
-      `}</style>
 
-      <div className="preview-container">
-        <div className="preview-scroll">
-          {previewItems.map((item, itemIndex) => {
-            if (item.type === 'file') {
-              const file = item.data;
-              const fileIndex = item.index;
-              const Icon = getFileIcon(file);
-              const isImage = isImageFile(file);
-              const previewUrl = previewUrls.get(fileIndex);
+          .remove-btn:hover {
+            background: var(--error);
+            color: white;
+          }
 
-              return (
-                <div
-                  key={`file-${file.name}-${fileIndex}`}
-                  className={`file-card ${isImage ? 'has-image' : ''}`}
-                >
-                  {isImage && previewUrl ? (
-                    <>
-                      <img
-                        src={previewUrl}
-                        alt={file.name}
-                        className="image-thumbnail"
-                      />
-                      <div className="image-overlay">
-                        <div className="file-name" title={file.name}>
-                          {file.name}
+          .file-size {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: auto;
+          }
+
+          .artifact-card {
+            cursor: pointer;
+          }
+
+          @media (max-width: 768px) {
+            .upload-preview-zone {
+              bottom: 90px;
+              left: 0 !important;
+            }
+          }
+        `}</style>
+
+        <div className="preview-container">
+          <div className="preview-scroll">
+            {previewItems.map((item, itemIndex) => {
+              if (item.type === 'file') {
+                const file = item.data;
+                const fileIndex = item.index;
+                const Icon = getFileIcon(file);
+                const isImage = isImageFile(file);
+                const previewUrl = previewUrls.get(fileIndex);
+
+                return (
+                  <div
+                    key={`file-${file.name}-${fileIndex}`}
+                    className={`file-card ${isImage ? 'has-image' : ''}`}
+                  >
+                    {isImage && previewUrl ? (
+                      <>
+                        <img
+                          src={previewUrl}
+                          alt={file.name}
+                          className="image-thumbnail"
+                        />
+                        <div className="image-overlay">
+                          <div className="file-name" title={file.name}>
+                            {file.name}
+                          </div>
+                          <div className="file-size">
+                            {formatFileSize(file.size)}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="file-header">
+                          <Icon size={18} className="file-icon" />
+                          <div className="file-name" title={file.name}>
+                            {file.name}
+                          </div>
                         </div>
                         <div className="file-size">
                           {formatFileSize(file.size)}
                         </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="file-header">
-                        <Icon size={18} className="file-icon" />
-                        <div className="file-name" title={file.name}>
-                          {file.name}
-                        </div>
-                      </div>
-                      <div className="file-size">
-                        {formatFileSize(file.size)}
-                      </div>
-                    </>
-                  )}
+                      </>
+                    )}
 
-                  <button
-                    onClick={() => onRemoveFile(fileIndex)}
-                    className="remove-btn"
-                    aria-label="Remove file"
-                    title="Remove file"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              );
-            } else {
-              // Artifact rendering
-              const artifact = item.data;
-              const Icon = getArtifactIcon(artifact);
-              const title = getArtifactTitle(artifact);
-              const size = getArtifactSize(artifact);
-              const modelLabel = getModelLabel(artifact.modelId);
-
-              return (
-                <div
-                  key={`artifact-${artifact.id}`}
-                  className="file-card artifact-card"
-                  onClick={() => setExpandedArtifact(artifact)}
-                >
-                  {artifact.modelId && (
-                    <div className="model-badge">{modelLabel}</div>
-                  )}
-
-                  <div className="file-header">
-                    <Icon size={18} className="file-icon" />
-                    <div className="file-name" title={title}>
-                      {title}
-                    </div>
-                  </div>
-                  <div className="file-size">
-                    {size}
-                  </div>
-
-                  {onRemoveArtifact && (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemoveArtifact(artifact.id);
-                      }}
+                      onClick={() => onRemoveFile(fileIndex)}
                       className="remove-btn"
-                      aria-label="Remove artifact"
-                      title="Remove artifact"
+                      aria-label="Remove file"
+                      title="Remove file"
                     >
                       <X size={14} />
                     </button>
-                  )}
-                </div>
-              );
-            }
-          })}
+                  </div>
+                );
+              } else {
+                // Artifact rendering
+                const artifact = item.data;
+                const Icon = getArtifactIcon(artifact);
+                const title = getArtifactTitle(artifact);
+                const size = getArtifactSize(artifact);
+                const modelLabel = getModelLabel(artifact.modelId);
+
+                return (
+                  <div
+                    key={`artifact-${artifact.id}`}
+                    className="file-card artifact-card"
+                    onClick={() => setExpandedArtifact(artifact)}
+                  >
+                    {artifact.modelId && (
+                      <div className="model-badge">{modelLabel}</div>
+                    )}
+
+                    <div className="file-header">
+                      <Icon size={18} className="file-icon" />
+                      <div className="file-name" title={title}>
+                        {title}
+                      </div>
+                    </div>
+                    <div className="file-size">
+                      {size}
+                    </div>
+
+                    {onRemoveArtifact && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemoveArtifact(artifact.id);
+                        }}
+                        className="remove-btn"
+                        aria-label="Remove artifact"
+                        title="Remove artifact"
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Expanded Artifact Modal */}
+      {/* Expanded Artifact Modal - Rendered outside parent to properly overlay sidebar */}
       {expandedArtifact && (
         <div
           className="modal-overlay"
           onClick={() => setExpandedArtifact(null)}
         >
+          <style jsx>{`
+            .modal-overlay {
+              position: fixed;
+              inset: 0;
+              background: rgba(0, 0, 0, 0.92);
+              z-index: 99999;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              backdrop-filter: blur(8px);
+              animation: fadeIn 0.2s ease-out;
+            }
+
+            @keyframes fadeIn {
+              from {
+                opacity: 0;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+
+            @keyframes slideUp {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+
+            .modal-content {
+              background: var(--panel-dark);
+              border: 1px solid var(--border);
+              border-radius: 16px;
+              width: 90vw;
+              height: 90vh;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+              box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+              animation: slideUp 0.3s ease-out;
+            }
+
+            .modal-header {
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 24px 32px;
+              border-bottom: 1px solid var(--border);
+              background: var(--panel);
+            }
+
+            .modal-title {
+              display: flex;
+              align-items: center;
+              gap: 16px;
+              font-size: 20px;
+              font-weight: 600;
+              color: var(--text-primary);
+            }
+
+            .modal-actions {
+              display: flex;
+              gap: 8px;
+            }
+
+            .modal-btn {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              padding: 8px 16px;
+              background: var(--primary);
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 14px;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+
+            .modal-btn:hover {
+              background: var(--primary-hover);
+            }
+
+            .modal-btn.copied {
+              background: var(--success);
+            }
+
+            .modal-close {
+              width: 40px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: rgba(255, 255, 255, 0.05);
+              border: 1px solid var(--border);
+              border-radius: 8px;
+              color: var(--text-primary);
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+
+            .modal-close:hover {
+              background: rgba(255, 255, 255, 0.1);
+              border-color: var(--primary);
+              color: var(--primary);
+              transform: scale(1.05);
+            }
+
+            .modal-close:active {
+              transform: scale(0.95);
+            }
+
+            .modal-body {
+              flex: 1;
+              overflow-y: auto;
+              overflow-x: hidden;
+              padding: 32px;
+              background: var(--panel-dark);
+            }
+
+            .modal-body::-webkit-scrollbar {
+              width: 12px;
+            }
+
+            .modal-body::-webkit-scrollbar-track {
+              background: transparent;
+            }
+
+            .modal-body::-webkit-scrollbar-thumb {
+              background: rgba(255, 255, 255, 0.2);
+              border-radius: 6px;
+              border: 3px solid transparent;
+              background-clip: padding-box;
+            }
+
+            .modal-body::-webkit-scrollbar-thumb:hover {
+              background: rgba(255, 255, 255, 0.3);
+              background-clip: padding-box;
+            }
+
+            .artifact-content {
+              background: var(--panel);
+              border: 1px solid var(--border);
+              border-radius: 12px;
+              padding: 24px;
+              font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+              font-size: 14px;
+              line-height: 1.7;
+              color: var(--text-primary);
+              white-space: pre-wrap;
+              word-break: break-word;
+              min-height: 100%;
+            }
+
+            @media (max-width: 768px) {
+              .modal-content {
+                width: 95vw;
+                height: 95vh;
+                border-radius: 12px;
+              }
+
+              .modal-header {
+                padding: 16px 20px;
+              }
+
+              .modal-title {
+                font-size: 18px;
+                gap: 12px;
+              }
+
+              .modal-body {
+                padding: 20px;
+              }
+
+              .artifact-content {
+                padding: 16px;
+                font-size: 13px;
+              }
+
+              .modal-close {
+                width: 36px;
+                height: 36px;
+              }
+            }
+          `}</style>
           <div
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
@@ -701,6 +704,6 @@ export default function UploadPreviewZone({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
