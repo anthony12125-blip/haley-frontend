@@ -344,10 +344,10 @@ export default function ChatPage() {
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === multiLLMMessageId) {
-                  const completedProviders = [
-                    ...(msg.metadata?.completedProviders || []),
-                    provider,
-                  ];
+                  const existingProviders = msg.metadata?.completedProviders || [];
+                  const completedProviders = existingProviders.includes(provider)
+                    ? existingProviders
+                    : [...existingProviders, provider];
                   const allComplete = completedProviders.length === selectedModels.length;
 
                   return {
@@ -378,10 +378,10 @@ export default function ChatPage() {
               prev.map((msg) => {
                 if (msg.id === multiLLMMessageId) {
                   // Mark provider as completed even on error
-                  const completedProviders = [
-                    ...(msg.metadata?.completedProviders || []),
-                    provider,
-                  ];
+                  const existingProviders = msg.metadata?.completedProviders || [];
+                  const completedProviders = existingProviders.includes(provider)
+                    ? existingProviders
+                    : [...existingProviders, provider];
                   const allComplete = completedProviders.length === selectedModels.length;
 
                   return {
@@ -823,10 +823,10 @@ export default function ChatPage() {
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.id === messageId) {
-                const completedProviders = [
-                  ...(msg.metadata?.completedProviders || []),
-                  provider,
-                ];
+                const existingProviders = msg.metadata?.completedProviders || [];
+                const completedProviders = existingProviders.includes(provider)
+                  ? existingProviders
+                  : [...existingProviders, provider];
                 const allProviders = msg.metadata?.providers || [];
                 const allComplete = completedProviders.length === allProviders.length;
 
@@ -850,10 +850,10 @@ export default function ChatPage() {
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.id === messageId) {
-                const completedProviders = [
-                  ...(msg.metadata?.completedProviders || []),
-                  provider,
-                ];
+                const existingProviders = msg.metadata?.completedProviders || [];
+                const completedProviders = existingProviders.includes(provider)
+                  ? existingProviders
+                  : [...existingProviders, provider];
                 const allProviders = msg.metadata?.providers || [];
                 const allComplete = completedProviders.length === allProviders.length;
 
@@ -892,10 +892,12 @@ export default function ChatPage() {
                     ...msg.metadata?.providerResponses,
                     [provider]: `Error: ${error instanceof Error ? error.message : 'Retry failed'}`,
                   },
-                  completedProviders: [
-                    ...(msg.metadata?.completedProviders || []),
-                    provider,
-                  ],
+                  completedProviders: (() => {
+                    const existingProviders = msg.metadata?.completedProviders || [];
+                    return existingProviders.includes(provider)
+                      ? existingProviders
+                      : [...existingProviders, provider];
+                  })(),
                 },
               }
             : msg
