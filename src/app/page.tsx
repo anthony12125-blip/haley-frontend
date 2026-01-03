@@ -26,6 +26,7 @@ import ArtifactsPanel from '@/components/ArtifactsPanel';
 import LoginPage from '@/components/LoginPage';
 import SuggestedReplies from '@/components/SuggestedReplies';
 import SummarizeButton from '@/components/SummarizeButton';
+import SummaryCard from '@/components/SummaryCard';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
 export default function ChatPage() {
@@ -48,6 +49,11 @@ export default function ChatPage() {
   // Artifacts
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [shouldShowSummarizeIcon, setShouldShowSummarizeIcon] = useState(false);
+
+  // Summary Card State
+  const [showSummaryCard, setShowSummaryCard] = useState(false);
+  const [summaryText, setSummaryText] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   // Initialize sidebar state from localStorage, with desktop default
   useEffect(() => {
@@ -1011,8 +1017,59 @@ export default function ChatPage() {
   };
 
   const handleMultiLLMSummary = async () => {
-    await handleSend('Please summarize all the multi-LLM responses above.');
+    // STEP 1: Hide button, show card
     setShouldShowSummarizeIcon(false);
+    setShowSummaryCard(true);
+    setSummaryLoading(true);
+    setSummaryText('');
+
+    // STEP 2: Find the completed multi-LLM message
+    const multiLLMMsg = messages.find(m =>
+      m.metadata?.isMultiLLM &&
+      m.metadata?.allProvidersComplete
+    );
+
+    if (!multiLLMMsg) {
+      setSummaryLoading(false);
+      setSummaryText('No multi-LLM responses found to summarize.');
+      return;
+    }
+
+    // STEP 3: Collect all provider responses
+    const providerResponses = multiLLMMsg.metadata?.providerResponses || {};
+    const providers = multiLLMMsg.metadata?.providers || [];
+
+    const summaryPrompt = `Summarize and compare these AI responses:\n\n${
+      providers.map(p => `${p.toUpperCase()}: ${providerResponses[p]}`).join('\n\n')
+    }`;
+
+    // STEP 4: Stream response into summary card (NOT main chat)
+    let streamingContent = '';
+
+    try {
+      const { messageId, cleanup } = await sendMessage(
+        summaryPrompt,
+        'haley',
+        (token: string) => {
+          // Token callback - stream into card
+          streamingContent += token;
+          setSummaryText(streamingContent);
+        },
+        (response) => {
+          // Completion callback
+          setSummaryLoading(false);
+          cleanup();
+        },
+        (error) => {
+          // Error callback
+          setSummaryText(`Error generating summary: ${error}`);
+          setSummaryLoading(false);
+        }
+      );
+    } catch (error) {
+      setSummaryText(`Failed to generate summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setSummaryLoading(false);
+    }
   };
 
   return (
@@ -1125,6 +1182,15 @@ export default function ChatPage() {
         {shouldShowSummarizeIcon && (
           <SummarizeButton
             onClick={handleMultiLLMSummary}
+            sidebarOpen={sidebarOpen && device.type === 'desktop'}
+          />
+        )}
+
+        {showSummaryCard && (
+          <SummaryCard
+            isLoading={summaryLoading}
+            summaryText={summaryText}
+            onClose={() => setShowSummaryCard(false)}
             sidebarOpen={sidebarOpen && device.type === 'desktop'}
           />
         )}
