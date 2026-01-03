@@ -426,9 +426,12 @@ export default function UploadPreviewZone({
 
                     <div className="file-header">
                       <Icon size={18} className="file-icon" />
-                      <div className="file-name" title={title}>
-                        {title}
-                      </div>
+                      {/* Hide title for llm-response artifacts with modelId since badge already shows model name */}
+                      {!(artifact.type === 'llm-response' && artifact.modelId) && (
+                        <div className="file-name" title={title}>
+                          {title}
+                        </div>
+                      )}
                     </div>
                     <div className="file-size">
                       {size}
