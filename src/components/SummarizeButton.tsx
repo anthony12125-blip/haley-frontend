@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import IconEnvelopeWings from './icons/IconEnvelopeWings';
 
 interface SummarizeButtonProps {
   onClick: () => void;
@@ -20,25 +21,65 @@ export default function SummarizeButton({ onClick, sidebarOpen }: SummarizeButto
         transform: 'translateX(-50%)',
         marginLeft: sidebarOpen ? '140px' : '0',
         zIndex: 28,
-        width: '48px',
-        height: '48px',
-        borderRadius: '50%',
-        background: 'var(--accent)',
+        background: 'transparent',
         border: 'none',
         cursor: 'pointer',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: '8px',
         transition: 'all 0.2s ease',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+        padding: '12px'
       }}
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-        <path d="M1 8C1 8 4 5 7 5" strokeLinecap="round"/>
-        <path d="M23 8C23 8 20 5 17 5" strokeLinecap="round"/>
-        <rect x="4" y="8" width="16" height="12" rx="2"/>
-        <path d="M4 8L12 14L20 8"/>
-      </svg>
+      <IconEnvelopeWings
+        size={32}
+        strokeWidth={2}
+        className="envelope-wings-icon"
+      />
+      <span style={{
+        fontSize: '12px',
+        fontWeight: 600,
+        color: 'var(--text-primary)',
+        textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+        letterSpacing: '0.5px'
+      }}>
+        AI Summary
+      </span>
+
+      <style jsx>{`
+        .summarize-button {
+          animation: float 3s ease-in-out infinite;
+        }
+
+        .summarize-button:hover {
+          transform: translateX(-50%) scale(1.1);
+        }
+
+        .summarize-button:active {
+          transform: translateX(-50%) scale(0.95);
+        }
+
+        .envelope-wings-icon {
+          color: var(--accent);
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .summarize-button {
+            bottom: 90px;
+          }
+        }
+      `}</style>
     </button>
   );
 }
