@@ -515,7 +515,7 @@ export default function Sidebar({
               </button>
 
               {!aiModelsCollapsed && (
-                <div className="mt-2 space-y-1">
+                <div className="mt-2 space-y-1 max-h-[50vh] overflow-y-auto">
                   {/* Multi-LLM Toggle - Always visible */}
                   <div className="px-3 py-2 mb-2 border-b border-border">
                     <MultiLLMToggle
