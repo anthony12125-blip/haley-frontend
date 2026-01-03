@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import MessageBubble from './MessageBubble';
 import { HaleyThinkingAnimation } from './HaleyThinkingAnimation';
 import LLMResponseCard from './LLMResponseCard';
+import IconEnvelopeWings from './icons/IconEnvelopeWings';
 import type { Message } from '@/types';
 
 // Model name mapping
@@ -235,7 +236,7 @@ export default function ChatMessages({
             return (
               <div key={message.id} className="mb-4">
                 <div className="max-w-3xl mx-auto px-4">
-                  <div className="text-sm text-secondary p-4 bg-gray-800 rounded-lg border border-gray-700">
+                  <div className="text-sm text-secondary p-4">
                     {allComplete ? (
                       <button
                         onClick={onMultiLLMSummary}
@@ -252,12 +253,7 @@ export default function ChatMessages({
                           cursor: 'pointer'
                         }}
                       >
-                        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5">
-                          <path d="M1 8C1 8 4 5 7 5" strokeLinecap="round"/>
-                          <path d="M23 8C23 8 20 5 17 5" strokeLinecap="round"/>
-                          <rect x="4" y="8" width="16" height="12" rx="2"/>
-                          <path d="M4 8L12 14L20 8"/>
-                        </svg>
+                        <IconEnvelopeWings size={56} strokeWidth={1.5} className="text-accent" />
                         <span style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: 500 }}>AI Summary</span>
                       </button>
                     ) : (
