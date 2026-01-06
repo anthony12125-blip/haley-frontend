@@ -201,6 +201,11 @@ export default function Sidebar({
       if (onSelectModel) {
         onSelectModel(modelId);
       }
+      // Auto-apply LLM-native Vibe Pack
+      if (modelId && typeof window !== 'undefined') {
+        localStorage.setItem('haley_vibePack', modelId);
+        window.dispatchEvent(new CustomEvent('vibePackChange', { detail: modelId }));
+      }
       setShowHaleyMenu(false);
     }
   };
