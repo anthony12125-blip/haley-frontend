@@ -23,6 +23,21 @@ export function VibePackProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Listen for LLM-native vibe pack changes from Sidebar
+  useEffect(() => {
+    const handleVibePackChange = (event: CustomEvent) => {
+      const modelId = event.detail;
+      if (modelId) {
+        setCurrentPack(getVibePack(modelId));
+      }
+    };
+
+    window.addEventListener('vibePackChange', handleVibePackChange as EventListener);
+    return () => {
+      window.removeEventListener('vibePackChange', handleVibePackChange as EventListener);
+    };
+  }, []);
+
   const handleSetVibePackId = (id: string) => {
     setVibePackId(id);
     setCurrentPack(getVibePack(id));
