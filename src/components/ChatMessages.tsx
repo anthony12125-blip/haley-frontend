@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import MessageBubble from './MessageBubble';
 import { HaleyThinkingAnimation } from './HaleyThinkingAnimation';
 import LLMResponseCard from './LLMResponseCard';
-import IconEnvelopeWings from './icons/IconEnvelopeWings';
+import { FileStack } from 'lucide-react';
 import type { Message } from '@/types';
 
 // Model name mapping
@@ -73,11 +73,12 @@ export default function ChatMessages({
   // Detect if user has scrolled up manually
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
-    
+
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
-    
-    setUserScrolledUp(!isAtBottom);
+    const distanceFromBottom = scrollHeight - clientHeight - scrollTop;
+
+    // Only mark as "scrolled up" if user is more than 150px from bottom
+    setUserScrolledUp(distanceFromBottom > 150);
   }, []);
 
   // Scroll to bottom when new messages arrive
@@ -253,8 +254,8 @@ export default function ChatMessages({
                           cursor: 'pointer'
                         }}
                       >
-                        <IconEnvelopeWings size={56} strokeWidth={1.5} className="text-accent" />
-                        <span style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: 500 }}>AI Summary</span>
+                        <FileStack size={56} strokeWidth={1.5} className="text-accent" />
+                        <span style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: 500 }}>Summary</span>
                       </button>
                     ) : (
                       <div className="flex items-center justify-between">
