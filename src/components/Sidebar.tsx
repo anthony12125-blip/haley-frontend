@@ -643,7 +643,7 @@ export default function Sidebar({
             </div>
 
             {/* Conversation History */}
-            <div className="flex-1 overflow-y-auto p-3">
+            <div className="flex-1 min-h-0 overflow-y-auto p-3">
               <div className="text-xs text-secondary font-semibold mb-2 px-2">
                 RECENT CHATS
               </div>
