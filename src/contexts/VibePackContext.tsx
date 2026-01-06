@@ -29,6 +29,25 @@ export function VibePackProvider({ children }: { children: ReactNode }) {
       const modelId = event.detail;
       if (modelId) {
         setCurrentPack(getVibePack(modelId));
+
+        // Apply CSS variables to document root
+        const pack = getVibePack(modelId);
+        if (pack.colors) {
+          const root = document.documentElement;
+          root.style.setProperty('--primary', pack.colors.primary);
+          root.style.setProperty('--accent', pack.colors.accent);
+          root.style.setProperty('--panel-dark', pack.colors.panelDark);
+          root.style.setProperty('--panel-medium', pack.colors.panelMedium);
+          root.style.setProperty('--panel-light', pack.colors.panelLight);
+          root.style.setProperty('--text-primary', pack.colors.textPrimary);
+          root.style.setProperty('--text-secondary', pack.colors.textSecondary);
+          root.style.setProperty('--border', pack.colors.border);
+          root.style.setProperty('--error', pack.colors.error);
+          root.style.setProperty('--success', pack.colors.success);
+          if (pack.background) {
+            root.style.setProperty('--background', pack.background);
+          }
+        }
       }
     };
 
