@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { HaleyCoreGlyph } from '@/components/HaleyCoreGlyph';
 import IconSoundboard from '@/components/icons/IconSoundboard';
-import { generateClaimsAsync } from '@/lib/ai_rd/claimsGenerator';
+import { generateClaims } from '@/lib/ai_rd/claimsGenerator';
 import { questionizeClaims, type Claim, type Question } from '@/lib/ai_rd/rd_questionizer';
-import { createBabyHaleyAdapter } from '@/lib/ai_rd/llmAdapter';
+import { createLLMAdapter } from '@/lib/ai_rd/llmAdapter';
 
 type Phase = 'input' | 'claims' | 'questions' | 'done';
 
@@ -30,32 +30,21 @@ export default function AiRDSoundboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleGenerateClaims = async () => {
+  const handleGenerateClaims = () => {
     setError(null);
-    setLoading(true);
 
-    // Use user idea as concept, success criteria as omega
     const concept = userIdea.trim();
     const omega = successCriteria.trim() || 'viable and user-friendly implementation';
 
-    try {
-      // R&D uses Baby Haley ONLY - no external LLM calls
-      const generatedClaims = await generateClaimsAsync(concept, omega);
+    const generatedClaims = generateClaims(concept, omega);
 
-      if (generatedClaims.length === 0) {
-        setError('Tell me what you want to build first.');
-        return;
-      }
-
-      console.log('[Soundboard] Baby Haley generated claims:', generatedClaims);
-      setClaims(generatedClaims);
-      setPhase('claims');
-    } catch (err) {
-      console.error('[Soundboard] Error generating claims:', err);
-      setError('Couldn\'t generate claims. Try again.');
-    } finally {
-      setLoading(false);
+    if (generatedClaims.length === 0) {
+      setError('Tell me what you want to build first.');
+      return;
     }
+
+    setClaims(generatedClaims);
+    setPhase('claims');
   };
 
   const handleGenerateQuestions = async () => {
@@ -63,15 +52,14 @@ export default function AiRDSoundboardPage() {
     setLoading(true);
 
     try {
-      // R&D uses Baby Haley ONLY - no external LLM calls
-      const babyHaley = createBabyHaleyAdapter();
+      const llmCall = createLLMAdapter('claude');
       const result = await questionizeClaims({
         claims,
-        llmCall: babyHaley,
+        llmCall,
         temperature: 0.2
       });
 
-      console.log('[Soundboard] Baby Haley questionize result:', result);
+      console.log('[Soundboard] Questionize result:', result);
       
       if (result.questions.length === 0) {
         setError('No user questions needed - all claims can be validated without user input.');
@@ -226,11 +214,10 @@ export default function AiRDSoundboardPage() {
                   
                   <button
                     onClick={handleGenerateClaims}
-                    disabled={!userIdea.trim() || loading}
-                    className="w-full px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium text-primary flex items-center justify-center gap-2"
+                    disabled={!userIdea.trim()}
+                    className="w-full px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium text-primary"
                   >
-                    {loading && <Loader2 size={16} className="animate-spin" />}
-                    {loading ? 'Baby Haley is analyzing...' : 'Start R&D Analysis'}
+                    Start R&D Analysis
                   </button>
                 </div>
               </div>
