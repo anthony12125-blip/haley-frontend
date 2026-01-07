@@ -111,10 +111,6 @@ export default function TokenBalance({
     }
   };
 
-  const formatBalance = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
-  };
-
   // Compact view for sidebar
   if (compact) {
     return (
@@ -133,9 +129,9 @@ export default function TokenBalance({
             ) : (
               <>
                 <div className="text-sm font-medium">
-                  {formatBalance(balance?.balance || 0)}
+                  {(balance?.balance || 0).toLocaleString()}
                 </div>
-                <div className="text-xs text-secondary">Credits</div>
+                <div className="text-xs text-secondary">Tokens</div>
               </>
             )}
           </div>
@@ -180,20 +176,20 @@ export default function TokenBalance({
       ) : (
         <div className="space-y-4">
           <div className="text-3xl font-bold text-primary">
-            {formatBalance(balance?.balance || 0)}
+            {(balance?.balance || 0).toLocaleString()} <span className="text-lg font-normal">tokens</span>
           </div>
 
           <div className="flex items-center gap-4 text-sm text-secondary">
             <div className="flex items-center gap-1">
               <TrendingDown size={14} />
-              <span>Total spent: {formatBalance(balance?.total_spent || 0)}</span>
+              <span>Total spent: {(balance?.total_spent || 0).toLocaleString()} tokens</span>
             </div>
           </div>
 
-          {(balance?.balance || 0) < 1 && (
+          {(balance?.balance || 0) < 100 && (
             <div className="p-3 bg-warning/10 border border-warning/30 rounded-lg">
               <p className="text-sm text-warning">
-                Low balance! Add credits to continue using AI features.
+                Low balance! Add tokens to continue using AI features.
               </p>
             </div>
           )}
