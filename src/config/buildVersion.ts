@@ -1,4 +1,5 @@
-export const BUILD_VERSION = 71;
+export const BUILD_VERSION = 72;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
+// Build 72: Update BuyTokensModal to show token amounts with Popular label

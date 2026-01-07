@@ -24,7 +24,7 @@ interface ProviderCost {
 }
 
 const TOKEN_PACKAGES: TokenPackage[] = [
-  { id: 'starter', price: 10, tokens: 10000 },
+  { id: 'starter', price: 10, tokens: 10000, label: 'Popular' },
   { id: 'standard', price: 20, tokens: 20000 },
   { id: 'value', price: 50, tokens: 50000, label: 'Best Value' },
 ];
@@ -201,7 +201,7 @@ export default function BuyTokensModal({
         {/* Footer */}
         <div className="mt-4 pt-4 border-t border-border">
           <p className="text-xs text-secondary text-center">
-            Secure checkout powered by Stripe. Tokens never expire.
+            Secure checkout powered by Stripe. Credits never expire.
           </p>
         </div>
       </div>
