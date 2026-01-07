@@ -28,6 +28,7 @@ import ThemeSelector from './ThemeSelector';
 import VibePackSelector from './VibePackSelector';
 import IconSoundboard from './icons/IconSoundboard';
 import IconBeaker from './icons/IconBeaker';
+import TokenBalance from './TokenBalance';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -691,6 +692,15 @@ export default function Sidebar({
                   ))
                 )}
               </div>
+            </div>
+
+            {/* Token Balance */}
+            <div className="px-3 pb-2">
+              <TokenBalance 
+                userId={userEmail || 'default_user'} 
+                userEmail={userEmail}
+                compact={true}
+              />
             </div>
 
             {/* Footer - User Profile */}
