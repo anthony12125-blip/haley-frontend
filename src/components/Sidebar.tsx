@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Send,
   MoreVertical,
+  Lightbulb,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -466,13 +467,21 @@ export default function Sidebar({
               {/* R&D Content - Expanded by default */}
               {rndExpanded && (
                 <div className="mt-3 space-y-1">
-                  {/* R&D submenu item */}
+                  {/* R&D Soundboard submenu item */}
                   <button
                     onClick={() => router.push('/ai-rd/soundboard')}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
                     <IconSoundboard className="flex-shrink-0" />
-                    <span>R&D</span>
+                    <span>R&D Soundboard</span>
+                  </button>
+                  {/* Idea Harvester submenu item */}
+                  <button
+                    onClick={() => router.push('/ai-labs/ideaharvester')}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                  >
+                    <Lightbulb size={18} className="flex-shrink-0" />
+                    <span>Idea Harvester</span>
                   </button>
                 </div>
               )}

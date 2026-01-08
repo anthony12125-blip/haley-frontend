@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 78;
+export const BUILD_VERSION = 79;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -9,3 +9,4 @@ export const BUILD_VERSION = 78;
 // Build 76: Revert R&D to working state - use sendMessage via haleyApi
 // Build 77: Fix R&D Soundboard flow - add Delta generation after questions phase
 // Build 78: R&D Soundboard Development Phase - Delta routing (llm/human), blocking dependencies, building UI
+// Build 79: Add Idea Harvester to AI Labs - one-session replication pipeline for AI product posts
