@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 77;
+export const BUILD_VERSION = 78;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -8,3 +8,4 @@ export const BUILD_VERSION = 77;
 // Build 75: R&D Soundboard uses Baby Haley only - no external LLM calls
 // Build 76: Revert R&D to working state - use sendMessage via haleyApi
 // Build 77: Fix R&D Soundboard flow - add Delta generation after questions phase
+// Build 78: R&D Soundboard Development Phase - Delta routing (llm/human), blocking dependencies, building UI
