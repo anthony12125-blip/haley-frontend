@@ -74,8 +74,10 @@ export default function AiRDSoundboardPage() {
       console.log('[Soundboard] Questionize result:', result);
       
       if (result.questions.length === 0) {
-        setError('No user questions needed - all claims can be validated without user input.');
-        setPhase('done');
+        // No questions needed - skip directly to Delta generation
+        setQuestions([]);
+        setLoading(false);
+        handleGenerateDeltas();
         return;
       }
       
