@@ -3,7 +3,7 @@
  * Adapter to convert Haley OS backend API to LLMCall signature for rd_questionizer
  */
 
-import { LLMCall } from './rd_questionizer';
+import type { LLMCall } from './rd_questionizer';
 import { sendMessage } from '../haleyApi';
 
 /**
@@ -13,7 +13,7 @@ import { sendMessage } from '../haleyApi';
  * @returns LLMCall function that can be used with rd_questionizer
  */
 export function createLLMAdapter(provider: string = 'claude'): LLMCall {
-  return async (system: string, user: string, temperature?: number): Promise<string> => {
+  return async ({ system, user, temperature }): Promise<string> => {
     const combinedMessage = `[System Instructions]\n${system}\n\n[User Query]\n${user}`;
 
     try {
