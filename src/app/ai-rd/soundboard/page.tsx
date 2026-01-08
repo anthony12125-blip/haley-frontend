@@ -9,7 +9,16 @@ import { generateClaims } from '@/lib/ai_rd/claimsGenerator';
 import { questionizeClaims, type Claim, type Question } from '@/lib/ai_rd/rd_questionizer';
 import { createLLMAdapter } from '@/lib/ai_rd/llmAdapter';
 
-type Phase = 'input' | 'claims' | 'questions' | 'done';
+type Phase = 'input' | 'claims' | 'questions' | 'deltas' | 'results';
+
+interface Delta {
+  id: string;
+  title: string;
+  description: string;
+  claimIds: string[];
+  priority: 'high' | 'medium' | 'low';
+  effort: 'small' | 'medium' | 'large';
+}
 
 export default function AiRDSoundboardPage() {
   const router = useRouter();
@@ -24,7 +33,10 @@ export default function AiRDSoundboardPage() {
   // Phase C: Questions state
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  
+
+  // Phase D: Deltas state
+  const [deltas, setDeltas] = useState<Delta[]>([]);
+
   // UI state
   const [phase, setPhase] = useState<Phase>('input');
   const [loading, setLoading] = useState(false);
@@ -84,21 +96,139 @@ export default function AiRDSoundboardPage() {
     }));
   };
 
-  const handleContinue = () => {
-    // Store answers in session (for now just log them)
-    console.log('[Soundboard] Answers captured:', answers);
-    
-    // Store in sessionStorage for persistence
-    sessionStorage.setItem('rd_soundboard_answers', JSON.stringify({
-      userIdea,
-      successCriteria,
-      claims,
-      questions,
-      answers,
-      timestamp: new Date().toISOString()
+  const handleGenerateDeltas = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const llmCall = createLLMAdapter('claude');
+
+      // Build context from claims, questions, and answers
+      const context = buildDeltaContext(userIdea, successCriteria, claims, questions, answers);
+
+      const deltaPrompt = `Based on this R&D analysis, generate implementation Deltas (actionable work items).
+
+${context}
+
+Output format (one Delta per line):
+DELTA|id=D1|title=...|description=...|claims=C1,C2|priority=high|effort=medium
+
+Rules:
+- Each Delta should address one or more claims
+- Priority: high (must-have), medium (should-have), low (nice-to-have)
+- Effort: small (< 1 day), medium (1-3 days), large (> 3 days)
+- Generate 3-8 Deltas covering the key implementation steps
+- Order by priority (high first)
+
+Output ONLY the DELTA lines, no other text.`;
+
+      const result = await llmCall({
+        system: 'You are an R&D implementation planner. Generate actionable Deltas from feasibility analysis.',
+        user: deltaPrompt,
+        temperature: 0.3
+      });
+
+      console.log('[Soundboard] Delta generation result:', result);
+
+      const generatedDeltas = parseDeltaResponse(result);
+
+      if (generatedDeltas.length === 0) {
+        // Fallback: generate basic deltas from claims
+        const fallbackDeltas = generateFallbackDeltas(claims);
+        setDeltas(fallbackDeltas);
+      } else {
+        setDeltas(generatedDeltas);
+      }
+
+      // Store in sessionStorage for persistence
+      sessionStorage.setItem('rd_soundboard_session', JSON.stringify({
+        userIdea,
+        successCriteria,
+        claims,
+        questions,
+        answers,
+        deltas: generatedDeltas.length > 0 ? generatedDeltas : generateFallbackDeltas(claims),
+        timestamp: new Date().toISOString()
+      }));
+
+      setPhase('deltas');
+    } catch (err) {
+      console.error('[Soundboard] Error generating deltas:', err);
+      // On error, use fallback deltas
+      const fallbackDeltas = generateFallbackDeltas(claims);
+      setDeltas(fallbackDeltas);
+      setPhase('deltas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper to build context for Delta generation
+  const buildDeltaContext = (
+    idea: string,
+    criteria: string,
+    claimsList: Claim[],
+    questionsList: Question[],
+    answerMap: Record<string, string>
+  ): string => {
+    let context = `PROJECT: ${idea}\n`;
+    if (criteria) context += `SUCCESS CRITERIA: ${criteria}\n`;
+    context += '\nCLAIMS:\n';
+    claimsList.forEach(c => {
+      context += `- ${c.id}: ${c.statement} [${c.priority}]\n`;
+    });
+    context += '\nUSER ANSWERS:\n';
+    questionsList.forEach(q => {
+      const answer = answerMap[q.id] || '(not answered)';
+      context += `- ${q.id} (${q.claimId}): ${q.question}\n  Answer: ${answer}\n`;
+    });
+    return context;
+  };
+
+  // Parse LLM response into Delta objects
+  const parseDeltaResponse = (response: string): Delta[] => {
+    const deltas: Delta[] = [];
+    const lines = (response || '').split('\n').filter(l => l.trim().startsWith('DELTA|'));
+
+    lines.forEach(line => {
+      const fields: Record<string, string> = {};
+      line.split('|').slice(1).forEach(part => {
+        const idx = part.indexOf('=');
+        if (idx > 0) {
+          fields[part.slice(0, idx).trim()] = part.slice(idx + 1).trim();
+        }
+      });
+
+      if (fields.id && fields.title) {
+        deltas.push({
+          id: fields.id,
+          title: fields.title,
+          description: fields.description || '',
+          claimIds: (fields.claims || '').split(',').map(s => s.trim()).filter(Boolean),
+          priority: (fields.priority as Delta['priority']) || 'medium',
+          effort: (fields.effort as Delta['effort']) || 'medium'
+        });
+      }
+    });
+
+    return deltas;
+  };
+
+  // Fallback Delta generation from claims
+  const generateFallbackDeltas = (claimsList: Claim[]): Delta[] => {
+    return claimsList.slice(0, 5).map((claim, idx) => ({
+      id: `D${idx + 1}`,
+      title: `Address ${claim.type} requirements`,
+      description: claim.statement,
+      claimIds: [claim.id],
+      priority: claim.priority === 'must' ? 'high' : claim.priority === 'should' ? 'medium' : 'low',
+      effort: 'medium' as const
     }));
-    
-    setPhase('done');
+  };
+
+  const handleContinue = () => {
+    // Trigger Delta generation
+    handleGenerateDeltas();
   };
 
   const handleReset = () => {
@@ -107,6 +237,7 @@ export default function AiRDSoundboardPage() {
     setClaims([]);
     setQuestions([]);
     setAnswers({});
+    setDeltas([]);
     setError(null);
     setPhase('input');
   };
@@ -381,72 +512,155 @@ export default function AiRDSoundboardPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setPhase('claims')}
-                    className="flex-1 px-6 py-3 rounded-lg bg-panel-light hover:bg-panel-medium transition-colors text-sm font-medium"
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 rounded-lg bg-panel-light hover:bg-panel-medium disabled:opacity-50 transition-colors text-sm font-medium"
                   >
                     Back
                   </button>
                   <button
                     onClick={handleContinue}
-                    className="flex-1 px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors text-sm font-medium text-primary"
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 disabled:opacity-50 transition-colors text-sm font-medium text-primary flex items-center justify-center gap-2"
                   >
-                    Continue
+                    {loading && <Loader2 size={16} className="animate-spin" />}
+                    {loading ? 'Generating Deltas...' : 'Generate Deltas'}
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Phase D: Done */}
-            {phase === 'done' && (
+            {/* Phase D: Deltas */}
+            {phase === 'deltas' && (
+              <div className="glass rounded-xl border border-border p-6">
+                <div className="mb-4">
+                  <h2 className="text-xl font-semibold mb-2">Implementation Deltas</h2>
+                  <p className="text-sm text-secondary">
+                    {deltas.length} actionable work items generated
+                  </p>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  {deltas.map((delta) => (
+                    <div key={delta.id} className="glass-light rounded-lg p-4 border border-border/50">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xs font-mono text-primary px-2 py-1 rounded bg-primary/10 flex-shrink-0">
+                          {delta.id}
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium mb-1">{delta.title}</p>
+                          {delta.description && (
+                            <p className="text-xs text-secondary mb-2">{delta.description}</p>
+                          )}
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            <span className={`px-2 py-0.5 rounded ${
+                              delta.priority === 'high' ? 'bg-red-500/20 text-red-400' :
+                              delta.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                              'bg-blue-500/20 text-blue-400'
+                            }`}>
+                              {delta.priority}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded ${
+                              delta.effort === 'large' ? 'bg-purple-500/20 text-purple-400' :
+                              delta.effort === 'medium' ? 'bg-orange-500/20 text-orange-400' :
+                              'bg-green-500/20 text-green-400'
+                            }`}>
+                              {delta.effort} effort
+                            </span>
+                            {delta.claimIds.length > 0 && (
+                              <span className="px-2 py-0.5 rounded bg-panel-dark text-secondary">
+                                Claims: {delta.claimIds.join(', ')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPhase('questions')}
+                    className="flex-1 px-6 py-3 rounded-lg bg-panel-light hover:bg-panel-medium transition-colors text-sm font-medium"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setPhase('results')}
+                    className="flex-1 px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors text-sm font-medium text-primary"
+                  >
+                    View Results
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Phase E: Results */}
+            {phase === 'results' && (
               <div className="glass rounded-xl border border-border p-6 text-center">
                 <div className="mb-6">
                   <div className="flex justify-center mb-4">
                     <div className="p-4 rounded-full bg-primary/10 border border-primary/20">
-                      <svg 
-                        className="w-12 h-12 text-primary" 
-                        fill="none" 
-                        stroke="currentColor" 
+                      <svg
+                        className="w-12 h-12 text-primary"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M5 13l4 4L19 7" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
                         />
                       </svg>
                     </div>
                   </div>
                   <h2 className="text-2xl font-bold text-gradient mb-2">
-                    Questions Captured
+                    R&D Analysis Complete
                   </h2>
                   <p className="text-secondary">
-                    Your answers have been stored in the session
+                    Your project has been analyzed and Deltas generated
                   </p>
                 </div>
-                
+
                 <div className="glass-light rounded-lg p-4 mb-6 text-left text-sm">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-secondary">Claims:</span>
+                      <span className="text-secondary">Claims analyzed:</span>
                       <span className="font-medium">{claims.length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-secondary">Questions:</span>
-                      <span className="font-medium">{questions.length}</span>
+                      <span className="text-secondary">Questions answered:</span>
+                      <span className="font-medium">{Object.keys(answers).length}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-secondary">Answers:</span>
-                      <span className="font-medium">{Object.keys(answers).length}</span>
+                      <span className="text-secondary">Deltas generated:</span>
+                      <span className="font-medium">{deltas.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-secondary">High priority:</span>
+                      <span className="font-medium text-red-400">
+                        {deltas.filter(d => d.priority === 'high').length}
+                      </span>
                     </div>
                   </div>
                 </div>
-                
-                <button
-                  onClick={handleReset}
-                  className="w-full px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors text-sm font-medium text-primary"
-                >
-                  Start New Session
-                </button>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setPhase('deltas')}
+                    className="flex-1 px-6 py-3 rounded-lg bg-panel-light hover:bg-panel-medium transition-colors text-sm font-medium"
+                  >
+                    View Deltas
+                  </button>
+                  <button
+                    onClick={handleReset}
+                    className="flex-1 px-6 py-3 rounded-lg bg-primary/20 hover:bg-primary/30 transition-colors text-sm font-medium text-primary"
+                  >
+                    Start New Session
+                  </button>
+                </div>
               </div>
             )}
           </div>
