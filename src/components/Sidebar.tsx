@@ -20,6 +20,7 @@ import {
   Send,
   MoreVertical,
   Lightbulb,
+  Gamepad2,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -482,6 +483,14 @@ export default function Sidebar({
                   >
                     <Lightbulb size={18} className="flex-shrink-0" />
                     <span>Idea Harvester</span>
+                  </button>
+                  {/* Roblox Expert submenu item */}
+                  <button
+                    onClick={() => router.push('/ai-labs/robloxexpert')}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                  >
+                    <Gamepad2 size={18} className="flex-shrink-0" />
+                    <span>Roblox Expert</span>
                   </button>
                 </div>
               )}
