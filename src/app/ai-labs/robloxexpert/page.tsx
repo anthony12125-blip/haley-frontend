@@ -320,7 +320,7 @@ export default function RobloxExpertPage() {
     setResult(null);
 
     try {
-      const response = await fetch('/api/module/robloxexpert/execute', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://logic-engine-core2-951854392741.us-central1.run.app'}/module/robloxexpert/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
