@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, AlertCircle, Gamepad2, Code, Eye, Download, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Gamepad2, Code, Eye, Download, Copy, Check, RotateCcw } from 'lucide-react';
 import { HaleyCoreGlyph } from '@/components/HaleyCoreGlyph';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 interface PreviewElement {
   type: string;
@@ -12,6 +14,7 @@ interface PreviewElement {
   size: { x: number; y: number; z: number };
   color: string;
   shape?: string;
+  rotation?: { x: number; y: number; z: number };
 }
 
 interface PreviewConfig {
@@ -28,7 +31,12 @@ interface GenerateResult {
 
 export default function RobloxExpertPage() {
   const router = useRouter();
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const animationIdRef = useRef<number | null>(null);
 
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,66 +45,269 @@ export default function RobloxExpertPage() {
   const [activeTab, setActiveTab] = useState<'preview' | 'code'>('preview');
   const [copied, setCopied] = useState(false);
 
-  // Simple 2D preview renderer
-  useEffect(() => {
-    if (!result?.preview_config || !canvasRef.current) return;
+  // Initialize Three.js scene
+  const initThreeJS = () => {
+    if (!containerRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Clear canvas
-    ctx.fillStyle = '#1a1e22';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw grid
-    ctx.strokeStyle = '#2a2e32';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += 20) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += 20) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
-    }
-
-    // Draw elements (simple top-down view)
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const scale = 4;
-
-    result.preview_config.elements.forEach((element) => {
-      const x = centerX + element.position.x * scale;
-      const y = centerY - element.position.z * scale; // Use z for top-down
-
-      ctx.fillStyle = element.color || '#4a9eff';
-      ctx.globalAlpha = 0.8;
-
-      if (element.shape === 'Ball' || element.shape === 'Cylinder') {
-        ctx.beginPath();
-        ctx.arc(x, y, (element.size.x * scale) / 2, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const width = element.size.x * scale;
-        const height = element.size.z * scale;
-        ctx.fillRect(x - width / 2, y - height / 2, width, height);
+    // Clean up existing
+    if (rendererRef.current) {
+      rendererRef.current.dispose();
+      if (containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
       }
+    }
+    if (animationIdRef.current) {
+      cancelAnimationFrame(animationIdRef.current);
+    }
 
-      // Draw label
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#fff';
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(element.name, x, y + (element.size.z * scale) / 2 + 12);
+    const width = containerRef.current.clientWidth;
+    const height = 450;
+
+    // Scene
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1e22);
+    scene.fog = new THREE.Fog(0x1a1e22, 50, 150);
+    sceneRef.current = scene;
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    camera.position.set(30, 25, 30);
+    camera.lookAt(0, 0, 0);
+    cameraRef.current = camera;
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    // Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 10;
+    controls.maxDistance = 100;
+    controls.maxPolarAngle = Math.PI / 2.1;
+    controlsRef.current = controls;
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(20, 30, 20);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 100;
+    directionalLight.shadow.camera.left = -50;
+    directionalLight.shadow.camera.right = 50;
+    directionalLight.shadow.camera.top = 50;
+    directionalLight.shadow.camera.bottom = -50;
+    scene.add(directionalLight);
+
+    const hemisphereLight = new THREE.HemisphereLight(0x87ceeb, 0x3d5c3d, 0.3);
+    scene.add(hemisphereLight);
+
+    // Grid helper
+    const gridHelper = new THREE.GridHelper(60, 30, 0x3a3e42, 0x2a2e32);
+    gridHelper.position.y = -0.01;
+    scene.add(gridHelper);
+
+    // Animation loop
+    const animate = () => {
+      animationIdRef.current = requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    };
+    animate();
+  };
+
+  // Create 3D mesh from element
+  const createElementMesh = (element: PreviewElement): THREE.Object3D => {
+    const color = new THREE.Color(element.color || '#4a9eff');
+    const name = element.name.toLowerCase();
+
+    // Material with some variation based on element type
+    let material: THREE.Material;
+    if (name.includes('neon') || name.includes('glow') || name.includes('flame')) {
+      material = new THREE.MeshBasicMaterial({ color });
+    } else if (name.includes('metal') || name.includes('sword') || name.includes('armor')) {
+      material = new THREE.MeshStandardMaterial({ color, metalness: 0.8, roughness: 0.2 });
+    } else if (name.includes('glass') || name.includes('water')) {
+      material = new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.6 });
+    } else {
+      material = new THREE.MeshStandardMaterial({ color, roughness: 0.7 });
+    }
+
+    let geometry: THREE.BufferGeometry;
+    const group = new THREE.Group();
+
+    // Determine geometry based on shape and name
+    if (element.shape === 'Ball' || name.includes('leaves') || name.includes('head') || name.includes('ball')) {
+      geometry = new THREE.SphereGeometry(element.size.x / 2, 16, 16);
+    } else if (element.shape === 'Cylinder' || name.includes('trunk') || name.includes('cylinder') || name.includes('coin')) {
+      geometry = new THREE.CylinderGeometry(
+        element.size.x / 2,
+        element.size.x / 2,
+        element.size.y,
+        16
+      );
+    } else if (name.includes('cone') || name.includes('tower')) {
+      geometry = new THREE.ConeGeometry(element.size.x / 2, element.size.y, 16);
+    } else {
+      // Default box
+      geometry = new THREE.BoxGeometry(element.size.x, element.size.y, element.size.z);
+    }
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(element.position.x, element.position.y, element.position.z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.name = element.name;
+
+    if (element.rotation) {
+      mesh.rotation.set(
+        THREE.MathUtils.degToRad(element.rotation.x || 0),
+        THREE.MathUtils.degToRad(element.rotation.y || 0),
+        THREE.MathUtils.degToRad(element.rotation.z || 0)
+      );
+    }
+
+    group.add(mesh);
+
+    // Add special decorations for certain element types
+    if (name.includes('tree') && !name.includes('trunk') && !name.includes('leaves')) {
+      // Create full tree: trunk + leaves
+      const trunkGeo = new THREE.CylinderGeometry(0.5, 0.7, 6, 8);
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.9 });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.set(element.position.x, element.position.y + 3, element.position.z);
+      trunk.castShadow = true;
+      group.add(trunk);
+
+      const leavesGeo = new THREE.SphereGeometry(3, 12, 12);
+      const leavesMat = new THREE.MeshStandardMaterial({ color: 0x228B22, roughness: 0.8 });
+      const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+      leaves.position.set(element.position.x, element.position.y + 7, element.position.z);
+      leaves.castShadow = true;
+      group.add(leaves);
+
+      group.remove(mesh); // Remove the default mesh
+    }
+
+    if (name.includes('dragon')) {
+      // Add wings as thin boxes
+      const wingGeo = new THREE.BoxGeometry(8, 0.3, 4);
+      const wingMat = new THREE.MeshStandardMaterial({ color, transparent: true, opacity: 0.7 });
+
+      const leftWing = new THREE.Mesh(wingGeo, wingMat);
+      leftWing.position.set(element.position.x + 5, element.position.y + 2, element.position.z);
+      leftWing.rotation.z = THREE.MathUtils.degToRad(20);
+      group.add(leftWing);
+
+      const rightWing = new THREE.Mesh(wingGeo, wingMat);
+      rightWing.position.set(element.position.x - 5, element.position.y + 2, element.position.z);
+      rightWing.rotation.z = THREE.MathUtils.degToRad(-20);
+      group.add(rightWing);
+    }
+
+    return group;
+  };
+
+  // Build scene from preview config
+  const buildScene = (config: PreviewConfig) => {
+    if (!sceneRef.current) return;
+
+    // Remove all existing meshes except lights and helpers
+    const toRemove: THREE.Object3D[] = [];
+    sceneRef.current.traverse((child) => {
+      if (child instanceof THREE.Mesh || child instanceof THREE.Group) {
+        if (!(child instanceof THREE.GridHelper)) {
+          toRemove.push(child);
+        }
+      }
+    });
+    toRemove.forEach((obj) => {
+      if (obj.parent === sceneRef.current) {
+        sceneRef.current!.remove(obj);
+      }
     });
 
-    ctx.globalAlpha = 1;
-  }, [result]);
+    // Rebuild grid
+    const existingGrid = sceneRef.current.children.find(c => c instanceof THREE.GridHelper);
+    if (!existingGrid) {
+      const gridHelper = new THREE.GridHelper(60, 30, 0x3a3e42, 0x2a2e32);
+      gridHelper.position.y = -0.01;
+      sceneRef.current.add(gridHelper);
+    }
+
+    // Add elements from config
+    config.elements.forEach((element) => {
+      const mesh = createElementMesh(element);
+      sceneRef.current!.add(mesh);
+    });
+
+    // Adjust camera to fit scene
+    if (cameraRef.current && controlsRef.current) {
+      cameraRef.current.position.set(30, 25, 30);
+      controlsRef.current.target.set(0, 5, 0);
+      controlsRef.current.update();
+    }
+  };
+
+  // Initialize/update 3D preview when result changes
+  useEffect(() => {
+    if (result?.preview_config && activeTab === 'preview') {
+      // Small delay to ensure container is mounted
+      const timer = setTimeout(() => {
+        initThreeJS();
+        buildScene(result.preview_config);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [result, activeTab]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+      }
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+      }
+    };
+  }, []);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
+
+      const width = containerRef.current.clientWidth;
+      const height = 450;
+
+      cameraRef.current.aspect = width / height;
+      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(width, height);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const resetCamera = () => {
+    if (cameraRef.current && controlsRef.current) {
+      cameraRef.current.position.set(30, 25, 30);
+      controlsRef.current.target.set(0, 5, 0);
+      controlsRef.current.update();
+    }
+  };
 
   const handleGenerate = async () => {
     if (!description.trim()) {
@@ -207,19 +418,33 @@ leaves.Parent = tree
 
 tree.Parent = Workspace
 
+-- Rock
+local rock = Instance.new("Part")
+rock.Name = "Rock"
+rock:SetAttribute("HaleyGenerated", true)
+rock.Size = Vector3.new(3, 2, 3)
+rock.Position = Vector3.new(-8, 1, -6)
+rock.Anchored = true
+rock.BrickColor = BrickColor.new("Dark stone grey")
+rock.Material = Enum.Material.Slate
+rock.Parent = Workspace
+
 print("Scene generated successfully!")`,
         preview_config: {
           elements: [
             { type: 'Part', name: 'Floor', position: { x: 0, y: -0.5, z: 0 }, size: { x: 50, y: 1, z: 50 }, color: '#4ade80' },
             { type: 'Part', name: 'Body', position: { x: 0, y: 3.5, z: 0 }, size: { x: 2, y: 3, z: 1 }, color: '#3b82f6' },
-            { type: 'Part', name: 'Head', position: { x: 0, y: 5.75, z: 0 }, size: { x: 1.5, y: 1.5, z: 1.5 }, color: '#fdba74' },
-            { type: 'Part', name: 'Trunk', position: { x: 10, y: 4, z: 5 }, size: { x: 2, y: 8, z: 2 }, color: '#92400e' },
+            { type: 'Part', name: 'Head', position: { x: 0, y: 5.75, z: 0 }, size: { x: 1.5, y: 1.5, z: 1.5 }, color: '#fdba74', shape: 'Ball' },
+            { type: 'Part', name: 'Trunk', position: { x: 10, y: 4, z: 5 }, size: { x: 2, y: 8, z: 2 }, color: '#92400e', shape: 'Cylinder' },
             { type: 'Part', name: 'Leaves', position: { x: 10, y: 10, z: 5 }, size: { x: 8, y: 8, z: 8 }, color: '#166534', shape: 'Ball' },
+            { type: 'Part', name: 'Rock', position: { x: -8, y: 1, z: -6 }, size: { x: 3, y: 2, z: 3 }, color: '#4b5563' },
+            { type: 'Part', name: 'Trunk', position: { x: -12, y: 3, z: 8 }, size: { x: 1.5, y: 6, z: 1.5 }, color: '#78350f', shape: 'Cylinder' },
+            { type: 'Part', name: 'Leaves', position: { x: -12, y: 8, z: 8 }, size: { x: 6, y: 6, z: 6 }, color: '#15803d', shape: 'Ball' },
           ],
           lighting: 'default',
           environment: 'forest',
         },
-        elements_created: 5,
+        elements_created: 8,
       };
 
       setResult(mockResult);
@@ -425,7 +650,7 @@ print("Scene generated successfully!")`,
                     }`}
                   >
                     <Eye size={16} />
-                    Preview
+                    3D Preview
                   </button>
                   <button
                     onClick={() => setActiveTab('code')}
@@ -440,20 +665,26 @@ print("Scene generated successfully!")`,
                   </button>
                 </div>
 
-                {/* Preview Panel */}
+                {/* 3D Preview Panel */}
                 {activeTab === 'preview' && (
                   <div className="glass rounded-xl border border-border p-6">
-                    <h3 className="text-lg font-semibold mb-4">Scene Preview (Top-Down View)</h3>
-                    <div className="flex justify-center">
-                      <canvas
-                        ref={canvasRef}
-                        width={600}
-                        height={400}
-                        className="rounded-lg border border-border"
-                      />
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">3D Scene Preview</h3>
+                      <button
+                        onClick={resetCamera}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-panel-light hover:bg-panel-medium transition-colors"
+                      >
+                        <RotateCcw size={14} />
+                        Reset View
+                      </button>
                     </div>
+                    <div
+                      ref={containerRef}
+                      className="w-full rounded-lg border border-border overflow-hidden"
+                      style={{ height: '450px', background: '#1a1e22' }}
+                    />
                     <p className="text-xs text-secondary text-center mt-4">
-                      This is a simplified preview. The actual scene will look much better in Roblox Studio!
+                      Drag to rotate, scroll to zoom. The actual scene in Roblox Studio will have more detail!
                     </p>
                   </div>
                 )}
