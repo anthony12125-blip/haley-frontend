@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Maximize2, Minimize2, Code, FileText, Table } from 'lucide-react';
+import { X, Maximize2, Minimize2, Code, FileText, Table, Download } from 'lucide-react';
 
 interface Artifact {
   id: string;
@@ -58,6 +58,18 @@ export default function ArtifactsPanel({ artifacts, onClose }: ArtifactsPanelPro
         {badge.initial}
       </span>
     );
+  };
+
+  const handleDownload = (artifact: Artifact) => {
+    const ext = artifact.language || 'txt';
+    const filename = `${artifact.title || 'artifact'}.${ext}`;
+    const blob = new Blob([artifact.content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -124,9 +136,18 @@ export default function ArtifactsPanel({ artifacts, onClose }: ArtifactsPanelPro
         <div className="flex-1 overflow-auto p-4">
           {currentArtifact && (
             <div>
-              {currentArtifact.title && (
-                <h3 className="text-lg font-semibold mb-2">{currentArtifact.title}</h3>
-              )}
+              <div className="flex items-center justify-between mb-2">
+                {currentArtifact.title && (
+                  <h3 className="text-lg font-semibold">{currentArtifact.title}</h3>
+                )}
+                <button
+                  onClick={() => handleDownload(currentArtifact)}
+                  className="p-1 hover:bg-gray-700 rounded"
+                  title="Download"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
               <pre className="bg-gray-800 p-4 rounded overflow-x-auto text-sm">
                 <code className={`language-${currentArtifact.language || 'text'}`}>
                   {currentArtifact.content}
