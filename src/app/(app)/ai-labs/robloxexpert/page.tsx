@@ -336,7 +336,26 @@ export default function RobloxExpertPage() {
       }
 
       const data = await response.json();
-      setResult(data.result);
+      const moduleResult = data.result;
+
+      // Transform API response to match frontend interface
+      // API returns preview_config.objects, frontend expects preview_config.elements
+      if (moduleResult?.preview_config?.objects) {
+        moduleResult.preview_config.elements = moduleResult.preview_config.objects.map((obj: any) => ({
+          type: obj.type || 'part',
+          name: obj.subtype || obj.id || 'element',
+          position: obj.position || { x: 0, y: 0, z: 0 },
+          size: obj.geometry ? {
+            x: obj.geometry.width || 1,
+            y: obj.geometry.height || 1,
+            z: obj.geometry.depth || 1
+          } : { x: 1, y: 1, z: 1 },
+          color: obj.material?.color || '#4a9eff',
+          shape: obj.geometry?.type || 'box',
+        }));
+      }
+
+      setResult(moduleResult);
       setActiveTab('preview');
     } catch (err) {
       console.error('[RobloxExpert] Error:', err);
