@@ -52,6 +52,7 @@ interface SidebarProps {
   onRecoverChat?: () => void;
   onMigrateChat?: () => void;
   onMultiLLMChange?: (enabled: boolean, selectedModels: string[]) => void;
+  onSelectModule?: (module: string | null) => void;
 }
 
 // AI Models
@@ -97,6 +98,7 @@ export default function Sidebar({
   onRecoverChat,
   onMigrateChat,
   onMultiLLMChange,
+  onSelectModule,
 }: SidebarProps) {
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
@@ -473,10 +475,7 @@ export default function Sidebar({
                 <div className="mt-3 space-y-1">
                   {/* R&D Soundboard submenu item */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push('/ai-rd/soundboard');
-                    }}
+                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('soundboard'); } else { router.push('/ai-rd/soundboard'); } }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
                     <IconSoundboard className="flex-shrink-0" />
@@ -484,10 +483,7 @@ export default function Sidebar({
                   </button>
                   {/* Idea Harvester submenu item */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push('/ai-labs/ideaharvester');
-                    }}
+                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('ideaharvester'); } else { router.push('/ai-labs/ideaharvester'); } }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
                     <Lightbulb size={18} className="flex-shrink-0" />
@@ -495,10 +491,7 @@ export default function Sidebar({
                   </button>
                   {/* Roblox Expert submenu item */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push('/ai-labs/robloxexpert');
-                    }}
+                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('robloxexpert'); } else { router.push('/ai-labs/robloxexpert'); } }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
                     <Gamepad2 size={18} className="flex-shrink-0" />
@@ -506,10 +499,7 @@ export default function Sidebar({
                   </button>
                   {/* Engineering Agent submenu item */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push('/ai-labs/engineering');
-                    }}
+                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('engineering'); } else { router.push('/ai-labs/engineering'); } }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
                     <Wrench size={18} className="flex-shrink-0" />
@@ -517,11 +507,7 @@ export default function Sidebar({
                   </button>
                   {/* API Keys Manager submenu item */}
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log('[Sidebar] API Keys clicked, navigating to /ai-labs/api-keys');
-                      router.push('/ai-labs/api-keys');
-                    }}
+                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('api-keys'); } else { router.push('/ai-labs/api-keys'); } }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
                     <Key size={18} className="flex-shrink-0" />
