@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import Sidebar from '@/components/Sidebar';
@@ -10,8 +10,13 @@ import LoginPage from '@/components/LoginPage';
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const device = useDeviceDetection();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Main chat page renders its own Sidebar with full handlers
+  // Layout only renders Sidebar for other pages (AI Labs, etc.)
+  const isMainChatPage = pathname === '/';
 
   // Stable star positions - computed once on mount
   const starPositions = useMemo(() =>
@@ -76,30 +81,36 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         ))}
       </div>
 
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={toggleSidebar}
-        onToggle={toggleSidebar}
-        onSignOut={signOut}
-        conversations={[]}
-        currentConversationId={undefined}
-        onNewConversation={() => router.push('/')}
-        onSelectConversation={() => router.push('/')}
-        onDeleteConversation={() => {}}
-        activeModel={null}
-        onSelectModel={() => router.push('/')}
-        userName={user.displayName || undefined}
-        userEmail={user.email || undefined}
-        userPhotoURL={user.photoURL || undefined}
-      />
+      {/* Sidebar - Only render in layout for non-main-chat pages */}
+      {/* Main chat page (/) renders its own Sidebar with full conversation handlers */}
+      {!isMainChatPage && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={toggleSidebar}
+          onToggle={toggleSidebar}
+          onSignOut={signOut}
+          conversations={[]}
+          currentConversationId={undefined}
+          onNewConversation={() => router.push('/')}
+          onSelectConversation={() => router.push('/')}
+          onDeleteConversation={() => {}}
+          activeModel={null}
+          onSelectModel={() => router.push('/')}
+          userName={user.displayName || undefined}
+          userEmail={user.email || undefined}
+          userPhotoURL={user.photoURL || undefined}
+        />
+      )}
 
       {/* Main Content Area */}
-      <div 
+      {/* On main chat page, page.tsx handles its own margin for its Sidebar */}
+      <div
         className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
-          device.type === 'desktop'
-            ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
-            : 'ml-0'
+          isMainChatPage
+            ? ''  // Main chat page handles its own margin
+            : device.type === 'desktop'
+              ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
+              : 'ml-0'
         }`}
       >
         {children}
