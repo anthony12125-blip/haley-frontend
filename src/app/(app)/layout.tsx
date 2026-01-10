@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import Sidebar from '@/components/Sidebar';
