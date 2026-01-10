@@ -8,6 +8,7 @@ import LoginPage from '@/components/LoginPage';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading, signOut } = useAuth();
+  const router = useRouter();
   const device = useDeviceDetection();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -73,11 +74,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         onSignOut={signOut}
         conversations={[]}
         currentConversationId={undefined}
-        onNewConversation={() => {}}
-        onSelectConversation={() => {}}
+        onNewConversation={() => router.push('/')}
+        onSelectConversation={() => router.push('/')}
         onDeleteConversation={() => {}}
         activeModel={null}
-        onSelectModel={() => {}}
+        onSelectModel={() => router.push('/')}
         userName={user.displayName || undefined}
         userEmail={user.email || undefined}
         userPhotoURL={user.photoURL || undefined}

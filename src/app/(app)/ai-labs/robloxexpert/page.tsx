@@ -246,7 +246,7 @@ export default function RobloxExpertPage() {
     }
 
     // Add elements from config
-    config.elements.forEach((element) => {
+    config?.elements?.forEach((element) => {
       const mesh = createElementMesh(element);
       sceneRef.current!.add(mesh);
     });
