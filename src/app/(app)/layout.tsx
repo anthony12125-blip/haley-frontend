@@ -89,14 +89,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           router.push('/');
         }}
         onSelectConversation={() => {
-          console.log('[Layout] onSelectConversation called - navigating to /');
-          router.push('/');
+          // Don't navigate - just selecting existing conversation
         }}
         onDeleteConversation={() => {}}
         activeModel={null}
         onSelectModel={() => {
-          console.log('[Layout] onSelectModel called - navigating to /');
-          router.push('/');
+          // Don't navigate - model selection shouldn't change routes
         }}
         userName={user.displayName || undefined}
         userEmail={user.email || undefined}
