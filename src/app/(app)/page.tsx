@@ -12,7 +12,6 @@ import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import { MigrationEngine } from '@/lib/migrationEngine';
 import { useAIClipboard } from '@/contexts/AIClipboardContext';
 import { extractArtifacts } from '@/lib/artifactsUtils';
-import Sidebar from '@/components/Sidebar';
 import ChatHeader from '@/components/ChatHeader';
 import ChatMessages from '@/components/ChatMessages';
 import ChatInputBar from '@/components/ChatInputBar';
@@ -1090,26 +1089,6 @@ export default function ChatPage() {
           />
         ))}
       </div>
-
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(!sidebarOpen)}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        onSignOut={signOut}
-        conversations={conversations}
-        currentConversationId={currentConversationId}
-        onNewConversation={handleNewConversation}
-        onSelectConversation={handleSelectConversation}
-        onDeleteConversation={handleDeleteConversation}
-        activeModel={activeModel}
-        onSelectModel={handleModelSelect}
-        userName={user.displayName || undefined}
-        userEmail={user.email || undefined}
-        userPhotoURL={user.photoURL || undefined}
-        onRecoverChat={() => console.log('Recover chat not yet implemented')}
-        onMigrateChat={handleMigrateChat}
-        onMultiLLMChange={handleMultiLLMChange}
-      />
 
       <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
         device.type === 'desktop'
