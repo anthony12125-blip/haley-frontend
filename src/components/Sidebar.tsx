@@ -21,6 +21,7 @@ import {
   MoreVertical,
   Lightbulb,
   Gamepad2,
+  Wrench,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -491,6 +492,14 @@ export default function Sidebar({
                   >
                     <Gamepad2 size={18} className="flex-shrink-0" />
                     <span>Roblox Expert</span>
+                  </button>
+                  {/* Engineering Agent submenu item */}
+                  <button
+                    onClick={() => router.push('/ai-labs/engineering')}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                  >
+                    <Wrench size={18} className="flex-shrink-0" />
+                    <span>Engineering</span>
                   </button>
                 </div>
               )}
