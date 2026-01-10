@@ -1074,148 +1074,127 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="full-screen flex overflow-hidden">
-      <div className="space-bg">
-        <div className="stars" />
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className="shooting-star"
-            style={{
-              top: `${Math.random() * 50}%`,
-              right: `${Math.random() * 50}%`,
-              animationDelay: `${Math.random() * 3}s`,
-            }}
-          />
-        ))}
-      </div>
+    <>
+      <VoiceStatusBar
+        isPlaying={voiceIsPlaying}
+        isListening={voiceIsListening}
+        hasError={voiceHasError}
+        errorMessage={voiceErrorMessage}
+      />
 
-      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
-        device.type === 'desktop'
-          ? (sidebarOpen ? 'ml-80' : 'ml-[60px]')
-          : 'ml-0'
-      }`}>
-        <VoiceStatusBar
-          isPlaying={voiceIsPlaying}
-          isListening={voiceIsListening}
-          hasError={voiceHasError}
-          errorMessage={voiceErrorMessage}
+      {audioUrl && (
+        <AudioPlaybackBar
+          audioUrl={audioUrl}
+          isPlaying={isAudioPlaying}
+          onPlayPause={handleAudioPlayPause}
+          onClose={handleAudioClose}
+          text={audioText}
         />
+      )}
 
-        {audioUrl && (
-          <AudioPlaybackBar
-            audioUrl={audioUrl}
-            isPlaying={isAudioPlaying}
-            onPlayPause={handleAudioPlayPause}
-            onClose={handleAudioClose}
-            text={audioText}
-          />
-        )}
+      <ChatHeader
+        aiMode={aiMode}
+        activeModels={activeModel ? [activeModel] : ['Haley']}
+        activeModel={activeModel}
+        onToggleResearch={() => setResearchEnabled(!researchEnabled)}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
+        systemStatus={systemStatus}
+        researchEnabled={researchEnabled}
+        logicEngineEnabled={logicEngineEnabled}
+        onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
+        onMigrateChat={handleMigrateChat}
+      />
 
-        <ChatHeader
-          aiMode={aiMode}
-          activeModels={activeModel ? [activeModel] : ['Haley']}
-          activeModel={activeModel}
-          onToggleResearch={() => setResearchEnabled(!researchEnabled)}
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
-          systemStatus={systemStatus}
-          researchEnabled={researchEnabled}
-          logicEngineEnabled={logicEngineEnabled}
-          onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
-          onMigrateChat={handleMigrateChat}
-        />
+      <ChatMessages
+        messages={messages}
+        isLoading={isAnyMessageStreaming}
+        onRetryMessage={handleRetryMessage}
+        onBranchMessage={handleBranchMessage}
+        onStreamingComplete={() => {}}
+        onRetryProvider={handleRetryProvider}
+        onAudioReady={handleAudioReady}
+        onVoiceError={(msg) => {
+          setVoiceHasError(true);
+          setVoiceErrorMessage(msg);
+          setTimeout(() => setVoiceHasError(false), 5000);
+        }}
+        onMultiLLMSummary={handleMultiLLMSummary}
+      />
 
-        <ChatMessages
-          messages={messages}
-          isLoading={isAnyMessageStreaming}
-          onRetryMessage={handleRetryMessage}
-          onBranchMessage={handleBranchMessage}
-          onStreamingComplete={() => {}}
-          onRetryProvider={handleRetryProvider}
-          onAudioReady={handleAudioReady}
-          onVoiceError={(msg) => {
-            setVoiceHasError(true);
-            setVoiceErrorMessage(msg);
-            setTimeout(() => setVoiceHasError(false), 5000);
-          }}
-          onMultiLLMSummary={handleMultiLLMSummary}
-        />
-
-        {(pendingUploads.length > 0 || artifacts.length > 0) && (
-          <UploadPreviewZone
-            files={pendingUploads}
-            artifacts={artifacts}
-            onRemoveFile={handleRemoveFile}
-            onRemoveArtifact={handleRemoveArtifact}
-            sidebarOpen={sidebarOpen && device.type === 'desktop'}
-          />
-        )}
-
-        {shouldShowSuggestedReplies && (
-          <SuggestedReplies
-            suggestions={['Yes']}
-            onSelect={handleSuggestionSelect}
-            sidebarOpen={sidebarOpen && device.type === 'desktop'}
-          />
-        )}
-
-        {shouldShowSummarizeIcon && (
-          <SummarizeButton
-            onClick={handleMultiLLMSummary}
-            sidebarOpen={sidebarOpen && device.type === 'desktop'}
-          />
-        )}
-
-        {showSummaryCard && (
-          <SummaryCard
-            isLoading={summaryLoading}
-            summaryText={summaryText}
-            onClose={() => setShowSummaryCard(false)}
-            sidebarOpen={sidebarOpen && device.type === 'desktop'}
-          />
-        )}
-
-        <ChatInputBar
-          input={input}
-          setInput={setInput}
-          isLoading={false}
-          onSend={handleSend}
-          onFileUpload={handleFileUpload}
-          onGallerySelect={handleGallerySelect}
+      {(pendingUploads.length > 0 || artifacts.length > 0) && (
+        <UploadPreviewZone
+          files={pendingUploads}
+          artifacts={artifacts}
+          onRemoveFile={handleRemoveFile}
+          onRemoveArtifact={handleRemoveArtifact}
           sidebarOpen={sidebarOpen && device.type === 'desktop'}
-          onRecordingStart={() => setVoiceIsListening(true)}
-          onRecordingStop={() => setVoiceIsListening(false)}
-          pendingUploads={pendingUploads}
         />
+      )}
 
-        <MagicWindow
-          isOpen={magicWindowOpen}
-          content={magicWindowContent}
-          researchEnabled={researchEnabled}
-          logicEngineEnabled={logicEngineEnabled}
-          onClose={() => setMagicWindowOpen(false)}
+      {shouldShowSuggestedReplies && (
+        <SuggestedReplies
+          suggestions={['Yes']}
+          onSelect={handleSuggestionSelect}
+          sidebarOpen={sidebarOpen && device.type === 'desktop'}
         />
+      )}
 
-        <ModeSelector
-          isOpen={modeSelectorOpen}
-          currentMode={aiMode}
-          activeModel={activeModel}
-          onClose={() => setModeSelectorOpen(false)}
-          onSelectMode={handleModeSelect}
-          onSelectModel={handleModelSelect}
-          availableModels={availableModels}
-          availableAgents={availableAgents}
+      {shouldShowSummarizeIcon && (
+        <SummarizeButton
+          onClick={handleMultiLLMSummary}
+          sidebarOpen={sidebarOpen && device.type === 'desktop'}
         />
+      )}
 
-        {artifactsPanelOpen && artifacts.length > 0 && (
-          <ArtifactsPanel
-            artifacts={artifacts}
-            onClose={() => setArtifactsPanelOpen(false)}
-          />
-        )}
-      </div>
-    </div>
+      {showSummaryCard && (
+        <SummaryCard
+          isLoading={summaryLoading}
+          summaryText={summaryText}
+          onClose={() => setShowSummaryCard(false)}
+          sidebarOpen={sidebarOpen && device.type === 'desktop'}
+        />
+      )}
+
+      <ChatInputBar
+        input={input}
+        setInput={setInput}
+        isLoading={false}
+        onSend={handleSend}
+        onFileUpload={handleFileUpload}
+        onGallerySelect={handleGallerySelect}
+        sidebarOpen={sidebarOpen && device.type === 'desktop'}
+        onRecordingStart={() => setVoiceIsListening(true)}
+        onRecordingStop={() => setVoiceIsListening(false)}
+        pendingUploads={pendingUploads}
+      />
+
+      <MagicWindow
+        isOpen={magicWindowOpen}
+        content={magicWindowContent}
+        researchEnabled={researchEnabled}
+        logicEngineEnabled={logicEngineEnabled}
+        onClose={() => setMagicWindowOpen(false)}
+      />
+
+      <ModeSelector
+        isOpen={modeSelectorOpen}
+        currentMode={aiMode}
+        activeModel={activeModel}
+        onClose={() => setModeSelectorOpen(false)}
+        onSelectMode={handleModeSelect}
+        onSelectModel={handleModelSelect}
+        availableModels={availableModels}
+        availableAgents={availableAgents}
+      />
+
+      {artifactsPanelOpen && artifacts.length > 0 && (
+        <ArtifactsPanel
+          artifacts={artifacts}
+          onClose={() => setArtifactsPanelOpen(false)}
+        />
+      )}
+    </>
   );
 }
 
