@@ -29,6 +29,8 @@ import SummaryCard from '@/components/SummaryCard';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
 export default function ChatPage() {
+  console.log('[ChatPage] RENDER - this should only happen on / route');
+
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const device = useDeviceDetection();

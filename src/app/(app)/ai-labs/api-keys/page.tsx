@@ -51,6 +51,8 @@ interface ApiKey {
 }
 
 export default function ApiKeysPage() {
+  console.log('[ApiKeysPage] RENDER - on /ai-labs/api-keys route');
+
   const router = useRouter();
   const { user } = useAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);

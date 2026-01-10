@@ -519,6 +519,7 @@ export default function Sidebar({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      console.log('[Sidebar] API Keys clicked, navigating to /ai-labs/api-keys');
                       router.push('/ai-labs/api-keys');
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"

@@ -84,11 +84,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         onSignOut={signOut}
         conversations={[]}
         currentConversationId={undefined}
-        onNewConversation={() => router.push('/')}
-        onSelectConversation={() => router.push('/')}
+        onNewConversation={() => {
+          console.log('[Layout] onNewConversation called - navigating to /');
+          router.push('/');
+        }}
+        onSelectConversation={() => {
+          console.log('[Layout] onSelectConversation called - navigating to /');
+          router.push('/');
+        }}
         onDeleteConversation={() => {}}
         activeModel={null}
-        onSelectModel={() => router.push('/')}
+        onSelectModel={() => {
+          console.log('[Layout] onSelectModel called - navigating to /');
+          router.push('/');
+        }}
         userName={user.displayName || undefined}
         userEmail={user.email || undefined}
         userPhotoURL={user.photoURL || undefined}
