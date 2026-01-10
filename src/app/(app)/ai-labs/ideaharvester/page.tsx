@@ -92,15 +92,18 @@ export default function IdeaHarvesterPage() {
       const pipelinePromise = simulatePipeline();
 
       // Make actual API call
-      const response = await fetch('/api/module/ideaharvester/execute', {
+      const response = await fetch('https://module-matrix-409495160162.us-central1.run.app/matrix/execute_module', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          module: 'ideaharvester',
           action: 'harvest',
-          post_text: postText,
-          skip_ingest: true,
+          params: {
+            post_text: postText,
+            skip_ingest: true,
+          },
         }),
       });
 
@@ -112,7 +115,7 @@ export default function IdeaHarvesterPage() {
       }
 
       const data = await response.json();
-      setResult(data);
+      setResult(data.result);
       setCurrentStep('complete');
     } catch (err) {
       console.error('[IdeaHarvester] Error:', err);
