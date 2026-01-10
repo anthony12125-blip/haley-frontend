@@ -22,6 +22,7 @@ import {
   Lightbulb,
   Gamepad2,
   Wrench,
+  Key,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -500,6 +501,14 @@ export default function Sidebar({
                   >
                     <Wrench size={18} className="flex-shrink-0" />
                     <span>Engineering</span>
+                  </button>
+                  {/* API Keys Manager submenu item */}
+                  <button
+                    onClick={() => router.push('/ai-labs/api-keys')}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
+                  >
+                    <Key size={18} className="flex-shrink-0" />
+                    <span>API Keys</span>
                   </button>
                 </div>
               )}
