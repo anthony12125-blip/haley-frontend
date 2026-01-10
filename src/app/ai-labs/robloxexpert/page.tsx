@@ -320,14 +320,15 @@ export default function RobloxExpertPage() {
     setResult(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://logic-engine-core2-951854392741.us-central1.run.app'}/module/robloxexpert/execute`, {
+      const response = await fetch('https://module-matrix-409495160162.us-central1.run.app/matrix/execute_module', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          module: 'robloxexpert',
           action: 'generate_scene',
-          description: description,
+          params: { description },
         }),
       });
 
@@ -336,7 +337,7 @@ export default function RobloxExpertPage() {
       }
 
       const data = await response.json();
-      setResult(data);
+      setResult(data.result);
       setActiveTab('preview');
     } catch (err) {
       console.error('[RobloxExpert] Error:', err);
