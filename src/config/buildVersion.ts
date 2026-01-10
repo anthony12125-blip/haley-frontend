@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 82;
+export const BUILD_VERSION = 83;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -12,3 +12,5 @@ export const BUILD_VERSION = 82;
 // Build 79: Add Idea Harvester to AI Labs - one-session replication pipeline for AI product posts
 // Build 80: Add Roblox Expert to AI Labs - describe scenes, get Lua code and preview
 // Build 81: Upgrade Roblox Expert preview to 3D Three.js renderer with orbit controls
+// Build 82: Add Engineering Agent + API Keys Manager to AI Labs
+// Build 83: Fix fixed elements overlapping sidebar, blocking clicks
