@@ -188,6 +188,11 @@ export default function Sidebar({
   }, [showUserMenu]);
 
   const handleModelSelect = (modelId: string | null) => {
+    // Exit any active module when selecting a model
+    if (onSelectModule) {
+      onSelectModule(null);
+    }
+
     if (multiLLMEnabled) {
       // Multi-select mode
       if (modelId === null) {

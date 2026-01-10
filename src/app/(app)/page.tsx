@@ -1112,6 +1112,23 @@ export default function ChatPage() {
             : 'ml-0'
         }`}
       >
+        {/* ChatHeader - Always visible, shows back button when in module */}
+        <ChatHeader
+          aiMode={aiMode}
+          activeModels={activeModel ? [activeModel] : ['Haley']}
+          activeModel={activeModel}
+          onToggleResearch={() => setResearchEnabled(!researchEnabled)}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
+          systemStatus={systemStatus}
+          researchEnabled={researchEnabled}
+          logicEngineEnabled={logicEngineEnabled}
+          onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
+          onMigrateChat={handleMigrateChat}
+          activeModule={activeModule}
+          onBackToChat={() => setActiveModule(null)}
+        />
+
         {activeModule === null ? (
           <>
             {/* Chat Mode */}
@@ -1131,20 +1148,6 @@ export default function ChatPage() {
                 text={audioText}
               />
             )}
-
-            <ChatHeader
-              aiMode={aiMode}
-              activeModels={activeModel ? [activeModel] : ['Haley']}
-              activeModel={activeModel}
-              onToggleResearch={() => setResearchEnabled(!researchEnabled)}
-              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-              onOpenMagicWindow={() => setMagicWindowOpen(!magicWindowOpen)}
-              systemStatus={systemStatus}
-              researchEnabled={researchEnabled}
-              logicEngineEnabled={logicEngineEnabled}
-              onToggleLogicEngine={() => setLogicEngineEnabled(!logicEngineEnabled)}
-              onMigrateChat={handleMigrateChat}
-            />
 
             <ChatMessages
               messages={messages}

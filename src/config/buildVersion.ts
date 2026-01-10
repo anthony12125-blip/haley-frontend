@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 90;
+export const BUILD_VERSION = 91;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -21,3 +21,4 @@ export const BUILD_VERSION = 90;
 // Build 88: Add diagnostic console.logs to trace navigation issue - [ChatPage], [ApiKeysPage], [Sidebar], [Layout]
 // Build 89: Fix navigation - onSelectModel/onSelectConversation no longer navigate to /, only onNewConversation does
 // Build 90: STATE-BASED MODULE SWITCHING - No more route changes! Modules render inside page.tsx based on activeModule state.
+// Build 91: Add universal back button in ChatHeader + clicking Haley/models exits modules

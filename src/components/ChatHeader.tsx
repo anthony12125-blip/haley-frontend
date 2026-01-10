@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu } from 'lucide-react';
+import { Menu, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
 import IconEnvelopeWings from './icons/IconEnvelopeWings';
@@ -18,6 +18,8 @@ interface ChatHeaderProps {
   logicEngineEnabled: boolean;
   onToggleLogicEngine: () => void;
   onMigrateChat?: () => void;
+  activeModule?: string | null;
+  onBackToChat?: () => void;
 }
 
 export default function ChatHeader({
@@ -32,6 +34,8 @@ export default function ChatHeader({
   logicEngineEnabled,
   onToggleLogicEngine,
   onMigrateChat,
+  activeModule,
+  onBackToChat,
 }: ChatHeaderProps) {
   // Get AI mode color hue
   const getAIHue = () => {
@@ -65,17 +69,31 @@ export default function ChatHeader({
   return (
     <header className={`glass-strong border-b border-border safe-top ${getAIHue()}`}>
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: Hamburger Menu - Hidden on desktop */}
-        <button
-          onClick={onToggleSidebar}
-          className="icon-btn md:hidden"
-          title="Toggle sidebar"
-        >
-          <Menu size={24} />
-        </button>
-        
-        {/* Desktop: Empty space for alignment */}
-        <div className="hidden md:block w-10" />
+        {/* Left: Back button (when in module) or Hamburger Menu */}
+        <div className="flex items-center gap-2">
+          {activeModule && onBackToChat ? (
+            <button
+              onClick={onBackToChat}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary transition-colors"
+              title="Back to Chat"
+            >
+              <ArrowLeft size={18} />
+              <span className="text-sm font-medium">Back to Chat</span>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={onToggleSidebar}
+                className="icon-btn md:hidden"
+                title="Toggle sidebar"
+              >
+                <Menu size={24} />
+              </button>
+              {/* Desktop: Empty space for alignment */}
+              <div className="hidden md:block w-10" />
+            </>
+          )}
+        </div>
 
         {/* Center: Dynamic Title */}
         <div className="flex items-center justify-center gap-3">
