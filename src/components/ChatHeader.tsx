@@ -51,6 +51,10 @@ export default function ChatHeader({
 
   // Get display name for top bar
   const getDisplayName = () => {
+    // Always show "Haley" when in a module
+    if (activeModule) {
+      return 'Haley';
+    }
     if (activeModel) {
       const modelName = {
         'gemini': 'Gemini',
