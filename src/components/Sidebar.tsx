@@ -496,12 +496,8 @@ export default function Sidebar({
                   {/* Roblox Expert submenu item */}
                   <button
                     onClick={(e) => {
-                      console.log('[Sidebar] Roblox Expert clicked at:', new Date().toISOString());
-                      console.log('[Sidebar] Event target:', e.target);
-                      console.log('[Sidebar] Calling router.push(/ai-labs/robloxexpert)');
                       e.stopPropagation();
                       router.push('/ai-labs/robloxexpert');
-                      console.log('[Sidebar] router.push completed');
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
                   >
