@@ -215,7 +215,7 @@ export default function ApiKeysPage() {
   const connectedServices = apiKeys.filter((k) => k.enabled).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f1318] via-[#141a21] to-[#0f1318] text-white">
+    <div className="flex-1 flex flex-col overflow-y-auto text-white">
       {/* Header */}
       <div className="border-b border-gray-800 bg-black/20 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4">

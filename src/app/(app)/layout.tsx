@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
@@ -12,6 +12,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const device = useDeviceDetection();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Stable star positions - computed once on mount
+  const starPositions = useMemo(() =>
+    [...Array(3)].map(() => ({
+      top: `${Math.random() * 50}%`,
+      right: `${Math.random() * 50}%`,
+      delay: `${Math.random() * 3}s`,
+    })), []
+  );
 
   // Initialize sidebar state from localStorage
   useEffect(() => {
@@ -54,14 +63,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Space Background */}
       <div className="space-bg">
         <div className="stars" />
-        {[...Array(3)].map((_, i) => (
+        {starPositions.map((pos, i) => (
           <div
             key={i}
             className="shooting-star"
             style={{
-              top: `${Math.random() * 50}%`,
-              right: `${Math.random() * 50}%`,
-              animationDelay: `${Math.random() * 3}s`,
+              top: pos.top,
+              right: pos.right,
+              animationDelay: pos.delay,
             }}
           />
         ))}
