@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 87;
+export const BUILD_VERSION = 88;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -18,3 +18,4 @@ export const BUILD_VERSION = 87;
 // Build 85: One Sidebar - removed duplicate from page.tsx, layout.tsx is single source of truth
 // Build 86: Remove nested layout wrapper from page.tsx - content only, no duplicate full-screen/space-bg/margins
 // Build 87: Fix full page reload on navigation - delete duplicate /app/page.tsx, all routes now use (app) layout
+// Build 88: Add diagnostic console.logs to trace navigation issue - [ChatPage], [ApiKeysPage], [Sidebar], [Layout]
