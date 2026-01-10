@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
-import { db } from '@/lib/firebaseClient';
+import { getDb } from '@/lib/firebaseClient';
 import {
   collection,
   doc,
@@ -65,15 +65,19 @@ export default function ApiKeysPage() {
 
   // Load API keys from Firestore
   useEffect(() => {
-    if (!user || !db) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const loadKeys = async () => {
       try {
+        const db = getDb();
         const keysRef = collection(db, 'users', user.uid, 'apiKeys');
         const snapshot = await getDocs(keysRef);
         const keys: ApiKey[] = [];
-        snapshot.forEach((doc) => {
-          keys.push({ id: doc.id, ...doc.data() } as ApiKey);
+        snapshot.forEach((docSnap) => {
+          keys.push({ id: docSnap.id, ...docSnap.data() } as ApiKey);
         });
         setApiKeys(keys);
       } catch (err) {
@@ -100,12 +104,13 @@ export default function ApiKeysPage() {
 
   // Save API key
   const handleSaveKey = async () => {
-    if (!user || !db || !keyInput.trim()) return;
+    if (!user || !keyInput.trim()) return;
 
     setSaving(true);
     setError(null);
 
     try {
+      const db = getDb();
       const keyRef = doc(db, 'users', user.uid, 'apiKeys', selectedService);
       await setDoc(keyRef, {
         service: selectedService,
@@ -120,8 +125,8 @@ export default function ApiKeysPage() {
       const keysRef = collection(db, 'users', user.uid, 'apiKeys');
       const snapshot = await getDocs(keysRef);
       const keys: ApiKey[] = [];
-      snapshot.forEach((doc) => {
-        keys.push({ id: doc.id, ...doc.data() } as ApiKey);
+      snapshot.forEach((docSnap) => {
+        keys.push({ id: docSnap.id, ...docSnap.data() } as ApiKey);
       });
       setApiKeys(keys);
 
@@ -137,10 +142,11 @@ export default function ApiKeysPage() {
 
   // Delete API key
   const handleDeleteKey = async (serviceId: string) => {
-    if (!user || !db) return;
+    if (!user) return;
     if (!confirm('Are you sure you want to delete this API key?')) return;
 
     try {
+      const db = getDb();
       await deleteDoc(doc(db, 'users', user.uid, 'apiKeys', serviceId));
       setApiKeys(apiKeys.filter((k) => k.id !== serviceId));
       setTestResults((prev) => ({ ...prev, [serviceId]: null }));
@@ -152,9 +158,10 @@ export default function ApiKeysPage() {
 
   // Toggle API key enabled/disabled
   const handleToggleKey = async (serviceId: string, currentEnabled: boolean) => {
-    if (!user || !db) return;
+    if (!user) return;
 
     try {
+      const db = getDb();
       await updateDoc(doc(db, 'users', user.uid, 'apiKeys', serviceId), {
         enabled: !currentEnabled,
       });
