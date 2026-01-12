@@ -217,15 +217,15 @@ export default function Sidebar({
 
       {/* Sidebar - Full width on mobile, Mini/Full on desktop */}
       <div
-        className={`sidebar-container fixed left-0 top-0 bottom-0 glass-strong border-r border-border z-50 transition-all duration-300 ${
-          isOpen 
-            ? 'translate-x-0 w-80' 
+        className={`sidebar-container fixed left-0 top-0 bottom-0 h-dvh glass-strong border-r border-border z-50 transition-all duration-300 overflow-hidden ${
+          isOpen
+            ? 'translate-x-0 w-80'
             : '-translate-x-full w-80 md:translate-x-0 md:w-[60px]'
         }`}
       >
         {/* Mini Sidebar - Desktop only, when collapsed */}
         {!isOpen && (
-          <div className="sidebar-mini hidden md:flex flex-col h-full items-center py-3">
+          <div className="sidebar-mini hidden md:flex flex-col h-full items-center py-3 overflow-y-auto">
             {/* Top: Haley Indicator - Shows comet when collapsed */}
             <HaleyIndicator 
               isExpanded={false}
@@ -364,7 +364,7 @@ export default function Sidebar({
 
         {/* Full Sidebar - When expanded */}
         {isOpen && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full overflow-hidden">
             {/* Header with Close Button */}
             <div className="p-4 flex items-center justify-between border-b border-border">
               <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 95;
+export const BUILD_VERSION = 96;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -26,3 +26,4 @@ export const BUILD_VERSION = 95;
 // Build 93: Dashboard launcher - iOS-style module grid replaces sidebar AI Labs
 // Build 94: (skipped)
 // Build 95: Dashboard background solid with space-bg stars, no transparency
+// Build 96: Sidebar height fix - h-dvh + overflow handling for all viewports
