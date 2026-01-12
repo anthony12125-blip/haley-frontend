@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, ArrowLeft } from 'lucide-react';
+import { Menu, ArrowLeft, LayoutGrid } from 'lucide-react';
 import { useState } from 'react';
 import type { SystemStatus, AIMode } from '@/types';
 import IconEnvelopeWings from './icons/IconEnvelopeWings';
@@ -20,6 +20,7 @@ interface ChatHeaderProps {
   onMigrateChat?: () => void;
   activeModule?: string | null;
   onBackToChat?: () => void;
+  onOpenDashboard?: () => void;
 }
 
 export default function ChatHeader({
@@ -36,6 +37,7 @@ export default function ChatHeader({
   onMigrateChat,
   activeModule,
   onBackToChat,
+  onOpenDashboard,
 }: ChatHeaderProps) {
   // Get AI mode color hue
   const getAIHue = () => {
@@ -107,8 +109,19 @@ export default function ChatHeader({
           </span>
         </div>
 
-        {/* Right: Migrate Chat Button */}
+        {/* Right: Dashboard + Migrate Chat Buttons */}
         <div className="flex items-center gap-2">
+          {/* Dashboard - Desktop only */}
+          {onOpenDashboard && (
+            <button
+              onClick={onOpenDashboard}
+              className="hidden md:block p-2 rounded-lg hover:bg-panel-light active:bg-primary/20 transition-all"
+              title="Open Dashboard"
+              aria-label="Open module dashboard"
+            >
+              <LayoutGrid size={24} className="text-violet-400" />
+            </button>
+          )}
           {onMigrateChat && (
             <button
               onClick={onMigrateChat}

@@ -4,6 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { LayoutGrid } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
 import { useRouter } from 'next/navigation';
 import { sendMessage, sendAudioMessage, sendMultiLLMMessage, getSystemStatus } from '@/lib/haleyApi';
@@ -1140,6 +1141,7 @@ export default function ChatPage() {
           onMigrateChat={handleMigrateChat}
           activeModule={activeModule}
           onBackToChat={() => setActiveModule(null)}
+          onOpenDashboard={() => setDashboardOpen(true)}
         />
 
         {activeModule === null ? (
@@ -1263,6 +1265,18 @@ export default function ChatPage() {
           <SoundboardPage />
         ) : null}
       </div>
+
+      {/* Mobile FAB for Dashboard - Mobile only */}
+      {!dashboardOpen && activeModule === null && (
+        <button
+          onClick={() => setDashboardOpen(true)}
+          className="block md:hidden fixed bottom-20 right-4 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center"
+          title="Open Dashboard"
+          aria-label="Open module dashboard"
+        >
+          <LayoutGrid size={24} className="text-white" />
+        </button>
+      )}
     </>
   );
 }
