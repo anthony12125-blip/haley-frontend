@@ -27,6 +27,7 @@ import SuggestedReplies from '@/components/SuggestedReplies';
 import SummarizeButton from '@/components/SummarizeButton';
 import SummaryCard from '@/components/SummaryCard';
 import Sidebar from '@/components/Sidebar';
+import Dashboard from '@/components/Dashboard';
 import IdeaHarvesterPage from './ai-labs/ideaharvester/page';
 import RobloxExpertPage from './ai-labs/robloxexpert/page';
 import EngineeringPage from './ai-labs/engineering/page';
@@ -53,6 +54,7 @@ export default function ChatPage() {
   const [modeSelectorOpen, setModeSelectorOpen] = useState(false);
   const [artifactsPanelOpen, setArtifactsPanelOpen] = useState(false);
   const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
 
   // Artifacts
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
@@ -1102,6 +1104,17 @@ export default function ChatPage() {
         userPhotoURL={user?.photoURL || undefined}
         onRecoverChat={() => {}}
         onSelectModule={setActiveModule}
+        onOpenDashboard={() => setDashboardOpen(true)}
+      />
+
+      {/* Dashboard Overlay */}
+      <Dashboard
+        isOpen={dashboardOpen}
+        onClose={() => setDashboardOpen(false)}
+        onSelectModule={(moduleId) => {
+          setActiveModule(moduleId);
+          setDashboardOpen(false);
+        }}
       />
 
       {/* Main Content Area */}

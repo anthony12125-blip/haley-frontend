@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 92;
+export const BUILD_VERSION = 93;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -23,3 +23,4 @@ export const BUILD_VERSION = 92;
 // Build 90: STATE-BASED MODULE SWITCHING - No more route changes! Modules render inside page.tsx based on activeModule state.
 // Build 91: Add universal back button in ChatHeader + clicking Haley/models exits modules
 // Build 92: Header shows Haley when in modules + scrollable AI Models list (max-h-64)
+// Build 93: Dashboard launcher - iOS-style module grid replaces sidebar AI Labs

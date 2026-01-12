@@ -19,10 +19,7 @@ import {
   RotateCcw,
   Send,
   MoreVertical,
-  Lightbulb,
-  Gamepad2,
-  Wrench,
-  Key,
+  LayoutGrid,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -30,8 +27,6 @@ import { HaleyIndicator } from './HaleyIndicator';
 import { MultiLLMToggle } from './MultiLLMToggle';
 import ThemeSelector from './ThemeSelector';
 import VibePackSelector from './VibePackSelector';
-import IconSoundboard from './icons/IconSoundboard';
-import IconBeaker from './icons/IconBeaker';
 import TokenBalance from './TokenBalance';
 
 interface SidebarProps {
@@ -53,6 +48,7 @@ interface SidebarProps {
   onMigrateChat?: () => void;
   onMultiLLMChange?: (enabled: boolean, selectedModels: string[]) => void;
   onSelectModule?: (module: string | null) => void;
+  onOpenDashboard?: () => void;
 }
 
 // AI Models
@@ -99,6 +95,7 @@ export default function Sidebar({
   onMigrateChat,
   onMultiLLMChange,
   onSelectModule,
+  onOpenDashboard,
 }: SidebarProps) {
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
@@ -140,17 +137,6 @@ export default function Sidebar({
     return true; // Default to collapsed
   });
 
-  // Initialize R&D expanded state from localStorage (default to EXPANDED)
-  const [rndExpanded, setRndExpanded] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedState = localStorage.getItem('haley_rndExpanded');
-      if (savedState !== null) {
-        return JSON.parse(savedState);
-      }
-    }
-    return true; // Default to EXPANDED - R&D is always visible
-  });
-
   // Save aiModelsCollapsed state to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -164,13 +150,6 @@ export default function Sidebar({
       localStorage.setItem('haley_projectsExpanded', JSON.stringify(!projectsCollapsed));
     }
   }, [projectsCollapsed]);
-
-  // Save R&D expanded state to localStorage whenever it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('haley_rndExpanded', JSON.stringify(rndExpanded));
-    }
-  }, [rndExpanded]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -256,15 +235,15 @@ export default function Sidebar({
 
             {/* Primary Action Buttons */}
             <div className="flex-1 flex flex-col items-center gap-2">
-              {/* AI Labs */}
+              {/* Dashboard */}
               <button
-                onClick={() => router.push('/ai-rd/soundboard')}
+                onClick={onOpenDashboard}
                 className="sidebar-mini-btn w-10 h-10 flex items-center justify-center rounded-lg hover:bg-panel-light transition-colors group relative"
-                title="AI Labs"
+                title="Dashboard"
               >
-                <IconBeaker size={22} className="sidebar-mini-icon" />
+                <LayoutGrid size={22} className="sidebar-mini-icon" />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
-                  AI Labs
+                  Dashboard
                 </div>
               </button>
 
@@ -408,118 +387,18 @@ export default function Sidebar({
               </button>
             </div>
 
-            {/* R&D - Research & Development Section - TOP PRIORITY */}
-            <div className="relative group p-3">
+            {/* Dashboard Button */}
+            <div className="p-3">
               <button
-                onClick={() => setRndExpanded(!rndExpanded)}
-                className="sidebar-menu-header w-full relative overflow-hidden rounded-lg transition-all duration-180 ease-out"
-                style={{
-                  paddingTop: '10px',
-                  paddingBottom: '10px',
-                  paddingLeft: '14px',
-                  paddingRight: '14px',
-                }}
+                onClick={onOpenDashboard}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-500/20 to-purple-600/20 hover:from-violet-500/30 hover:to-purple-600/30 border border-violet-500/30 transition-all duration-200"
               >
-                {/* Hover glow effect */}
-                <div 
-                  className="sidebar-hover-glow absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-180"
-                  style={{
-                    background: 'rgba(80, 160, 255, 0.08)',
-                    boxShadow: '0 0 8px rgba(80, 160, 255, 0.25)',
-                  }}
-                />
-                
-                {/* Active state indicator - left accent bar */}
-                {rndExpanded && (
-                  <div 
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full"
-                    style={{ background: 'rgba(80, 160, 255, 0.8)' }}
-                  />
-                )}
-                
-                {/* Content */}
-                <div className="relative flex items-center gap-3">
-                  <IconBeaker 
-                    size={20} 
-                    strokeWidth={1.5}
-                    className="flex-shrink-0 transition-transform group-hover:scale-105"
-                  />
-                  <div className="flex-1 text-left">
-                    <div 
-                      className="font-semibold tracking-tight"
-                      style={{ 
-                        fontSize: '1.3em',
-                        fontWeight: 600,
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      AI Labs
-                    </div>
-                    {/* Permanent subtitle */}
-                    <div 
-                      className="text-xs uppercase tracking-wider opacity-70 transition-opacity duration-180"
-                      style={{ 
-                        fontVariant: 'small-caps',
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      Lab / Sandbox
-                    </div>
-                  </div>
-                  <ChevronDown 
-                    size={18} 
-                    className={`transition-colors duration-200 ${
-                      rndExpanded ? 'text-primary' : 'text-gray-400'
-                    }`}
-                  />
+                <LayoutGrid size={22} className="text-violet-400" />
+                <div className="flex-1 text-left">
+                  <div className="font-semibold text-white">Dashboard</div>
+                  <div className="text-xs text-gray-400">AI modules & tools</div>
                 </div>
               </button>
-
-              {/* R&D Content - Expanded by default */}
-              {rndExpanded && (
-                <div className="mt-3 space-y-1">
-                  {/* R&D Soundboard submenu item */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('soundboard'); } else { router.push('/ai-rd/soundboard'); } }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
-                  >
-                    <IconSoundboard className="flex-shrink-0" />
-                    <span>R&D Soundboard</span>
-                  </button>
-                  {/* Idea Harvester submenu item */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('ideaharvester'); } else { router.push('/ai-labs/ideaharvester'); } }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
-                  >
-                    <Lightbulb size={18} className="flex-shrink-0" />
-                    <span>Idea Harvester</span>
-                  </button>
-                  {/* Roblox Expert submenu item */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('robloxexpert'); } else { router.push('/ai-labs/robloxexpert'); } }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
-                  >
-                    <Gamepad2 size={18} className="flex-shrink-0" />
-                    <span>Roblox Expert</span>
-                  </button>
-                  {/* Engineering Agent submenu item */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('engineering'); } else { router.push('/ai-labs/engineering'); } }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
-                  >
-                    <Wrench size={18} className="flex-shrink-0" />
-                    <span>Engineering</span>
-                  </button>
-                  {/* API Keys Manager submenu item */}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (onSelectModule) { onSelectModule('api-keys'); } else { router.push('/ai-labs/api-keys'); } }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-panel-light transition-colors text-sm"
-                  >
-                    <Key size={18} className="flex-shrink-0" />
-                    <span>API Keys</span>
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Primary Action Buttons */}
