@@ -59,6 +59,15 @@ function getCategoryGradient(categoryId: string): string {
 export default function Dashboard({ isOpen, onClose, onSelectModule }: DashboardProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Generate stable star positions
+  const starPositions = useMemo(() =>
+    [...Array(3)].map(() => ({
+      top: `${Math.random() * 50}%`,
+      right: `${Math.random() * 50}%`,
+      delay: `${Math.random() * 3}s`,
+    })), []
+  );
+
   // Filter modules based on search
   const filteredCategories = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -89,9 +98,17 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] bg-background animate-in fade-in duration-200">
+      {/* Space background with stars */}
+      <div className="space-bg">
+        <div className="stars" />
+        {starPositions.map((pos, i) => (
+          <div key={i} className="shooting-star" style={{ top: pos.top, right: pos.right, animationDelay: pos.delay }} />
+        ))}
+      </div>
+
       {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-border">
+      <header className="relative z-10 flex items-center justify-between p-4 border-b border-border">
         <button
           onClick={onClose}
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors"
@@ -104,7 +121,7 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
       </header>
 
       {/* Search */}
-      <div className="p-4">
+      <div className="relative z-10 p-4">
         <div className="relative max-w-md mx-auto">
           <Search
             size={18}
@@ -121,7 +138,7 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
       </div>
 
       {/* Module Grid by Category */}
-      <div className="overflow-y-auto p-4 space-y-8" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+      <div className="relative z-10 overflow-y-auto p-4 space-y-8" style={{ maxHeight: 'calc(100vh - 160px)' }}>
         {filteredCategories.map((category) => {
           const modules = getFilteredModules(category.id);
           if (modules.length === 0) return null;

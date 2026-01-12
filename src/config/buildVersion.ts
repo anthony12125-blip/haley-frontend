@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 93;
+export const BUILD_VERSION = 95;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -24,3 +24,5 @@ export const BUILD_VERSION = 93;
 // Build 91: Add universal back button in ChatHeader + clicking Haley/models exits modules
 // Build 92: Header shows Haley when in modules + scrollable AI Models list (max-h-64)
 // Build 93: Dashboard launcher - iOS-style module grid replaces sidebar AI Labs
+// Build 94: (skipped)
+// Build 95: Dashboard background solid with space-bg stars, no transparency
