@@ -461,11 +461,8 @@ export default function ChatPage() {
     }
 
     // Single Model Mode (existing logic)
-    if (!activeModel) {
-      setActiveModel('gemini');
-      alert('Please select an AI model first. Defaulting to Gemini.');
-      return;
-    }
+    // activeModel=null means Haley is selected, use 'haley' as provider
+    const provider = activeModel || 'haley';
 
     const userMessage: Message = {
       id: generateId(),
@@ -492,7 +489,7 @@ export default function ChatPage() {
       timestamp: new Date(),
       metadata: {
         operation: 'chat',
-        model_used: activeModel,
+        model_used: provider,
         streaming: true,
       },
     };
@@ -505,7 +502,7 @@ export default function ChatPage() {
       const { messageId, cleanup } = audioBlob
         ? await sendAudioMessage(
             audioBlob,
-            activeModel,
+            provider,
             (token: string) => {
               streamingContent += token;
               setMessages((prev) =>
@@ -530,7 +527,7 @@ export default function ChatPage() {
                           baby_invoked: response.baby_invoked,
                           task: response.task,
                           supreme_court: aiMode === 'supreme-court',
-                          llm_sources: activeModel ? [activeModel] : undefined,
+                          llm_sources: [provider],
                         },
                       }
                     : msg
@@ -556,7 +553,7 @@ export default function ChatPage() {
           )
         : await sendMessage(
             textToSend,
-            activeModel,
+            provider,
             (token: string) => {
           streamingContent += token;
           setMessages((prev) =>
@@ -581,7 +578,7 @@ export default function ChatPage() {
                       baby_invoked: response.baby_invoked,
                       task: response.task,
                       supreme_court: aiMode === 'supreme-court',
-                      llm_sources: activeModel ? [activeModel] : undefined,
+                      llm_sources: [provider],
                     },
                   }
                 : msg
