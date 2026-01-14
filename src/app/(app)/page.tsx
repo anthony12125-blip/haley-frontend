@@ -1104,6 +1104,7 @@ export default function ChatPage() {
         userEmail={user?.email || undefined}
         userPhotoURL={user?.photoURL || undefined}
         onRecoverChat={() => {}}
+        onMultiLLMChange={handleMultiLLMChange}
         onSelectModule={setActiveModule}
         onOpenDashboard={() => setDashboardOpen(true)}
       />

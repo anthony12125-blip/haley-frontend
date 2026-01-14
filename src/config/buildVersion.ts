@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 98;
+export const BUILD_VERSION = 99;
 // Build 66-69: Internal development
 // Build 70: DKRP Sentinel Verification + Token Balance UI + Stripe Checkout
 // Build 71: Add BuyTokensModal component with token packages and provider costs
@@ -29,3 +29,4 @@ export const BUILD_VERSION = 98;
 // Build 96: Sidebar height fix - h-dvh + overflow handling for all viewports
 // Build 97: Dashboard launch icons - header icon (desktop) + FAB (mobile)
 // Build 98: Dashboard redesign - remove categories, drag-to-reorder active modules, localStorage persistence
+// Build 99: Fix Multi-LLM fan-out - connect onMultiLLMChange prop to Sidebar
