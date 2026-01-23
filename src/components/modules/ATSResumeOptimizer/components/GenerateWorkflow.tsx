@@ -19,16 +19,16 @@ import { exportResume, downloadBlob, getSuggestedFilename } from '../utils/expor
 import ScoreCard from './shared/ScoreCard';
 
 interface GenerateWorkflowProps {
-  context: ATSOptimizerContext;
+  context: any;
 }
 
-const GENERATE_STEPS: { key: ATSWorkflowStep; label: string }[] = [
-  { key: 'profile-select', label: 'Profile' },
-  { key: 'jd-input', label: 'Job' },
+const GENERATE_STEPS: { key: string; label: string }[] = [
+  { key: 'profile_select', label: 'Profile' },
+  { key: 'jd_input', label: 'Job' },
   { key: 'matching', label: 'Match' },
-  { key: 'selection-review', label: 'Review' },
+  { key: 'selection_review', label: 'Review' },
   { key: 'preview', label: 'Preview' },
-  { key: 'generate-export', label: 'Export' },
+  { key: 'generate_export', label: 'Export' },
 ];
 
 export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
@@ -54,7 +54,7 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
 
   const [jdText, setJdText] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [editedSelections, setEditedSelections] = useState<SelectionDecision | null>(null);
+  const [editedSelections, setEditedSelections] = useState<any>(null);
 
   const currentStepIndex = GENERATE_STEPS.findIndex(s => s.key === currentStep);
 
@@ -70,9 +70,9 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
       const jd = parseJobDescription(jdText);
       setParsedJD?.(jd);
 
-      const decision = matchProfileToJob(activeProfile, jd, preferences);
+      const decision = matchProfileToJob(activeProfile, jd, preferences) as any;
       setSelectionDecision?.(decision);
-      setEditedSelections(decision);
+      setEditedSelections(decision as any);
 
       setStep?.('matching');
     } catch (e) {
@@ -92,13 +92,13 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
         activeProfile,
         parsedJD,
         {
-          experienceIds: editedSelections.selectedExperiences.map(e => e.experienceId),
-          bulletOverrides: editedSelections.selectedExperiences.reduce((acc, exp) => {
+          experienceIds: editedSelections.selectedExperiences.map((e: any) => e.experienceId),
+          bulletOverrides: editedSelections.selectedExperiences.reduce((acc: Record<string, string[]>, exp: any) => {
             acc[exp.experienceId] = exp.selectedBulletIds;
             return acc;
           }, {} as Record<string, string[]>),
           skillNames: editedSelections.selectedSkills,
-          projectIds: editedSelections.selectedProjects.map(p => p.projectId),
+          projectIds: editedSelections.selectedProjects.map((p: any) => p.projectId),
           summaryVariantId: editedSelections.summaryVariantId,
         },
         preferences
@@ -177,7 +177,7 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
       {/* Step Content */}
       <div className="flex-1 overflow-auto p-6">
         <AnimatePresence mode="wait">
-          {currentStep === 'profile-select' && (
+          {currentStep === 'profile_select' && (
             <motion.div
               key="profile-select"
               initial={{ opacity: 0, x: 20 }}
@@ -209,12 +209,12 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
                     setActiveProfile?.(null);
                   }
                 }}
-                onNext={() => setStep?.('jd-input')}
+                onNext={() => setStep?.('jd_input')}
               />
             </motion.div>
           )}
 
-          {currentStep === 'jd-input' && (
+          {currentStep === 'jd_input' && (
             <motion.div
               key="jd-input"
               initial={{ opacity: 0, x: 20 }}
@@ -226,7 +226,7 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
                 jdText={jdText}
                 onJdChange={setJdText}
                 onMatch={handleMatchProfile}
-                onBack={() => setStep?.('profile-select')}
+                onBack={() => setStep?.('profile_select')}
                 isProcessing={isProcessing || false}
                 profileName={activeProfile?.contact.name || 'Unknown'}
               />
@@ -243,13 +243,13 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
             >
               <MatchingStep
                 decision={selectionDecision}
-                onNext={() => setStep?.('selection-review')}
-                onBack={() => setStep?.('jd-input')}
+                onNext={() => setStep?.('selection_review')}
+                onBack={() => setStep?.('jd_input')}
               />
             </motion.div>
           )}
 
-          {currentStep === 'selection-review' && editedSelections && activeProfile && (
+          {currentStep === 'selection_review' && editedSelections && activeProfile && (
             <motion.div
               key="selection-review"
               initial={{ opacity: 0, x: 20 }}
@@ -278,13 +278,13 @@ export default function GenerateWorkflow({ context }: GenerateWorkflowProps) {
             >
               <PreviewStep
                 resume={generatedResume}
-                onExport={() => setStep?.('generate-export')}
-                onBack={() => setStep?.('selection-review')}
+                onExport={() => setStep?.('generate_export')}
+                onBack={() => setStep?.('selection_review')}
               />
             </motion.div>
           )}
 
-          {currentStep === 'generate-export' && generatedResume && (
+          {currentStep === 'generate_export' && generatedResume && (
             <motion.div
               key="generate-export"
               initial={{ opacity: 0, x: 20 }}
@@ -322,9 +322,15 @@ function createEmptyProfile(): MasterProfile {
       primarySkills: [],
       primaryIndustries: [],
       seniorityLevel: 'mid',
+      targetRoles: [],
     },
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    lastUpdated: Date.now(),
+    additional: {
+      publications: [],
+      awards: [],
+      volunteer: [],
+      languages: [],
+    },
   };
 }
 
@@ -505,7 +511,7 @@ function ProfileEditor({
     onChange({
       ...profile,
       contact: { ...profile.contact, [field]: value },
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -516,13 +522,17 @@ function ProfileEditor({
       title: '',
       location: '',
       startDate: '',
+      isCurrentRole: false,
       bullets: [],
       tags: [],
+      industries: [],
+      skills: [],
+      highlights: false,
     };
     onChange({
       ...profile,
       experience: [...profile.experience, newExp],
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -532,7 +542,7 @@ function ProfileEditor({
     onChange({
       ...profile,
       experience: newExp,
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -540,7 +550,7 @@ function ProfileEditor({
     onChange({
       ...profile,
       experience: profile.experience.filter((_, i) => i !== index),
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -548,14 +558,18 @@ function ProfileEditor({
     const newBullet: MasterBullet = {
       id: `bullet-${Date.now()}`,
       text: '',
-      tags: [],
+      category: 'achievement',
+      skills: [],
+      keywords: [],
+      hasMetrics: false,
+      timesUsed: 0,
     };
     const newExp = [...profile.experience];
     newExp[expIndex].bullets = [...newExp[expIndex].bullets, newBullet];
     onChange({
       ...profile,
       experience: newExp,
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -565,7 +579,7 @@ function ProfileEditor({
     onChange({
       ...profile,
       experience: newExp,
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -575,22 +589,23 @@ function ProfileEditor({
     onChange({
       ...profile,
       experience: newExp,
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
   const addSkill = () => {
     const newSkill: MasterSkill = {
-      id: `skill-${Date.now()}`,
       name: '',
       category: 'programming_language',
-      yearsOfExperience: 1,
+      yearsExperience: 1,
       proficiency: 'intermediate',
+      aliases: [],
+      relatedSkills: [],
     };
     onChange({
       ...profile,
       skills: [...profile.skills, newSkill],
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -600,7 +615,7 @@ function ProfileEditor({
     onChange({
       ...profile,
       skills: newSkills,
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -608,7 +623,7 @@ function ProfileEditor({
     onChange({
       ...profile,
       skills: profile.skills.filter((_, i) => i !== index),
-      updatedAt: Date.now(),
+      lastUpdated: Date.now(),
     });
   };
 
@@ -806,7 +821,7 @@ function ProfileEditor({
             <div className="flex flex-wrap gap-2">
               {profile.skills.map((skill, index) => (
                 <div
-                  key={skill.id}
+                  key={index}
                   className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full"
                 >
                   <input
@@ -935,7 +950,7 @@ function MatchingStep({
   onNext,
   onBack,
 }: {
-  decision: SelectionDecision;
+  decision: any;
   onNext: () => void;
   onBack: () => void;
 }) {
@@ -986,7 +1001,7 @@ function MatchingStep({
       <div className="bg-white/5 rounded-xl p-6 border border-white/10">
         <h3 className="font-medium text-white mb-4">Selection Rationale</h3>
         <div className="space-y-3">
-          {decision.rationale.slice(0, 5).map((item, index) => (
+          {decision.rationale.slice(0, 5).map((item: any, index: number) => (
             <div key={index} className="flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs text-emerald-400">
                 {index + 1}
@@ -1028,21 +1043,21 @@ function SelectionReviewStep({
   isProcessing,
 }: {
   profile: MasterProfile;
-  selections: SelectionDecision;
-  onUpdateSelections: (selections: SelectionDecision) => void;
+  selections: any;
+  onUpdateSelections: (selections: any) => void;
   onGenerate: () => void;
   onBack: () => void;
   isProcessing: boolean;
 }) {
   const toggleExperience = (expId: string) => {
-    const existing = selections.selectedExperiences.find(e => e.experienceId === expId);
+    const existing = selections.selectedExperiences.find((e: any) => e.experienceId === expId);
     if (existing) {
       onUpdateSelections({
         ...selections,
-        selectedExperiences: selections.selectedExperiences.filter(e => e.experienceId !== expId),
+        selectedExperiences: selections.selectedExperiences.filter((e: any) => e.experienceId !== expId),
       });
     } else {
-      const exp = profile.experience.find(e => e.id === expId);
+      const exp = profile.experience.find((e: any) => e.id === expId);
       if (exp) {
         onUpdateSelections({
           ...selections,
@@ -1050,7 +1065,7 @@ function SelectionReviewStep({
             ...selections.selectedExperiences,
             {
               experienceId: expId,
-              selectedBulletIds: exp.bullets.map(b => b.id).slice(0, 5),
+              selectedBulletIds: exp.bullets.map((b: any) => b.id).slice(0, 5),
               score: 0.5,
             },
           ],
@@ -1063,7 +1078,7 @@ function SelectionReviewStep({
     if (selections.selectedSkills.includes(skillName)) {
       onUpdateSelections({
         ...selections,
-        selectedSkills: selections.selectedSkills.filter(s => s !== skillName),
+        selectedSkills: selections.selectedSkills.filter((s: any) => s !== skillName),
       });
     } else {
       onUpdateSelections({
@@ -1089,8 +1104,8 @@ function SelectionReviewStep({
         <div className="bg-white/5 rounded-xl p-6 border border-white/10">
           <h3 className="font-medium text-white mb-4">Experience</h3>
           <div className="space-y-3 max-h-80 overflow-auto">
-            {profile.experience.map((exp) => {
-              const isSelected = selections.selectedExperiences.some(e => e.experienceId === exp.id);
+            {profile.experience.map((exp: any) => {
+              const isSelected = selections.selectedExperiences.some((e: any) => e.experienceId === exp.id);
               return (
                 <button
                   key={exp.id}
@@ -1126,11 +1141,11 @@ function SelectionReviewStep({
         <div className="bg-white/5 rounded-xl p-6 border border-white/10">
           <h3 className="font-medium text-white mb-4">Skills</h3>
           <div className="flex flex-wrap gap-2 max-h-80 overflow-auto">
-            {profile.skills.map((skill) => {
+            {profile.skills.map((skill: any, skillIdx: number) => {
               const isSelected = selections.selectedSkills.includes(skill.name);
               return (
                 <button
-                  key={skill.id}
+                  key={skillIdx}
                   onClick={() => toggleSkill(skill.name)}
                   className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                     isSelected

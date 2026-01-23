@@ -12,10 +12,10 @@ import GapAnalysis from './shared/GapAnalysis';
 import RecommendationList from './shared/RecommendationList';
 
 interface OptimizeWorkflowProps {
-  context: ATSOptimizerContext;
+  context: any;
 }
 
-const OPTIMIZE_STEPS: { key: ATSWorkflowStep; label: string }[] = [
+const OPTIMIZE_STEPS: { key: string; label: string }[] = [
   { key: 'upload', label: 'Upload' },
   { key: 'analysis', label: 'Analysis' },
   { key: 'optimize', label: 'Optimize' },
@@ -66,7 +66,7 @@ export default function OptimizeWorkflow({ context }: OptimizeWorkflowProps) {
     setIsProcessing?.(true);
     try {
       // Parse documents
-      const resume = parseResume(resumeText);
+      const resume = parseResume(resumeText, 'txt');
       const jd = parseJobDescription(jdText);
 
       setParsedResume?.(resume);

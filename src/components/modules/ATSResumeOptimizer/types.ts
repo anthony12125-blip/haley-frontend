@@ -1,6 +1,12 @@
 // ATS Resume Optimizer - Type Definitions
 
 // ============================================================================
+// MODE TYPES
+// ============================================================================
+
+export type ATSMode = 'optimize' | 'generate';
+
+// ============================================================================
 // MASTER PROFILE TYPES
 // ============================================================================
 
@@ -510,6 +516,7 @@ export interface ATSPreferences {
   includeProjects: boolean;
   includeSoftSkills: boolean;
   resumeLength: '1-page' | '2-page' | 'auto';
+  prioritizeRecent?: boolean;
 }
 
 export type ATSWorkflowStep =
@@ -563,6 +570,7 @@ export const DEFAULT_PREFERENCES: ATSPreferences = {
   includeProjects: true,
   includeSoftSkills: false,
   resumeLength: 'auto',
+  prioritizeRecent: true,
 };
 
 // Default context
@@ -573,3 +581,12 @@ export const DEFAULT_CONTEXT: ATSOptimizerContext = {
   preferences: DEFAULT_PREFERENCES,
   analysisHistory: [],
 };
+
+// Export types
+export type ExportFormat = 'docx' | 'pdf' | 'txt';
+
+export interface ExportOptions {
+  includeMetrics?: boolean;
+  includeKeywords?: boolean;
+  compactMode?: boolean;
+}

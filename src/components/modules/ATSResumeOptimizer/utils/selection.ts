@@ -195,7 +195,7 @@ export function matchProfileToJob(
       bulletOverrides,
       selectedSkills,
       missingKeywords
-    ),
+    ) as any,
     analyzedAt: Date.now(),
     processingTime: Date.now() - startTime,
   };

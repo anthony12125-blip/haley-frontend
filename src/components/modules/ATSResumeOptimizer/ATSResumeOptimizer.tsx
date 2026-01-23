@@ -23,9 +23,14 @@ interface ATSResumeOptimizerProps {
 }
 
 const DEFAULT_PREFERENCES: ATSPreferences = {
+  aggressiveness: 'balanced',
+  preserveFormatting: false,
+  targetScore: 80,
+  focusAreas: ['hard_skill', 'tool'],
+  maxExperiences: 4,
+  maxBulletsPerJob: 5,
   includeProjects: true,
   includeSoftSkills: false,
-  maxBulletsPerJob: 5,
   resumeLength: 'auto',
   prioritizeRecent: true,
 };
@@ -34,7 +39,7 @@ export default function ATSResumeOptimizer({ onBack }: ATSResumeOptimizerProps) 
   // Mode and workflow state
   const [mode, setMode] = useState<ATSMode | null>(null);
   const [optimizeStep, setOptimizeStep] = useState<ATSWorkflowStep>('upload');
-  const [generateStep, setGenerateStep] = useState<ATSWorkflowStep>('profile-select');
+  const [generateStep, setGenerateStep] = useState<ATSWorkflowStep>('profile_select');
 
   // Data state
   const [profiles, setProfiles] = useState<MasterProfile[]>(() => loadProfiles());
@@ -77,7 +82,7 @@ export default function ATSResumeOptimizer({ onBack }: ATSResumeOptimizerProps) 
   // Reset workflow
   const resetWorkflow = useCallback(() => {
     setOptimizeStep('upload');
-    setGenerateStep('profile-select');
+    setGenerateStep('profile_select');
     setParsedResume(null);
     setParsedJD(null);
     setAnalysis(null);
@@ -95,9 +100,11 @@ export default function ATSResumeOptimizer({ onBack }: ATSResumeOptimizerProps) 
   }, [mode, resetWorkflow]);
 
   // Context object for child components
-  const context: ATSOptimizerContext = useMemo(() => ({
+  const context = useMemo(() => ({
     mode: mode || 'optimize',
     currentStep: mode === 'optimize' ? optimizeStep : generateStep,
+    profileSource: null,
+    analysisHistory: [],
     profiles,
     activeProfile,
     parsedResume,
@@ -207,7 +214,7 @@ export default function ATSResumeOptimizer({ onBack }: ATSResumeOptimizerProps) 
               exit={{ opacity: 0, x: -20 }}
               className="h-full"
             >
-              <OptimizeWorkflow context={context} />
+              <OptimizeWorkflow context={context as any} />
             </motion.div>
           ) : (
             <motion.div
@@ -217,7 +224,7 @@ export default function ATSResumeOptimizer({ onBack }: ATSResumeOptimizerProps) 
               exit={{ opacity: 0, x: -20 }}
               className="h-full"
             >
-              <GenerateWorkflow context={context} />
+              <GenerateWorkflow context={context as any} />
             </motion.div>
           )}
         </AnimatePresence>

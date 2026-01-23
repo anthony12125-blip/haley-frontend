@@ -655,10 +655,10 @@ function generatePrintableHtml(resume: GeneratedResume | ParsedResume): string {
   </div>
   ` : ''}
 
-  ${projects?.length > 0 ? `
+  ${(projects?.length ?? 0) > 0 ? `
   <div class="section">
     <div class="section-title">PROJECTS</div>
-    ${projects.map((project: any) => `
+    ${projects!.map((project: any) => `
       <div class="job">
         <div class="job-header">${project.name}${'url' in project && project.url ? ' | ' + project.url : ''}</div>
         ${'description' in project ? `<div>${project.description}</div>` : ''}
