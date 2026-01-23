@@ -30,19 +30,19 @@
   --primary: #4B6CFF;
   --accent: #4B6CFF;
   
-  /* Surfaces - Pure white */
-  --panel-dark: #FFFFFF;
-  --panel-medium: #FFFFFF;
-  --panel-light: #F7F7F7;
+  /* Surfaces - Proper hierarchy for light mode */
+  --panel-dark: #FFFFFF;       /* Input backgrounds - white */
+  --panel-medium: #FFFFFF;     /* Card backgrounds - white */
+  --panel-light: #F5F5F5;      /* Hover states - very light gray */
   
   /* Text hierarchy - Black to gray */
-  --text-primary: #000000;
-  --text-secondary: #3A3A3A;
-  --text-muted: #6A6A6A;
+  --text-primary: #1A1A1A;
+  --text-secondary: #666666;
+  --text-muted: #999999;
   
-  /* Borders - Subtle */
-  --border: rgba(0, 0, 0, 0.06);
-  --border-strong: rgba(0, 0, 0, 0.08);
+  /* Borders - More visible for light mode */
+  --border: #E0E0E0;
+  --border-strong: #D0D0D0;
   
   /* Feedback colors */
   --error: #ef4444;
@@ -1192,4 +1192,55 @@ body {
 
 :root.light.light-space-inverse .sidebar-container.border-r {
   border-right-color: #D8E2F0 !important;
+}
+
+/* ============================================================================
+   MODULE THEMING - Light Mode Fixes
+   Ensures inputs and form elements have proper contrast in light mode
+   ============================================================================ */
+
+/* Module inputs in light mode need visible borders */
+:root.light input.bg-panel-dark,
+:root.light select.bg-panel-dark,
+:root.light textarea.bg-panel-dark,
+:root.light [class*="bg-panel-dark"]:where(input, select, textarea) {
+  background: #FFFFFF !important;
+  border-color: #E0E0E0 !important;
+  color: #1A1A1A !important;
+}
+
+:root.light input.bg-panel-dark::placeholder,
+:root.light textarea.bg-panel-dark::placeholder {
+  color: #999999 !important;
+}
+
+:root.light input.bg-panel-dark:focus,
+:root.light select.bg-panel-dark:focus,
+:root.light textarea.bg-panel-dark:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(75, 108, 255, 0.1) !important;
+}
+
+/* Module cards and panels in light mode */
+:root.light .bg-panel-medium {
+  background: #FFFFFF !important;
+  border-color: #E8E8E8 !important;
+}
+
+:root.light .bg-panel-light {
+  background: #F5F5F5 !important;
+}
+
+/* Module text colors in light mode */
+:root.light .text-text-primary {
+  color: #1A1A1A !important;
+}
+
+:root.light .text-text-secondary {
+  color: #666666 !important;
+}
+
+/* Module borders in light mode */
+:root.light .border-border {
+  border-color: #E0E0E0 !important;
 }

@@ -1,14 +1,20 @@
 /**
  * Universal Module Theme Constants
- *
- * All modules should import from this file to maintain consistent theming.
- * These classes use CSS variables defined in globals.css that automatically
- * switch between light and dark mode.
+ * 
+ * DEPRECATED: This file exists for backward compatibility.
+ * Please import from '@/styles/module-theme' instead.
+ * 
+ * All modules should use the comprehensive theme system in:
+ * src/styles/module-theme.ts
  */
 
+// Re-export everything from the new theme system
+export { default, colors, components, layout, cx, variant } from '@/styles/module-theme';
+
+// Legacy exports for backward compatibility
 export const moduleTheme = {
   // Main container - use for the outermost module wrapper
-  container: 'flex flex-col h-full min-h-0',
+  container: 'flex flex-col h-full min-h-0 bg-panel-dark',
 
   // Backgrounds
   bg: {
@@ -33,13 +39,13 @@ export const moduleTheme = {
   },
 
   // Common input styling
-  input: 'bg-panel-dark border border-border rounded-xl text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary',
+  input: 'w-full px-4 py-3 bg-panel-dark border border-border rounded-xl text-text-primary placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors',
 
   // Common button styling
   button: {
-    primary: 'bg-primary hover:bg-primary/90 text-white',
-    secondary: 'bg-panel-light hover:bg-panel-medium text-text-primary',
-    ghost: 'hover:bg-panel-light text-text-secondary',
+    primary: 'px-6 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors disabled:opacity-50',
+    secondary: 'px-6 py-3 bg-panel-light hover:bg-panel-light/80 text-text-primary border border-border rounded-xl transition-colors disabled:opacity-50',
+    ghost: 'px-4 py-2 hover:bg-panel-light text-text-secondary hover:text-text-primary rounded-lg transition-colors',
   },
 
   // Panel/card styling
@@ -54,7 +60,3 @@ export const moduleTheme = {
     inactive: 'text-text-secondary hover:text-text-primary hover:bg-panel-light',
   },
 } as const;
-
-// Helper to combine theme classes with custom classes
-export const cx = (...classes: (string | undefined | false)[]) =>
-  classes.filter(Boolean).join(' ');
