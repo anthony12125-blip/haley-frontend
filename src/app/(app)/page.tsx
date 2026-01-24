@@ -44,6 +44,9 @@ import CRM from '@/components/modules/CRM';
 import Atlas from '@/components/modules/Atlas';
 import ATSResumeOptimizer from '@/components/modules/ATSResumeOptimizer';
 import Receptionist from '@/components/modules/Receptionist';
+import LegalWorkflow from '@/components/modules/LegalWorkflow';
+import FeedbackAdminDashboard from '@/components/modules/FeedbackAdminDashboard';
+import ModuleFeedbackWrapper from '@/components/ModuleFeedbackWrapper';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
 export default function ChatPage() {
@@ -1067,11 +1070,25 @@ export default function ChatPage() {
   };
 
   const handleMultiLLMSummary = async () => {
+    console.log('[MultiLLM-Summary] Starting summary generation...');
+
     // STEP 1: Hide button, show card
     setShouldShowSummarizeIcon(false);
     setShowSummaryCard(true);
     setSummaryLoading(true);
     setSummaryText('');
+
+    // STEP 1.5: Health check - verify backend is reachable
+    console.log('[MultiLLM-Summary] Checking backend health...');
+    try {
+      const status = await getSystemStatus();
+      console.log('[MultiLLM-Summary] Backend health check passed:', status);
+    } catch (healthError) {
+      console.error('[MultiLLM-Summary] ❌ Backend health check failed:', healthError);
+      setSummaryLoading(false);
+      setSummaryText('Cannot connect to backend server. Please ensure the backend is running on localhost:8080 or check NEXT_PUBLIC_BACKEND_URL in .env.local');
+      return;
+    }
 
     // STEP 2: Find the completed multi-LLM message
     const multiLLMMsg = messages.find(m =>
@@ -1080,6 +1097,7 @@ export default function ChatPage() {
     );
 
     if (!multiLLMMsg) {
+      console.warn('[MultiLLM-Summary] No completed multi-LLM message found');
       setSummaryLoading(false);
       setSummaryText('No multi-LLM responses found to summarize.');
       return;
@@ -1088,6 +1106,7 @@ export default function ChatPage() {
     // STEP 3: Collect all provider responses
     const providerResponses = multiLLMMsg.metadata?.providerResponses || {};
     const providers = multiLLMMsg.metadata?.providers || [];
+    console.log('[MultiLLM-Summary] Summarizing responses from:', providers.join(', '));
 
     const summaryPrompt = `Summarize and compare these AI responses:\n\n${
       providers.map(p => `${p.toUpperCase()}: ${providerResponses[p]}`).join('\n\n')
@@ -1097,6 +1116,7 @@ export default function ChatPage() {
     let streamingContent = '';
 
     try {
+      console.log('[MultiLLM-Summary] Sending summary request to Haley...');
       const { messageId, cleanup } = await sendMessage(
         summaryPrompt,
         'haley',
@@ -1107,17 +1127,21 @@ export default function ChatPage() {
         },
         (response) => {
           // Completion callback
+          console.log('[MultiLLM-Summary] ✅ Summary complete');
           setSummaryLoading(false);
           cleanup();
         },
         (error) => {
           // Error callback
+          console.error('[MultiLLM-Summary] ❌ Summary error:', error);
           setSummaryText(`Error generating summary: ${error}`);
           setSummaryLoading(false);
         }
       );
     } catch (error) {
-      setSummaryText(`Failed to generate summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('[MultiLLM-Summary] ❌ Failed to generate summary:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      setSummaryText(`Failed to generate summary: ${errorMsg}`);
       setSummaryLoading(false);
     }
   };
@@ -1308,21 +1332,43 @@ export default function ChatPage() {
         ) : activeModule === 'soundboard' ? (
           <SoundboardPage />
         ) : activeModule === 'homework_solver' ? (
-          <HomeworkSolver onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="homework_solver" moduleName="Homework Solver">
+            <HomeworkSolver onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'code_assist' ? (
-          <CodeAssistant onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="code_assist" moduleName="Code Assistant">
+            <CodeAssistant onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'action_item_extractor' ? (
-          <ActionItemExtractor onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="action_item_extractor" moduleName="Action Item Extractor">
+            <ActionItemExtractor onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'photo_studio' ? (
-          <PhotoStudio onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="photo_studio" moduleName="Photo Studio">
+            <PhotoStudio onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'crm' ? (
-          <CRM onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="crm" moduleName="CRM">
+            <CRM onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'atlas' ? (
-          <Atlas onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="atlas" moduleName="Atlas">
+            <Atlas onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'ats_resume_optimizer' ? (
-          <ATSResumeOptimizer onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="ats_resume_optimizer" moduleName="ATS Resume Optimizer">
+            <ATSResumeOptimizer onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'receptionist' ? (
-          <Receptionist onBack={goBack} />
+          <ModuleFeedbackWrapper moduleId="receptionist" moduleName="Receptionist">
+            <Receptionist onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'legal_workflow' ? (
+          <ModuleFeedbackWrapper moduleId="legal_workflow" moduleName="Legal Workflow">
+            <LegalWorkflow onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'feedback_admin' ? (
+          <FeedbackAdminDashboard onBack={goBack} />
         ) : null}
       </div>
 

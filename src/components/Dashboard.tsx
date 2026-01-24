@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { ArrowLeft, Search, GripVertical } from 'lucide-react';
+import { ArrowLeft, Search, GripVertical, Scale } from 'lucide-react';
 import { MODULE_REGISTRY } from '@/config/moduleRegistry';
 import { useProcess } from '@/providers/ProcessProvider';
 
@@ -263,9 +263,13 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
                         </div>
                       </div>
                     )}
-                    {/* Emoji icon */}
+                    {/* Module icon */}
                     <div className="text-5xl mb-2 select-none">
-                      {module.emoji}
+                      {module.id === 'legal_workflow' ? (
+                        <Scale size={48} className="text-amber-400" />
+                      ) : (
+                        module.emoji
+                      )}
                     </div>
                     {/* Module name */}
                     <span className="text-xs font-medium text-center leading-tight text-foreground">

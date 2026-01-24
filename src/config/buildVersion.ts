@@ -1,4 +1,7 @@
-export const BUILD_VERSION = 110;
+export const BUILD_VERSION = 113;
+// Build 113: Feedback system - FeedbackAdminDashboard, ModuleFeedbackButton, ModuleFeedbackWrapper components
+// Build 112: Legal Workflow module - case management, 6-phase delta workflow, multi-LLM verification, FOIA/subpoena generation, conflict checks
+// Build 111: LLM fixes - GPT max_tokens 4096, added XAI_API_KEY and TOGETHER_API_KEY env vars
 // Build 110: Process Management Phase 2 Complete - Tab styling (40px, rounded-t-lg), process count badge on dashboard icon, truncated tab names
 // Build 109: Tab bar UI - ProcessTabBar shows running processes, nav history stack for back button, Haley name = home button, removed long-press switcher
 // Build 108: Fix process persistence - back button now backgrounds (not kills) processes, added debug logging to all syscalls

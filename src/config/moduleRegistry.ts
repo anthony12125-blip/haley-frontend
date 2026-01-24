@@ -271,6 +271,20 @@ export const MODULE_REGISTRY: Record<string, ModuleConfig> = {
     status: 'coming',
     description: 'AI contract review and analysis',
   },
+  legal_workflow: {
+    name: 'Legal Workflow',
+    emoji: '⚖️',
+    category: 'business',
+    status: 'active',
+    description: 'Comprehensive legal case management - intake, discovery, FOIA, motions, conflict checks, multi-LLM verification',
+  },
+  feedback_admin: {
+    name: 'Feedback Admin',
+    emoji: '📊',
+    category: 'developer',
+    status: 'active',
+    description: 'Admin dashboard for reviewing user feedback, feature requests, and bug reports across all modules',
+  },
   viral_trend_tracker: {
     name: 'Viral Trend Tracker',
     emoji: '📈',

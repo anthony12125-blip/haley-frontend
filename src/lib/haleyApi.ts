@@ -60,6 +60,9 @@ export async function sendMessage(
 
     let submitResponse: Response;
 
+    console.log('[HaleyAPI] Sending message to:', BACKEND_URL + '/chat/submit');
+    console.log('[HaleyAPI] Provider:', provider, '| Message length:', message.length);
+
     try {
       // Convert files to Base64 if present
       if (files && files.length > 0) {
@@ -115,7 +118,10 @@ export async function sendMessage(
         });
       }
     } catch (fetchError) {
-      throw fetchError;
+      const errorMsg = fetchError instanceof Error ? fetchError.message : 'Unknown fetch error';
+      console.error('[HaleyAPI] ❌ Network error:', errorMsg);
+      console.error('[HaleyAPI] Backend URL was:', BACKEND_URL);
+      throw new Error(`Network error connecting to ${BACKEND_URL}: ${errorMsg}. Is the backend running?`);
     }
 
     if (!submitResponse.ok) {
@@ -191,10 +197,14 @@ export async function sendMessage(
     };
 
     eventSource.onerror = (error) => {
+      const readyState = eventSource?.readyState;
+      const readyStateDesc = readyState === 0 ? 'CONNECTING' : readyState === 1 ? 'OPEN' : readyState === 2 ? 'CLOSED' : 'UNKNOWN';
       console.error('[STREAM] ❌ EventSource error:', error);
-      console.error('[STREAM] EventSource readyState:', eventSource?.readyState);
+      console.error('[STREAM] Stream URL:', streamUrl);
+      console.error('[STREAM] EventSource readyState:', readyState, `(${readyStateDesc})`);
+      console.error('[STREAM] Backend URL:', BACKEND_URL);
       eventSource?.close();
-      onError?.(`Connection error - stream readyState: ${eventSource?.readyState}`);
+      onError?.(`Stream connection failed to ${BACKEND_URL} - readyState: ${readyStateDesc}. Is the backend running?`);
     };
 
     const cleanup = () => {
@@ -226,6 +236,10 @@ export async function sendMultiLLMMessage(
   onProviderError?: (provider: string, error: string) => void,
   files?: File[]
 ): Promise<Array<{ provider: string; messageId: string; cleanup: () => void }>> {
+  console.log('[Multi-LLM] Backend URL:', BACKEND_URL);
+  console.log('[Multi-LLM] Providers:', providers.join(', '));
+  console.log('[Multi-LLM] Message length:', message.length);
+
   const streams = await Promise.all(
     providers.map(async (provider) => {
       try {
