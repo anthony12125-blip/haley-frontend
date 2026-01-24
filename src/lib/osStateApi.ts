@@ -7,7 +7,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:808
 export interface HaleyProcess {
   pid: string;
   moduleId: string;
-  state: 'running' | 'suspended' | 'background';
+  state: 'spawning' | 'active' | 'background' | 'suspended' | 'zombie';
   context: {
     formState?: Record<string, unknown>;
     scrollPosition?: number;
@@ -16,7 +16,7 @@ export interface HaleyProcess {
   };
   spawnedAt: number;
   lastActiveAt: number;
-  priority: 'system' | 'user' | 'background';
+  priority: 'system' | 'user' | 'low';
 }
 
 export interface OSState {
