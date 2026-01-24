@@ -47,7 +47,9 @@ export async function sendMessage(
   onToken?: (token: string) => void,
   onComplete?: (response: OSOperationResponse) => void,
   onError?: (error: string) => void,
-  files?: File[]
+  files?: File[],
+  userId?: string,
+  conversationId?: string
 ): Promise<{ messageId: string; cleanup: () => void }> {
   let eventSource: EventSource | null = null;
 
@@ -98,8 +100,8 @@ export async function sendMessage(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            conversation_id: 'default',
-            user_id: 'user',
+            conversation_id: conversationId || 'default',
+            user_id: userId || 'anonymous',
             message: message,
             provider: provider,
             attachments: attachments
@@ -110,8 +112,8 @@ export async function sendMessage(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            conversation_id: 'default',
-            user_id: 'user',
+            conversation_id: conversationId || 'default',
+            user_id: userId || 'anonymous',
             message: message,
             provider: provider
           }),
@@ -268,7 +270,9 @@ export async function sendAudioMessage(
   provider?: string | null,
   onToken?: (token: string) => void,
   onComplete?: (response: OSOperationResponse) => void,
-  onError?: (error: string) => void
+  onError?: (error: string) => void,
+  userId?: string,
+  conversationId?: string
 ): Promise<{ messageId: string; transcript?: string; cleanup: () => void }> {
   let eventSource: EventSource | null = null;
 
@@ -283,8 +287,8 @@ export async function sendAudioMessage(
     const formData = new FormData();
     formData.append('audio_file', audioBlob, 'voice_message.webm');
 
-    // conversation_id and provider go in URL query params, not form body
-    const audioUrl = `${BACKEND_URL}/chat/submit/audio?conversation_id=default&provider=${provider}`;
+    // conversation_id, user_id, and provider go in URL query params, not form body
+    const audioUrl = `${BACKEND_URL}/chat/submit/audio?conversation_id=${conversationId || 'default'}&user_id=${userId || 'anonymous'}&provider=${provider}`;
 
     const submitResponse = await fetch(audioUrl, {
       method: 'POST',

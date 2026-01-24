@@ -1,4 +1,8 @@
-export const BUILD_VERSION = 113;
+export const BUILD_VERSION = 117;
+// Build 117: Fix animation on old messages - only show streaming animation for new messages with metadata.streaming=true, not bulk-loaded history
+// Build 116: Load conversation provider - when selecting a saved conversation, set activeModel from conversation's provider field
+// Build 115: Chat persistence fix - pass real userId and conversationId to backend instead of hardcoded 'user'/'default'
+// Build 114: State persistence system - OS state saved to Firestore, restored on browser refresh (open modules, nav history, conversation)
 // Build 113: Feedback system - FeedbackAdminDashboard, ModuleFeedbackButton, ModuleFeedbackWrapper components
 // Build 112: Legal Workflow module - case management, 6-phase delta workflow, multi-LLM verification, FOIA/subpoena generation, conflict checks
 // Build 111: LLM fixes - GPT max_tokens 4096, added XAI_API_KEY and TOGETHER_API_KEY env vars

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
+import { useAuth } from '@/lib/authContext';
+import { saveOSState, loadOSState, saveOSStateBeacon, OSState } from '@/lib/osStateApi';
 
 // =============================================================================
 // TYPES
@@ -74,6 +76,11 @@ interface ProcessProviderState {
 
   // Helper to get current module ID for rendering
   activeModuleId: string | null;
+
+  // State persistence
+  isHydrated: boolean;             // True when state is loaded from backend
+  currentConversationId: string | null;
+  setCurrentConversationId: (id: string | null) => void;
 }
 
 const ProcessContext = createContext<ProcessProviderState | undefined>(undefined);
@@ -118,9 +125,167 @@ function createInitialProcessTable(): ProcessTable {
   };
 }
 
+// Helper to convert Map to Object for serialization
+function processMapToObject(map: Map<string, HaleyProcess>): Record<string, HaleyProcess> {
+  const obj: Record<string, HaleyProcess> = {};
+  map.forEach((value, key) => {
+    obj[key] = value;
+  });
+  return obj;
+}
+
+// Helper to convert Object to Map for deserialization
+function objectToProcessMap(obj: Record<string, HaleyProcess>): Map<string, HaleyProcess> {
+  const map = new Map<string, HaleyProcess>();
+  Object.entries(obj).forEach(([key, value]) => {
+    map.set(key, value);
+  });
+  return map;
+}
+
 export function ProcessProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [processTable, setProcessTable] = useState<ProcessTable>(createInitialProcessTable);
   const [navHistory, setNavHistory] = useState<string[]>([SYSTEM_PIDS.CHAT]); // Stack of PIDs
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+
+  // Refs for persistence
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedStateRef = useRef<string>('');
+
+  // -------------------------------------------------------------------------
+  // STATE PERSISTENCE: Load on auth
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (!user?.uid) {
+      setIsHydrated(true); // No user, nothing to load
+      return;
+    }
+
+    const loadState = async () => {
+      try {
+        console.log('[PROCESS] 📂 Loading OS state for user:', user.uid);
+        const state = await loadOSState(user.uid);
+
+        if (state && state.processes && Object.keys(state.processes).length > 0) {
+          console.log('[PROCESS] ✅ Restoring state:', Object.keys(state.processes).length, 'processes');
+
+          // Restore process table
+          const restoredProcesses = objectToProcessMap(state.processes as Record<string, HaleyProcess>);
+
+          // Ensure chat process exists
+          if (!restoredProcesses.has(SYSTEM_PIDS.CHAT)) {
+            restoredProcesses.set(SYSTEM_PIDS.CHAT, {
+              pid: SYSTEM_PIDS.CHAT,
+              moduleId: 'chat',
+              state: 'background',
+              context: createDefaultContext(),
+              spawnedAt: Date.now(),
+              lastActiveAt: Date.now(),
+              priority: 'system',
+            });
+          }
+
+          setProcessTable({
+            processes: restoredProcesses,
+            foregroundPid: state.foregroundPid || SYSTEM_PIDS.CHAT,
+            maxProcesses: 10,
+          });
+
+          if (state.navHistory && state.navHistory.length > 0) {
+            setNavHistory(state.navHistory);
+          }
+
+          if (state.currentConversationId) {
+            setCurrentConversationId(state.currentConversationId);
+          }
+        } else {
+          console.log('[PROCESS] ℹ️ No saved state, using defaults');
+        }
+      } catch (error) {
+        console.error('[PROCESS] ❌ Failed to load state:', error);
+      } finally {
+        setIsHydrated(true);
+      }
+    };
+
+    loadState();
+  }, [user?.uid]);
+
+  // -------------------------------------------------------------------------
+  // STATE PERSISTENCE: Debounced save on changes
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (!isHydrated || !user?.uid) return;
+
+    // Build state object
+    const state: OSState = {
+      processes: processMapToObject(processTable.processes),
+      foregroundPid: processTable.foregroundPid,
+      navHistory,
+      currentConversationId,
+      activeModel: null,
+      sidebarOpen: true,
+      dashboardOpen: false,
+      moduleStates: {},
+    };
+
+    // Check if state actually changed
+    const stateString = JSON.stringify(state);
+    if (stateString === lastSavedStateRef.current) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce save by 2 seconds
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        console.log('[PROCESS] 💾 Saving OS state...');
+        await saveOSState(user.uid, state);
+        lastSavedStateRef.current = stateString;
+        console.log('[PROCESS] ✅ State saved');
+      } catch (error) {
+        console.error('[PROCESS] ❌ Failed to save state:', error);
+      }
+    }, 2000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [isHydrated, user?.uid, processTable, navHistory, currentConversationId]);
+
+  // -------------------------------------------------------------------------
+  // STATE PERSISTENCE: Save on beforeunload
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const handleBeforeUnload = () => {
+      const state: OSState = {
+        processes: processMapToObject(processTable.processes),
+        foregroundPid: processTable.foregroundPid,
+        navHistory,
+        currentConversationId,
+        activeModel: null,
+        sidebarOpen: true,
+        dashboardOpen: false,
+        moduleStates: {},
+      };
+
+      console.log('[PROCESS] 🚪 Saving state before unload...');
+      saveOSStateBeacon(user.uid, state);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [user?.uid, processTable, navHistory, currentConversationId]);
 
   // -------------------------------------------------------------------------
   // SYSCALL: spawn
@@ -566,6 +731,9 @@ export function ProcessProvider({ children }: { children: ReactNode }) {
     getForeground,
     findProcessByModule,
     activeModuleId,
+    isHydrated,
+    currentConversationId,
+    setCurrentConversationId,
   };
 
   return (

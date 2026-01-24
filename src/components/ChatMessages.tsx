@@ -93,20 +93,30 @@ export default function ChatMessages({
   }, [isLoading, scrollToBottom]);
 
   // Detect new assistant messages for streaming
+  // Only trigger for genuinely streaming messages (metadata.streaming === true)
+  // This prevents animation when loading old messages from history
   useEffect(() => {
-    if (messages.length > prevMessagesLengthRef.current) {
-      const newMessage = messages[messages.length - 1];
-      if (newMessage.role === 'assistant') {
-        console.log('🎬 STREAMING STARTED - New assistant message detected');
-        console.log('   isLoading:', isLoading);
+    const prevLength = prevMessagesLengthRef.current;
+    const currentLength = messages.length;
+
+    // Only check for streaming on single message additions (not bulk loads)
+    if (currentLength === prevLength + 1) {
+      const newMessage = messages[currentLength - 1];
+      // Only start streaming animation if the message is actively streaming
+      if (newMessage.role === 'assistant' && newMessage.metadata?.streaming === true) {
+        console.log('🎬 STREAMING STARTED - New streaming assistant message detected');
         console.log('   streamingMessageId:', newMessage.id);
         setStreamingMessageId(newMessage.id);
         // Force scroll to bottom on new assistant message
         scrollToBottom(true);
       }
+    } else if (currentLength !== prevLength) {
+      // Bulk load (loading old chat) - reset streaming state
+      setStreamingMessageId(null);
     }
-    prevMessagesLengthRef.current = messages.length;
-  }, [messages, scrollToBottom, isLoading, onStreamingComplete]);
+
+    prevMessagesLengthRef.current = currentLength;
+  }, [messages, scrollToBottom]);
 
   // Detect streaming completion by watching metadata.streaming flag
   useEffect(() => {

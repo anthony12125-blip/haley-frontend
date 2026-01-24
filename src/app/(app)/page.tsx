@@ -69,6 +69,9 @@ export default function ChatPage() {
     goHome,
     canGoBack,
     listProcesses,
+    isHydrated,
+    currentConversationId: persistedConversationId,
+    setCurrentConversationId: setPersistedConversationId,
   } = useProcess();
 
   // Get process count for dashboard badge
@@ -606,7 +609,9 @@ export default function ChatPage() {
                 )
               );
               cleanupFunctionsRef.current.delete(assistantMessageId);
-            }
+            },
+            user?.uid,
+            currentConversationId
           )
         : await sendMessage(
             textToSend,
@@ -662,7 +667,10 @@ export default function ChatPage() {
           );
         },
         // Include files in message payload
-        filesToSend
+        filesToSend,
+        // User and conversation for persistence
+        user?.uid,
+        currentConversationId
       );
 
       cleanupFunctionsRef.current.set(assistantMessageId, cleanup);
@@ -925,7 +933,10 @@ export default function ChatPage() {
               return msg;
             })
           );
-        }
+        },
+        undefined, // files
+        user?.uid,
+        currentConversationId
       );
 
       // Store cleanup function
@@ -1004,21 +1015,26 @@ export default function ChatPage() {
   const handleSelectConversation = async (id: string) => {
 
     setCurrentConversationId(id);
-    
+
     if (hasActiveNewChat) {
       setHasActiveNewChat(false);
     }
-    
+
     if (user?.uid) {
       const loadedChat = await loadConversation(user.uid, id);
+      console.log('[SELECT_CONV] Loaded conversation:', id, 'provider:', loadedChat?.provider);
       if (loadedChat && loadedChat.messages && loadedChat.messages.length > 0) {
         setMessages(loadedChat.messages);
-        setActiveModel(loadedChat.modelMode);
+        // Use provider from backend (e.g., 'claude', 'gemini', 'gpt')
+        if (loadedChat.provider) {
+          console.log('[SELECT_CONV] Setting activeModel to:', loadedChat.provider);
+          setActiveModel(loadedChat.provider);
+        }
       } else {
         initializeChat();
       }
     }
-    
+
     if (device.type !== 'desktop') {
       setSidebarOpen(false);
     }
@@ -1039,7 +1055,7 @@ export default function ChatPage() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || !isHydrated) {
     return (
       <div className="full-screen flex items-center justify-center">
         <div className="text-center">
@@ -1049,6 +1065,9 @@ export default function ChatPage() {
             <div className="typing-dot" />
             <div className="typing-dot" />
           </div>
+          {!authLoading && !isHydrated && (
+            <div className="text-sm text-zinc-500 mt-2">Restoring session...</div>
+          )}
         </div>
       </div>
     );
@@ -1136,7 +1155,10 @@ export default function ChatPage() {
           console.error('[MultiLLM-Summary] ❌ Summary error:', error);
           setSummaryText(`Error generating summary: ${error}`);
           setSummaryLoading(false);
-        }
+        },
+        undefined, // files
+        user?.uid,
+        currentConversationId
       );
     } catch (error) {
       console.error('[MultiLLM-Summary] ❌ Failed to generate summary:', error);
