@@ -46,6 +46,40 @@ import ATSResumeOptimizer from '@/components/modules/ATSResumeOptimizer';
 import Receptionist from '@/components/modules/Receptionist';
 import LegalWorkflow from '@/components/modules/LegalWorkflow';
 import FeedbackAdminDashboard from '@/components/modules/FeedbackAdminDashboard';
+import WorkflowBuilder from '@/components/modules/WorkflowBuilder';
+import WorkflowAnalytics from '@/components/modules/WorkflowAnalytics';
+import Navigator from '@/components/modules/Navigator';
+import Summarizer from '@/components/modules/Summarizer';
+import Translator from '@/components/modules/Translator';
+import VoiceCloner from '@/components/modules/VoiceCloner';
+import ImageEnhancer from '@/components/modules/ImageEnhancer';
+import ImageGenerator from '@/components/modules/ImageGenerator';
+import DocScanner from '@/components/modules/DocScanner';
+import PlantDiagnostic from '@/components/modules/PlantDiagnostic';
+import WritingAssistant from '@/components/modules/WritingAssistant';
+import AudioDubber from '@/components/modules/AudioDubber';
+import BeautyRetouch from '@/components/modules/BeautyRetouch';
+import SafetyIngredientScanner from '@/components/modules/SafetyIngredientScanner';
+import SlideDeckGenerator from '@/components/modules/SlideDeckGenerator';
+import StudyGuide from '@/components/modules/StudyGuide';
+import EmailGenerator from '@/components/modules/EmailGenerator';
+import StoryWriter from '@/components/modules/StoryWriter';
+import GrammarOverlay from '@/components/modules/GrammarOverlay';
+import MathLogicSolver from '@/components/modules/MathLogicSolver';
+import ExpenseAuditor from '@/components/modules/ExpenseAuditor';
+import CollectibleValuer from '@/components/modules/CollectibleValuer';
+import ContractAuditor from '@/components/modules/ContractAuditor';
+import SpeakingCoach from '@/components/modules/SpeakingCoach';
+import ViralTrendTracker from '@/components/modules/ViralTrendTracker';
+import NoCodeWebScraper from '@/components/modules/NoCodeWebScraper';
+import CodeSmokeTester from '@/components/modules/CodeSmokeTester';
+import FaceSwapMotion from '@/components/modules/FaceSwapMotion';
+import VideoAutoCutter from '@/components/modules/VideoAutoCutter';
+import MusicProducer from '@/components/modules/MusicProducer';
+import VisualStoryboarder from '@/components/modules/VisualStoryboarder';
+import CinematicVideoGen from '@/components/modules/CinematicVideoGen';
+import IdentityArchitect from '@/components/modules/IdentityArchitect';
+import AllInOneDesign from '@/components/modules/AllInOneDesign';
 import ModuleFeedbackWrapper from '@/components/ModuleFeedbackWrapper';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
@@ -1389,8 +1423,144 @@ export default function ChatPage() {
           <ModuleFeedbackWrapper moduleId="legal_workflow" moduleName="Legal Workflow">
             <LegalWorkflow onBack={goBack} />
           </ModuleFeedbackWrapper>
+        ) : activeModule === 'workflow_builder' ? (
+          <ModuleFeedbackWrapper moduleId="workflow_builder" moduleName="Workflow Builder">
+            <WorkflowBuilder onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'workflow_analytics' ? (
+          <ModuleFeedbackWrapper moduleId="workflow_analytics" moduleName="Workflow Analytics">
+            <WorkflowAnalytics onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'navigator' ? (
+          <ModuleFeedbackWrapper moduleId="navigator" moduleName="Navigator">
+            <Navigator onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : activeModule === 'feedback_admin' ? (
           <FeedbackAdminDashboard onBack={goBack} />
+        ) : activeModule === 'summarizer' ? (
+          <ModuleFeedbackWrapper moduleId="summarizer" moduleName="Summarizer">
+            <Summarizer onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'translator' ? (
+          <ModuleFeedbackWrapper moduleId="translator" moduleName="Translator">
+            <Translator onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'voice_cloner' ? (
+          <ModuleFeedbackWrapper moduleId="voice_cloner" moduleName="Voice Cloner">
+            <VoiceCloner onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'image_enhancer' ? (
+          <ModuleFeedbackWrapper moduleId="image_enhancer" moduleName="Image Enhancer">
+            <ImageEnhancer onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'image_gen' ? (
+          <ModuleFeedbackWrapper moduleId="image_gen" moduleName="Image Generator">
+            <ImageGenerator onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'doc_scanner' ? (
+          <ModuleFeedbackWrapper moduleId="doc_scanner" moduleName="Doc Scanner">
+            <DocScanner onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'plant_diagnostic' ? (
+          <ModuleFeedbackWrapper moduleId="plant_diagnostic" moduleName="Plant Diagnostic">
+            <PlantDiagnostic onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'writing_assist' ? (
+          <ModuleFeedbackWrapper moduleId="writing_assist" moduleName="Writing Assistant">
+            <WritingAssistant onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'audio_dubber' ? (
+          <ModuleFeedbackWrapper moduleId="audio_dubber" moduleName="Audio Dubber">
+            <AudioDubber onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'beauty_retouch' ? (
+          <ModuleFeedbackWrapper moduleId="beauty_retouch" moduleName="Beauty & Retouch">
+            <BeautyRetouch onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'safety_ingredient_scanner' ? (
+          <ModuleFeedbackWrapper moduleId="safety_ingredient_scanner" moduleName="Safety Ingredient Scanner">
+            <SafetyIngredientScanner onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'slide_deck_generator' ? (
+          <ModuleFeedbackWrapper moduleId="slide_deck_generator" moduleName="Slide Deck Generator">
+            <SlideDeckGenerator onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'study_guide' ? (
+          <ModuleFeedbackWrapper moduleId="study_guide" moduleName="Study Guide">
+            <StudyGuide onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'email_gen' ? (
+          <ModuleFeedbackWrapper moduleId="email_gen" moduleName="Email Generator">
+            <EmailGenerator onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'story_writer' ? (
+          <ModuleFeedbackWrapper moduleId="story_writer" moduleName="Story Writer">
+            <StoryWriter onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'grammar_overlay' ? (
+          <ModuleFeedbackWrapper moduleId="grammar_overlay" moduleName="Grammar Overlay">
+            <GrammarOverlay onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'math_logic_solver' ? (
+          <ModuleFeedbackWrapper moduleId="math_logic_solver" moduleName="Math Logic Solver">
+            <MathLogicSolver onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'expense_auditor' ? (
+          <ModuleFeedbackWrapper moduleId="expense_auditor" moduleName="Expense Auditor">
+            <ExpenseAuditor onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'collectible_valuer' ? (
+          <ModuleFeedbackWrapper moduleId="collectible_valuer" moduleName="Collectible Valuer">
+            <CollectibleValuer onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'contract_auditor' ? (
+          <ModuleFeedbackWrapper moduleId="contract_auditor" moduleName="Contract Auditor">
+            <ContractAuditor onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'speaking_coach' ? (
+          <ModuleFeedbackWrapper moduleId="speaking_coach" moduleName="Speaking Coach">
+            <SpeakingCoach onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'viral_trend_tracker' ? (
+          <ModuleFeedbackWrapper moduleId="viral_trend_tracker" moduleName="Viral Trend Tracker">
+            <ViralTrendTracker onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'no_code_web_scraper' ? (
+          <ModuleFeedbackWrapper moduleId="no_code_web_scraper" moduleName="No-Code Web Scraper">
+            <NoCodeWebScraper onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'code_smoke_tester' ? (
+          <ModuleFeedbackWrapper moduleId="code_smoke_tester" moduleName="Code Smoke Tester">
+            <CodeSmokeTester onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'face_swap_motion' ? (
+          <ModuleFeedbackWrapper moduleId="face_swap_motion" moduleName="Face Swap & Motion">
+            <FaceSwapMotion onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'video_auto_cutter' ? (
+          <ModuleFeedbackWrapper moduleId="video_auto_cutter" moduleName="Video Auto-Cutter">
+            <VideoAutoCutter onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'music_producer' ? (
+          <ModuleFeedbackWrapper moduleId="music_producer" moduleName="Music Producer">
+            <MusicProducer onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'visual_storyboarder' ? (
+          <ModuleFeedbackWrapper moduleId="visual_storyboarder" moduleName="Visual Storyboarder">
+            <VisualStoryboarder onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'cinematic_video_gen' ? (
+          <ModuleFeedbackWrapper moduleId="cinematic_video_gen" moduleName="Cinematic Video Gen">
+            <CinematicVideoGen onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'identity_architect' ? (
+          <ModuleFeedbackWrapper moduleId="identity_architect" moduleName="Identity Architect">
+            <IdentityArchitect onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'all_in_one_design' ? (
+          <ModuleFeedbackWrapper moduleId="all_in_one_design" moduleName="All-in-One Design">
+            <AllInOneDesign onBack={goBack} />
+          </ModuleFeedbackWrapper>
         ) : null}
       </div>
 
