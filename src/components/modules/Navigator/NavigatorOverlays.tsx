@@ -417,7 +417,7 @@ export default function NavigatorOverlays({
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
       <AnimatePresence>
         {visibleOverlays.map(overlay => {
-          const position = positions.get(overlay.id);
+          const position = positions.get(overlay.id) ?? null;
           const props: BaseOverlayProps = {
             overlay,
             position,
