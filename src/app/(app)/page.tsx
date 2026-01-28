@@ -215,6 +215,7 @@ export default function ChatPage() {
   const [audioText, setAudioText] = useState<string>('');
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const summaryCache = useRef<Record<string, string>>({});
 
   // Conversation History
   const [conversations, setConversations] = useState<ConversationHistory[]>([]);
@@ -1125,6 +1126,22 @@ export default function ChatPage() {
   const handleMultiLLMSummary = async () => {
     console.log('[MultiLLM-Summary] Starting summary generation...');
 
+    // STEP 0: Check cache - return cached summary if available
+    const multiLLMMsg = messages.find(m =>
+      m.metadata?.isMultiLLM &&
+      m.metadata?.allProvidersComplete
+    );
+    const cacheKey = multiLLMMsg?.id || currentConversationId || 'default';
+
+    if (summaryCache.current[cacheKey]) {
+      console.log('[MultiLLM-Summary] Cache hit, displaying cached summary');
+      setShouldShowSummarizeIcon(false);
+      setShowSummaryCard(true);
+      setSummaryLoading(false);
+      setSummaryText(summaryCache.current[cacheKey]);
+      return;
+    }
+
     // STEP 1: Hide button, show card
     setShouldShowSummarizeIcon(false);
     setShowSummaryCard(true);
@@ -1143,12 +1160,7 @@ export default function ChatPage() {
       return;
     }
 
-    // STEP 2: Find the completed multi-LLM message
-    const multiLLMMsg = messages.find(m =>
-      m.metadata?.isMultiLLM &&
-      m.metadata?.allProvidersComplete
-    );
-
+    // STEP 2: Find the completed multi-LLM message (already found above for cache check)
     if (!multiLLMMsg) {
       console.warn('[MultiLLM-Summary] No completed multi-LLM message found');
       setSummaryLoading(false);
@@ -1179,8 +1191,9 @@ export default function ChatPage() {
           setSummaryText(streamingContent);
         },
         (response) => {
-          // Completion callback
-          console.log('[MultiLLM-Summary] ✅ Summary complete');
+          // Completion callback - cache the result
+          console.log('[MultiLLM-Summary] ✅ Summary complete, caching result');
+          summaryCache.current[cacheKey] = streamingContent;
           setSummaryLoading(false);
           cleanup();
         },
