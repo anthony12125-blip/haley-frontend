@@ -457,7 +457,17 @@ export default function MessageBubble({
       <div className="message-content-wrapper">
         {/* Message Header */}
         <div className={`message-header ${message.role === 'assistant' ? 'haley-header' : ''}`}>
-          {message.role === 'user' ? 'You' : message.role === 'assistant' ? 'Haley' : 'System'}
+          {message.role === 'user' ? 'You' : message.role === 'assistant' ? (
+            message.metadata?.provider ? {
+              'gpt': 'GPT',
+              'claude': 'Claude',
+              'gemini': 'Gemini',
+              'llama': 'Llama',
+              'perplexity': 'Perplexity',
+              'mistral': 'Mistral',
+              'grok': 'Grok'
+            }[message.metadata.provider] || 'Haley' : 'Haley'
+          ) : 'System'}
         </div>
 
         {/* Supreme Court Indicator */}

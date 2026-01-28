@@ -43,7 +43,7 @@ export default function ArtifactsPanel({ artifacts, onClose }: ArtifactsPanelPro
 
     const badges: Record<string, { initial: string; color: string }> = {
       'gemini': { initial: 'G', color: 'bg-blue-600' },
-      'gpt': { initial: 'C', color: 'bg-green-600' },
+      'gpt': { initial: 'G', color: 'bg-green-600' },
       'claude': { initial: 'A', color: 'bg-purple-600' },
       'llama': { initial: 'L', color: 'bg-orange-600' },
       'perplexity': { initial: 'P', color: 'bg-cyan-600' },
