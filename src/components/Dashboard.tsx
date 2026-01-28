@@ -211,11 +211,11 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
       </div>
 
       {/* Module Grid */}
-      <div className="relative z-10 overflow-y-auto p-4 space-y-8" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+      <div className="relative z-10 overflow-y-auto px-6 py-4 space-y-8" style={{ maxHeight: 'calc(100vh - 160px)' }}>
         {/* Active Modules - Draggable */}
         {filteredActiveModules.length > 0 && (
-          <div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 justify-items-center">
               {filteredActiveModules.map((module) => {
                 const isDragging = draggedId === module.id;
                 const isDragOver = dragOverId === module.id;
@@ -289,11 +289,11 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
 
         {/* Coming Soon Modules - Static */}
         {filteredComingSoonModules.length > 0 && (
-          <div>
+          <div className="max-w-7xl mx-auto">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 px-1">
               Coming Soon
             </h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 justify-items-center">
               {filteredComingSoonModules.map((module) => (
                 <div
                   key={module.id}
@@ -325,7 +325,7 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
 
         {/* Empty state when no results */}
         {filteredActiveModules.length === 0 && filteredComingSoonModules.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-12 max-w-7xl mx-auto">
             <p className="text-gray-400">No modules found matching "{searchQuery}"</p>
           </div>
         )}
