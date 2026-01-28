@@ -323,11 +323,13 @@ export default function ChatPage() {
 
   // Monitor multi-LLM completion and show summarize icon
   useEffect(() => {
-    const hasCompleteMultiLLM = messages.some(msg =>
+    const completeMultiLLMMsg = messages.find(msg =>
       msg.metadata?.isMultiLLM &&
       msg.metadata?.allProvidersComplete === true
     );
-    setShouldShowSummarizeIcon(hasCompleteMultiLLM);
+    // Show the summarize button if there's a completed multi-LLM query
+    // (whether it needs generation or just toggling)
+    setShouldShowSummarizeIcon(!!completeMultiLLMMsg);
   }, [messages]);
 
   const loadConversationsFromStorage = async () => {
@@ -374,6 +376,12 @@ export default function ChatPage() {
     // VOICE INPUT: Audio blobs bypass multi-LLM mode
     // Multi-LLM Mode Check (only for text messages)
     if (!audioBlob && multiLLMEnabled && selectedModels.length > 0) {
+
+      // Clear previous artifacts and summary card for the new query
+      setArtifacts([]);
+      setShowSummaryCard(false);
+      setSummaryText('');
+      setShouldShowSummarizeIcon(false);
 
       const userMessage: Message = {
         id: generateId(),
@@ -834,11 +842,25 @@ export default function ChatPage() {
     }
 
     setAiMode('single');
+
+    // Clear multi-LLM artifacts and summary when switching to single mode
+    setArtifacts([]);
+    setShowSummaryCard(false);
+    setSummaryText('');
+    setShouldShowSummarizeIcon(false);
   };
 
   const handleMultiLLMChange = useCallback((enabled: boolean, models: string[]) => {
     setMultiLLMEnabled(enabled);
     setSelectedModels(models);
+
+    // If disabling multi-LLM, clear artifacts
+    if (!enabled) {
+      setArtifacts([]);
+      setShowSummaryCard(false);
+      setSummaryText('');
+      setShouldShowSummarizeIcon(false);
+    }
   }, []);
 
   const handleRetryMessage = (messageId: string) => {
@@ -1134,16 +1156,20 @@ export default function ChatPage() {
     const cacheKey = multiLLMMsg?.id || currentConversationId || 'default';
 
     if (summaryCache.current[cacheKey]) {
-      console.log('[MultiLLM-Summary] Cache hit, displaying cached summary');
-      setShouldShowSummarizeIcon(false);
-      setShowSummaryCard(true);
-      setSummaryLoading(false);
-      setSummaryText(summaryCache.current[cacheKey]);
+      // Toggle: if card is already visible, collapse it; otherwise expand
+      if (showSummaryCard) {
+        console.log('[MultiLLM-Summary] Toggle: collapsing cached summary');
+        setShowSummaryCard(false);
+      } else {
+        console.log('[MultiLLM-Summary] Toggle: expanding cached summary');
+        setShowSummaryCard(true);
+        setSummaryLoading(false);
+        setSummaryText(summaryCache.current[cacheKey]);
+      }
       return;
     }
 
-    // STEP 1: Hide button, show card
-    setShouldShowSummarizeIcon(false);
+    // STEP 1: Show card (keep button visible for future toggle)
     setShowSummaryCard(true);
     setSummaryLoading(true);
     setSummaryText('');
