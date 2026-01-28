@@ -1,0 +1,15 @@
+node_modules/
+.gradle/
+build/
+*.iml
+.idea/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+DerivedData/
+Pods/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+local.properties
+.DS_Store
