@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { layout, components, colors, cx } from '@/styles/module-theme';
 import { MODULE_REGISTRY } from '@/config/moduleRegistry';
+import { useAuth } from '@/lib/authContext';
 
 interface FeedbackAdminDashboardProps {
   onBack: () => void;
@@ -82,11 +83,12 @@ const SORT_OPTIONS = [
 ];
 
 export default function FeedbackAdminDashboard({ onBack }: FeedbackAdminDashboardProps) {
+  const { user } = useAuth();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [stats, setStats] = useState<GlobalStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
@@ -94,9 +96,15 @@ export default function FeedbackAdminDashboard({ onBack }: FeedbackAdminDashboar
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState('score');
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Selected feedback for detail view
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackItem | null>(null);
+
+  // Admin guard - after all hooks
+  const ADMIN_EMAIL = "anthony.guticoll82@gmail.com";
+  if (user?.email !== ADMIN_EMAIL) {
+    return <div className="p-8 text-center text-red-500 text-xl">Access denied</div>;
+  }
   
   // Fetch feedback and stats
   const fetchData = async () => {
