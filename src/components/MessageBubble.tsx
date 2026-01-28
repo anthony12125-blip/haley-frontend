@@ -466,7 +466,7 @@ export default function MessageBubble({
               'perplexity': 'Perplexity',
               'mistral': 'Mistral',
               'grok': 'Grok'
-            }[message.metadata.providers] || 'Haley' : 'Haley'
+            }[message.metadata.providers?.[0]] || 'Haley' : 'Haley'
           ) : 'System'}
         </div>
 
