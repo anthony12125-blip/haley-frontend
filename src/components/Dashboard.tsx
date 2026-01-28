@@ -171,7 +171,7 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-background animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[60] bg-background animate-in fade-in duration-200 overflow-x-hidden">
       {/* Space background with stars */}
       <div className="space-bg">
         <div className="stars" />
@@ -211,7 +211,7 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
       </div>
 
       {/* Module Grid */}
-      <div className="relative z-10 overflow-y-auto px-6 py-4 space-y-8" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+      <div className="relative z-10 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4 space-y-8 w-full max-w-full" style={{ maxHeight: 'calc(100vh - 160px)' }}>
         {/* Active Modules - Draggable */}
         {filteredActiveModules.length > 0 && (
           <div className="max-w-7xl mx-auto">
@@ -238,15 +238,15 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
                     `}
                     onClick={() => onSelectModule(module.id)}
                   >
-                    {/* Tooltip */}
+                    {/* Tooltip - hidden on mobile/touch devices */}
                     {module.description && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-[200] shadow-xl">
+                      <div className="hidden sm:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-[200] shadow-xl">
                         {module.description}
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-700" />
                       </div>
                     )}
-                    {/* Drag handle indicator */}
-                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-50 transition-opacity">
+                    {/* Drag handle indicator - hidden on mobile */}
+                    <div className="hidden sm:block absolute top-1 right-1 opacity-0 group-hover:opacity-50 transition-opacity">
                       <GripVertical size={12} className="text-gray-400" />
                     </div>
                     {/* Running process indicator dot */}
@@ -299,9 +299,9 @@ export default function Dashboard({ isOpen, onClose, onSelectModule }: Dashboard
                   key={module.id}
                   className="group relative flex flex-col items-center p-3 rounded-2xl opacity-50 cursor-not-allowed hover:z-[100]"
                 >
-                  {/* Tooltip */}
+                  {/* Tooltip - hidden on mobile/touch devices */}
                   {module.description && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-[200] shadow-xl">
+                    <div className="hidden sm:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-gray-200 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-[200] shadow-xl">
                       {module.description}
                       <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-700" />
                     </div>
