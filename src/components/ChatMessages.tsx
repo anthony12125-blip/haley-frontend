@@ -237,49 +237,24 @@ export default function ChatMessages({
 
       <div className="messages-container">
         {messages.map((message) => {
-          // Check if this is a multi-LLM message - redirect to Artifacts Panel
-          if (message.metadata?.isMultiLLM) {
-            console.log('[ChatMessages] Multi-LLM message - showing in Artifacts Panel');
-            const providers = message.metadata.providers || [];
-            const completedProviders = message.metadata.completedProviders || [];
-            const allComplete = message.metadata.allProvidersComplete || false;
+          // Check if this is a provider response message (from multi-LLM query)
+          if (message.metadata?.provider && message.role === 'assistant') {
+            const provider = message.metadata.provider as string;
+            const modelName = MODEL_NAMES[provider] || provider;
+            const isStreaming = message.metadata?.streaming === true;
+            const isComplete = message.metadata?.isComplete === true;
 
             return (
               <div key={message.id} className="mb-4">
                 <div className="max-w-3xl mx-auto px-4">
-                  <div className="text-sm text-secondary p-4">
-                    {allComplete ? (
-                      <button
-                        onClick={onMultiLLMSummary}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          width: '100%',
-                          padding: '20px',
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <FileStack size={56} strokeWidth={1.5} className="text-accent" />
-                        <span style={{ color: 'var(--accent)', fontSize: '14px', fontWeight: 500 }}>Summary</span>
-                      </button>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold mb-1">
-                            Querying {providers.length} models in parallel...
-                          </div>
-                          <div className="text-xs opacity-70">
-                            {completedProviders.length}/{providers.length} models completed
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <LLMResponseCard
+                    modelId={provider}
+                    modelName={modelName}
+                    content={message.content}
+                    isStreaming={isStreaming}
+                    isComplete={isComplete}
+                    onRetry={onRetryProvider ? () => onRetryProvider(message.id, provider) : undefined}
+                  />
                 </div>
               </div>
             );

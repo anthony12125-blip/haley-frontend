@@ -26,13 +26,18 @@ export interface MessageMetadata {
   error?: boolean; // Track if message encountered an error
   isVoiceMessage?: boolean; // Indicates this message came from voice input
   audio_url?: string; // URL to synthesized audio from Haley's voice (Eleven Labs)
-  // Multi-LLM fields
+  // Multi-LLM fields (legacy container format)
   isMultiLLM?: boolean; // Indicates this is a multi-LLM query message
   providers?: string[]; // List of provider IDs in multi-LLM query
   providerResponses?: Record<string, string>; // Provider ID to response content mapping
   completedProviders?: string[]; // List of providers that have completed
   allProvidersComplete?: boolean; // True when all providers have finished
   summaryOffered?: boolean; // True when Haley summary has been offered
+  // Per-provider message fields (new format)
+  provider?: string; // Provider ID for this specific message (gpt, claude, gemini, etc.)
+  multiLLMGroupId?: string; // Group ID linking all messages from the same multi-LLM query
+  isComplete?: boolean; // True when this provider's response is complete
+  isError?: boolean; // True if this provider response is an error
 }
 
 export interface SystemStatus {

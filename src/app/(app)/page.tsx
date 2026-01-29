@@ -322,14 +322,16 @@ export default function ChatPage() {
   }, [messages]);
 
   // Monitor multi-LLM completion and show summarize icon
+  // Monitor for completed provider response messages and show summarize icon
   useEffect(() => {
-    const completeMultiLLMMsg = messages.find(msg =>
-      msg.metadata?.isMultiLLM &&
-      msg.metadata?.allProvidersComplete === true
+    // Find all completed provider response messages
+    const completedProviderMessages = messages.filter(msg =>
+      msg.metadata?.provider &&
+      msg.role === 'assistant' &&
+      msg.metadata?.isComplete === true
     );
-    // Show the summarize button if there's a completed multi-LLM query
-    // (whether it needs generation or just toggling)
-    setShouldShowSummarizeIcon(!!completeMultiLLMMsg);
+    // Show the summarize button if there are completed provider responses
+    setShouldShowSummarizeIcon(completedProviderMessages.length > 0);
   }, [messages]);
 
   const loadConversationsFromStorage = async () => {
@@ -391,6 +393,9 @@ export default function ChatPage() {
         attachments: pendingUploads.length > 0 ? [...pendingUploads] : undefined,
       };
 
+      // Generate a unique group ID to link all provider responses together
+      const multiLLMGroupId = generateId();
+
       setMessages((prev) => [...prev, userMessage]);
       setInput('');
 
@@ -398,30 +403,31 @@ export default function ChatPage() {
         setHasActiveNewChat(false);
       }
 
-      // Create multi-LLM response container message
-      const multiLLMMessageId = generateId();
-      const multiLLMMessage: Message = {
-        id: multiLLMMessageId,
-        role: 'assistant',
+      // Create individual message IDs for each provider
+      const providerMessageIds: Record<string, string> = {};
+      selectedModels.forEach(provider => {
+        providerMessageIds[provider] = generateId();
+      });
+
+      // Create placeholder messages for each provider
+      const providerMessages: Message[] = selectedModels.map(provider => ({
+        id: providerMessageIds[provider],
+        role: 'assistant' as const,
         content: '',
         timestamp: new Date(),
         metadata: {
-          operation: 'multi-llm',
-          isMultiLLM: true,
-          providers: selectedModels,
+          provider,
+          multiLLMGroupId,
           streaming: true,
-          providerResponses: {},
-          completedProviders: [],
+          isComplete: false,
         },
-      };
+      }));
 
-      setMessages((prev) => [...prev, multiLLMMessage]);
+      setMessages((prev) => [...prev, ...providerMessages]);
 
-      // Initialize response tracking
-      const providerResponses: Record<string, string> = {};
+      // Track streaming content for each provider
       const providerStreamingContent: Record<string, string> = {};
       selectedModels.forEach(model => {
-        providerResponses[model] = '';
         providerStreamingContent[model] = '';
       });
 
@@ -432,88 +438,66 @@ export default function ChatPage() {
           textToSend,
           selectedModels,
           (provider: string, token: string) => {
-            // Update streaming content for this provider
+            // Update streaming content for this provider's message
             providerStreamingContent[provider] += token;
+            const msgId = providerMessageIds[provider];
 
             setMessages((prev) =>
               prev.map((msg) =>
-                msg.id === multiLLMMessageId
+                msg.id === msgId
                   ? {
                       ...msg,
-                      metadata: {
-                        ...msg.metadata,
-                        providerResponses: {
-                          ...msg.metadata?.providerResponses,
-                          [provider]: providerStreamingContent[provider],
-                        },
-                      },
+                      content: providerStreamingContent[provider],
                     }
                   : msg
               )
             );
           },
           (provider: string, response) => {
-            // Mark provider as completed
+            // Mark this provider's message as complete
+            const msgId = providerMessageIds[provider];
 
             setMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id === multiLLMMessageId) {
-                  const existingProviders = msg.metadata?.completedProviders || [];
-                  const completedProviders = existingProviders.includes(provider)
-                    ? existingProviders
-                    : [...existingProviders, provider];
-                  const allComplete = completedProviders.length === selectedModels.length;
-
-                  return {
-                    ...msg,
-                    metadata: {
-                      ...msg.metadata,
-                      completedProviders,
-                      streaming: !allComplete,
-                      allProvidersComplete: allComplete,
-                    },
-                  };
-                }
-                return msg;
-              })
+              prev.map((msg) =>
+                msg.id === msgId
+                  ? {
+                      ...msg,
+                      metadata: {
+                        ...msg.metadata,
+                        streaming: false,
+                        isComplete: true,
+                      },
+                    }
+                  : msg
+              )
             );
 
             // Cleanup this provider's stream
             const streamData = streams.find(s => s.provider === provider);
             if (streamData) {
               streamData.cleanup();
-              cleanupFunctionsRef.current.delete(`${multiLLMMessageId}-${provider}`);
+              cleanupFunctionsRef.current.delete(`${msgId}-${provider}`);
             }
           },
           (provider: string, error: string) => {
             console.error(`[MULTI-LLM] ${provider} error:`, error);
+            const msgId = providerMessageIds[provider];
 
             setMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id === multiLLMMessageId) {
-                  // Mark provider as completed even on error
-                  const existingProviders = msg.metadata?.completedProviders || [];
-                  const completedProviders = existingProviders.includes(provider)
-                    ? existingProviders
-                    : [...existingProviders, provider];
-                  const allComplete = completedProviders.length === selectedModels.length;
-
-                  return {
-                    ...msg,
-                    metadata: {
-                      ...msg.metadata,
-                      providerResponses: {
-                        ...msg.metadata?.providerResponses,
-                        [provider]: `Error: ${error}`,
+              prev.map((msg) =>
+                msg.id === msgId
+                  ? {
+                      ...msg,
+                      content: `Error: ${error}`,
+                      metadata: {
+                        ...msg.metadata,
+                        streaming: false,
+                        isComplete: true,
+                        isError: true,
                       },
-                      completedProviders,
-                      streaming: !allComplete,
-                      allProvidersComplete: allComplete,
-                    },
-                  };
-                }
-                return msg;
-              })
+                    }
+                  : msg
+              )
             );
           },
           // Include files in multi-LLM message payload
@@ -522,8 +506,9 @@ export default function ChatPage() {
 
         // Store cleanup functions
         streams.forEach((stream) => {
+          const msgId = providerMessageIds[stream.provider];
           cleanupFunctionsRef.current.set(
-            `${multiLLMMessageId}-${stream.provider}`,
+            `${msgId}-${stream.provider}`,
             stream.cleanup
           );
         });
@@ -534,29 +519,26 @@ export default function ChatPage() {
         }
 
       } catch (error) {
-
-        // Create error artifacts for ALL providers
+        // Create error messages for ALL providers
         const errorMessage = error instanceof Error ? error.message : 'Failed to start multi-LLM query';
-        const errorResponses: Record<string, string> = {};
-        selectedModels.forEach(model => {
-          errorResponses[model] = `Error: ${errorMessage}`;
-        });
 
         setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === multiLLMMessageId
-              ? {
-                  ...msg,
-                  metadata: {
-                    ...msg.metadata,
-                    providerResponses: errorResponses,
-                    completedProviders: selectedModels,
-                    streaming: false,
-                    allProvidersComplete: true,
-                  },
-                }
-              : msg
-          )
+          prev.map((msg) => {
+            const provider = msg.metadata?.provider;
+            if (provider && msg.metadata?.multiLLMGroupId === multiLLMGroupId) {
+              return {
+                ...msg,
+                content: `Error: ${errorMessage}`,
+                metadata: {
+                  ...msg.metadata,
+                  streaming: false,
+                  isComplete: true,
+                  isError: true,
+                },
+              };
+            }
+            return msg;
+          })
         );
       }
 
@@ -1148,12 +1130,27 @@ export default function ChatPage() {
   const handleMultiLLMSummary = async () => {
     console.log('[MultiLLM-Summary] Starting summary generation...');
 
-    // STEP 0: Check cache - return cached summary if available
-    const multiLLMMsg = messages.find(m =>
-      m.metadata?.isMultiLLM &&
-      m.metadata?.allProvidersComplete
+    // Find all provider response messages (messages with metadata.provider)
+    const providerMessages = messages.filter(m =>
+      m.metadata?.provider &&
+      m.role === 'assistant' &&
+      m.metadata?.isComplete === true
     );
-    const cacheKey = multiLLMMsg?.id || currentConversationId || 'default';
+
+    if (providerMessages.length === 0) {
+      console.warn('[MultiLLM-Summary] No completed provider responses found');
+      setSummaryLoading(false);
+      setSummaryText('No multi-LLM responses found to summarize.');
+      return;
+    }
+
+    // Use the most recent group's messages (find the latest multiLLMGroupId)
+    const latestGroupId = providerMessages[providerMessages.length - 1]?.metadata?.multiLLMGroupId;
+    const groupMessages = latestGroupId
+      ? providerMessages.filter(m => m.metadata?.multiLLMGroupId === latestGroupId)
+      : providerMessages;
+
+    const cacheKey = latestGroupId || currentConversationId || 'default';
 
     if (summaryCache.current[cacheKey]) {
       // Toggle: if card is already visible, collapse it; otherwise expand
@@ -1186,21 +1183,12 @@ export default function ChatPage() {
       return;
     }
 
-    // STEP 2: Find the completed multi-LLM message (already found above for cache check)
-    if (!multiLLMMsg) {
-      console.warn('[MultiLLM-Summary] No completed multi-LLM message found');
-      setSummaryLoading(false);
-      setSummaryText('No multi-LLM responses found to summarize.');
-      return;
-    }
-
-    // STEP 3: Collect all provider responses
-    const providerResponses = multiLLMMsg.metadata?.providerResponses || {};
-    const providers = multiLLMMsg.metadata?.providers || [];
+    // STEP 3: Collect all provider responses from individual messages
+    const providers = groupMessages.map(m => m.metadata?.provider as string);
     console.log('[MultiLLM-Summary] Summarizing responses from:', providers.join(', '));
 
     const summaryPrompt = `Summarize and compare these AI responses:\n\n${
-      providers.map(p => `${p.toUpperCase()}: ${providerResponses[p]}`).join('\n\n')
+      groupMessages.map(m => `${(m.metadata?.provider as string).toUpperCase()}: ${m.content}`).join('\n\n')
     }`;
 
     // STEP 4: Stream response into summary card (NOT main chat)
@@ -1208,7 +1196,7 @@ export default function ChatPage() {
 
     try {
       console.log('[MultiLLM-Summary] Sending summary request to Haley...');
-      const { messageId, cleanup } = await sendMessage(
+      const { cleanup } = await sendMessage(
         summaryPrompt,
         'haley',
         (token: string) => {
@@ -1216,7 +1204,7 @@ export default function ChatPage() {
           streamingContent += token;
           setSummaryText(streamingContent);
         },
-        (response) => {
+        () => {
           // Completion callback - cache the result
           console.log('[MultiLLM-Summary] ✅ Summary complete, caching result');
           summaryCache.current[cacheKey] = streamingContent;
