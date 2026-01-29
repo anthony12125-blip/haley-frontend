@@ -78,7 +78,8 @@ export async function sendMessage(
   onError?: (error: string) => void,
   files?: File[],
   userId?: string,
-  conversationId?: string
+  conversationId?: string,
+  conversationHistory?: Message[]
 ): Promise<{ messageId: string; cleanup: () => void }> {
   let eventSource: EventSource | null = null;
 
@@ -93,6 +94,15 @@ export async function sendMessage(
 
     console.log('[HaleyAPI] Sending message to:', BACKEND_URL + '/chat/submit');
     console.log('[HaleyAPI] Provider:', provider, '| Message length:', message.length);
+
+    // Filter conversation history to hide multi-LLM provider responses from Haley
+    const filteredHistory = conversationHistory
+      ? filterMessagesForContext(conversationHistory).map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp instanceof Date ? msg.timestamp.toISOString() : msg.timestamp
+        }))
+      : undefined;
 
     try {
       // Convert files to Base64 if present
@@ -133,7 +143,8 @@ export async function sendMessage(
             user_id: userId || 'anonymous',
             message: message,
             provider: provider,
-            attachments: attachments
+            attachments: attachments,
+            ...(filteredHistory && { conversation_history: filteredHistory })
           }),
         });
       } else {
@@ -144,7 +155,8 @@ export async function sendMessage(
             conversation_id: conversationId || 'default',
             user_id: userId || 'anonymous',
             message: message,
-            provider: provider
+            provider: provider,
+            ...(filteredHistory && { conversation_history: filteredHistory })
           }),
         });
       }

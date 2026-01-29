@@ -695,7 +695,9 @@ export default function ChatPage() {
         filesToSend,
         // User and conversation for persistence
         user?.uid,
-        currentConversationId
+        currentConversationId,
+        // Pass conversation history (will be filtered in haleyApi)
+        messages
       );
 
       cleanupFunctionsRef.current.set(assistantMessageId, cleanup);
