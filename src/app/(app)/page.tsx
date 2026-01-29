@@ -501,7 +501,9 @@ export default function ChatPage() {
             );
           },
           // Include files in multi-LLM message payload
-          filesToSend
+          filesToSend,
+          // Conversation history for LLM context
+          messages
         );
 
         // Store cleanup functions
@@ -977,7 +979,9 @@ export default function ChatPage() {
         },
         undefined, // files
         user?.uid,
-        currentConversationId
+        currentConversationId,
+        // Conversation history for LLM context
+        messages
       );
 
       // Store cleanup function

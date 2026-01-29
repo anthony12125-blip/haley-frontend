@@ -277,7 +277,8 @@ export async function sendMultiLLMMessage(
   onProviderToken?: (provider: string, token: string) => void,
   onProviderComplete?: (provider: string, response: OSOperationResponse) => void,
   onProviderError?: (provider: string, error: string) => void,
-  files?: File[]
+  files?: File[],
+  conversationHistory?: Message[]
 ): Promise<Array<{ provider: string; messageId: string; cleanup: () => void }>> {
   console.log('[Multi-LLM] Backend URL:', BACKEND_URL);
   console.log('[Multi-LLM] Providers:', providers.join(', '));
@@ -292,7 +293,10 @@ export async function sendMultiLLMMessage(
           (token) => onProviderToken?.(provider, token),
           (response) => onProviderComplete?.(provider, response),
           (error) => onProviderError?.(provider, error),
-          files
+          files,
+          undefined, // userId
+          undefined, // conversationId
+          conversationHistory
         );
 
         return { provider, messageId, cleanup };
