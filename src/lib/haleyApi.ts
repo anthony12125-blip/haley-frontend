@@ -1,4 +1,33 @@
+import type { Message } from '@/types';
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+
+/**
+ * Filter messages for conversation context sent to Haley
+ * Replaces multi-LLM provider response content with placeholders
+ * to prevent Haley from getting confused about who said what
+ */
+export function filterMessagesForContext(messages: Message[]): Message[] {
+  return messages.map(msg => {
+    // If this is a multi-LLM provider response, replace content with placeholder
+    if (msg.metadata?.provider && msg.role === 'assistant') {
+      const provider = msg.metadata.provider;
+      return {
+        ...msg,
+        content: `[LLM Response from ${provider.toUpperCase()} - available on request]`
+      };
+    }
+    return msg;
+  });
+}
+
+/**
+ * Get full messages without filtering (for Summary generation)
+ * Use this when user explicitly requests to see multi-LLM responses
+ */
+export function getFullMessages(messages: Message[]): Message[] {
+  return messages;
+}
 
 export interface ProcessRequest {
   intent: string;
