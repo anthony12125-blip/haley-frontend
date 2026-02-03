@@ -13,6 +13,7 @@ import theme from '@/styles/module-theme';
 import NavigatorBrowser, { NavigatorBrowserRef, Snapshot, BrowserState } from './NavigatorBrowser';
 import NavigatorOverlays, { NavigatorOverlay } from './NavigatorOverlays';
 import VMViewer from '@/components/modules/VMViewer/VMViewer';
+import NavigatorStream from './NavigatorStream';
 import {
   createVMSession, waitForSession, terminateSession,
   getUserModuleSession, type VMSession
@@ -24,6 +25,7 @@ import { useAuth } from '@/lib/authContext';
 // ============================================================================
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://logic-engine-core2-409495160162.us-central1.run.app';
+const NAVIGATOR_SERVICE_URL = process.env.NEXT_PUBLIC_NAVIGATOR_URL || 'https://navigator-service-409495160162.us-central1.run.app';
 
 // ============================================================================
 // TYPES
@@ -968,6 +970,9 @@ export default function Navigator({ onBack }: NavigatorProps) {
   const [vmLoading, setVmLoading] = useState(false);
   const [vmError, setVmError] = useState<string | null>(null);
 
+  // Browser mode: 'vm' uses VMViewer, 'haley_drives' uses NavigatorStream
+  const [browserMode, setBrowserMode] = useState<'vm' | 'haley_drives'>('haley_drives');
+
   // Browser state
   const browserRef = useRef<NavigatorBrowserRef>(null);
   const [browserState, setBrowserState] = useState<BrowserState | null>(null);
@@ -1416,7 +1421,7 @@ export default function Navigator({ onBack }: NavigatorProps) {
         {/* Browser content area with overlays */}
         <div className="flex-1 relative overflow-hidden">
           {vmLoading ? (
-            /* VM session is being created — show loading state */
+            /* Session is being created — show loading state */
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
               <div className="text-center">
@@ -1424,9 +1429,34 @@ export default function Navigator({ onBack }: NavigatorProps) {
                 <p className="text-sm text-text-secondary mt-1">This may take up to a minute</p>
               </div>
             </div>
+          ) : browserMode === 'haley_drives' && vmSession?.stream_url ? (
+            /* Haley Drives mode — NavigatorStream with Playwright backend */
+            (() => {
+              const url = new URL(vmSession.stream_url!);
+              const token = url.searchParams.get('token') || vmSession.stream_token || '';
+              url.searchParams.delete('token');
+              const baseStreamUrl = url.toString();
+              const overlayWsUrl = baseStreamUrl.replace(/\/ws\/stream\//, '/api/navigator/session/').replace(/\?.*$/, '/overlay');
+              return (
+                <NavigatorStream
+                  sessionId={vmSession.session_id}
+                  streamUrl={baseStreamUrl}
+                  streamToken={token}
+                  overlayWsUrl={overlayWsUrl}
+                  initialMode="haley_drives"
+                  onModeChange={(mode) => console.log('[Navigator] Mode changed:', mode)}
+                  onDisconnect={() => setVmSession(null)}
+                  onError={(err) => {
+                    console.error('[Navigator] Stream error:', err);
+                    setVmError(String(err));
+                    setVmSession(null);
+                  }}
+                  className="w-full h-full"
+                />
+              );
+            })()
           ) : vmSession?.stream_url ? (
-            /* VM session is ready — render WebRTC VMViewer.
-               Backend embeds token in stream_url as ?token=..., so parse it out. */
+            /* VM mode — VMViewer with WebRTC/canvas frames */
             (() => {
               const url = new URL(vmSession.stream_url!);
               const token = url.searchParams.get('token') || vmSession.stream_token || '';
@@ -1448,31 +1478,23 @@ export default function Navigator({ onBack }: NavigatorProps) {
               );
             })()
           ) : vmError ? (
-            /* VM failed — show error with fallback to iframe */
-            <div className="flex flex-col h-full">
-              <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                <p className="text-xs text-amber-500">
-                  VM browser unavailable ({vmError}). Using embedded browser — some sites may not load.
-                </p>
-              </div>
-              <div className="flex-1 relative">
-                <NavigatorBrowser
-                  ref={browserRef}
-                  snapshotInterval={settings.snapshotInterval}
-                  onSnapshot={handleSnapshot}
-                  onStateChange={setBrowserState}
-                />
+            /* VM failed — show error message */
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <AlertCircle className="w-10 h-10 text-amber-500" />
+              <div className="text-center">
+                <p className="text-text-primary font-medium">Browser session unavailable</p>
+                <p className="text-sm text-text-secondary mt-1">{vmError}</p>
               </div>
             </div>
           ) : (
-            /* No VM session — fallback to iframe NavigatorBrowser */
-            <NavigatorBrowser
-              ref={browserRef}
-              snapshotInterval={settings.snapshotInterval}
-              onSnapshot={handleSnapshot}
-              onStateChange={setBrowserState}
-            />
+            /* No session yet — prompt to start */
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <Globe className="w-10 h-10 text-text-secondary" />
+              <div className="text-center">
+                <p className="text-text-primary font-medium">Ready to browse</p>
+                <p className="text-sm text-text-secondary mt-1">Tell Haley what you need or start a browser session</p>
+              </div>
+            </div>
           )}
 
           {/* Overlays layer — only when using iframe browser */}
