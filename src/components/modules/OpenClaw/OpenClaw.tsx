@@ -71,12 +71,12 @@ const CHANNEL_DEFAULTS: Omit<ChannelConfig, 'connected' | 'webhookUrl' | 'connec
     name: 'WhatsApp',
     icon: <Smartphone size={24} />,
     color: 'text-emerald-400',
-    description: 'Connect WhatsApp Business via OpenClaw gateway.',
+    description: 'Connect your WhatsApp via QR code.',
     setupSteps: [
-      'Set up OpenClaw gateway locally',
-      'Scan the QR code with WhatsApp',
-      'Messages route through the gateway to Haley',
-      'Requires OpenClaw running on your device',
+      'Click Connect below to generate a QR code',
+      'Open WhatsApp on your phone → Linked Devices → Link a Device',
+      'Scan the QR code shown here',
+      'Messages to the linked number will route through Haley',
     ],
   },
 ];
