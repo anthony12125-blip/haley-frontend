@@ -30,6 +30,22 @@ interface NavigatorProps {
 type NavigatorMode = 'setup' | 'active' | 'browser';
 type SetupStep = 'domain' | 'complexity' | 'data-needs' | 'data-sources' | 'state-schema' | 'triggers' | 'review';
 
+// Default Haley expert — used when launching browser directly without setup wizard
+const HALEY_DEFAULT_EXPERT: DomainExpert = {
+  id: 'haley_default',
+  name: 'Haley',
+  description: 'Haley controls the browser for you. Just tell her what you need.',
+  domain: 'General Web Browsing',
+  complexityTriggers: [],
+  dataNeeds: [],
+  dataSources: [],
+  stateSchema: { type: 'software', fields: [] },
+  proactiveTriggers: [],
+  modes: [],
+  createdAt: 0,
+  updatedAt: 0,
+};
+
 interface DomainExpert {
   id: string;
   name: string;
@@ -1160,6 +1176,12 @@ export default function Navigator({ onBack }: NavigatorProps) {
     </div>
   );
 
+  // Launch browser directly with Haley as controller (no setup wizard)
+  const handleLaunchBrowser = async () => {
+    setActiveExpert(HALEY_DEFAULT_EXPERT);
+    setMode('active');
+  };
+
   // Expert selection / management view
   if (mode === 'setup' && !isCreating) {
     return (
@@ -1175,7 +1197,7 @@ export default function Navigator({ onBack }: NavigatorProps) {
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-text-primary">Navigator</h1>
-                <p className="text-xs text-text-secondary">Domain Expert System</p>
+                <p className="text-xs text-text-secondary">AI-Powered Web Browser</p>
               </div>
             </div>
           </div>
@@ -1183,56 +1205,66 @@ export default function Navigator({ onBack }: NavigatorProps) {
             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-panel-light rounded-lg">
               <Settings className="w-5 h-5 text-text-secondary" />
             </button>
-            <button onClick={() => setIsCreating(true)} className={theme.button.primary}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Domain Expert
-            </button>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {experts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <div className="w-20 h-20 rounded-2xl bg-panel-medium flex items-center justify-center mb-4">
-                <Compass className="w-10 h-10 text-text-secondary" />
+          {/* Launch Browser CTA — primary action */}
+          <div className="max-w-2xl mx-auto mb-10">
+            <div className="p-8 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-2xl border border-primary/20 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-4">
+                <Globe className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-lg font-medium text-text-primary mb-2">No Domain Experts Yet</h2>
-              <p className="text-text-secondary max-w-md mb-6">
-                Create a Domain Expert to get real-time guidance when complexity overwhelms you.
+              <h2 className="text-xl font-semibold text-text-primary mb-2">Launch Browser</h2>
+              <p className="text-text-secondary max-w-md mx-auto mb-6">
+                Open a browser session controlled by Haley. Use voice or text to tell her what to do — book flights, order items, fill forms, browse the web.
               </p>
-              <button onClick={() => setIsCreating(true)} className={theme.button.primary}>
-                Create Your First Domain Expert
+              <button
+                onClick={handleLaunchBrowser}
+                className="inline-flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors text-lg"
+              >
+                <Globe className="w-5 h-5" />
+                Launch Browser
               </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {experts.map(expert => (
-                <div key={expert.id} className="p-4 bg-panel-medium rounded-xl border border-border hover:border-primary/50 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-medium text-text-primary">{expert.name}</h3>
-                      <p className="text-sm text-text-secondary">{expert.domain}</p>
+          </div>
+
+          {/* Domain Experts section — secondary */}
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-text-secondary uppercase tracking-wider">Domain Experts</h3>
+              <button onClick={() => setIsCreating(true)} className="flex items-center gap-1 text-sm text-primary hover:text-primary/80">
+                <Plus className="w-4 h-4" /> New Expert
+              </button>
+            </div>
+            {experts.length === 0 ? (
+              <div className="p-6 bg-panel-medium rounded-xl border border-border text-center">
+                <p className="text-sm text-text-secondary">
+                  Optionally create Domain Experts for specialized guidance in specific applications.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {experts.map(expert => (
+                  <div key={expert.id} className="p-4 bg-panel-medium rounded-xl border border-border hover:border-primary/50 transition-colors">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-medium text-text-primary">{expert.name}</h3>
+                        <p className="text-sm text-text-secondary">{expert.domain}</p>
+                      </div>
+                      <button onClick={() => handleDeleteExpert(expert.id)} className="p-1 text-text-secondary hover:text-red-400">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button onClick={() => handleDeleteExpert(expert.id)} className="p-1 text-text-secondary hover:text-red-400">
-                      <Trash2 className="w-4 h-4" />
+                    <p className="text-sm text-text-secondary mb-4 line-clamp-2">{expert.description}</p>
+                    <button onClick={() => handleActivateExpert(expert)} className="w-full py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors">
+                      Activate
                     </button>
                   </div>
-                  <p className="text-sm text-text-secondary mb-4 line-clamp-2">{expert.description}</p>
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs px-2 py-1 bg-panel-light rounded-full text-text-secondary">
-                      {expert.modes.length} modes
-                    </span>
-                    <span className="text-xs px-2 py-1 bg-panel-light rounded-full text-text-secondary">
-                      {expert.proactiveTriggers.length} triggers
-                    </span>
-                  </div>
-                  <button onClick={() => handleActivateExpert(expert)} className="w-full py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors">
-                    Activate
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {showSettings && <SettingsModal />}
@@ -1251,10 +1283,12 @@ export default function Navigator({ onBack }: NavigatorProps) {
 
   // Active expert mode with browser
   if (mode === 'active' && activeExpert) {
+    const isHaleyDefault = activeExpert.id === 'haley_default';
+
     return (
       <div className={theme.layout.module}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-border">
           <div className="flex items-center gap-4">
             <button
               onClick={() => { setActiveExpert(null); setMode('setup'); setOverlays([]); }}
@@ -1263,11 +1297,28 @@ export default function Navigator({ onBack }: NavigatorProps) {
               <ArrowLeft className="w-5 h-5 text-text-secondary" />
             </button>
             <div>
-              <h1 className="text-lg font-semibold text-text-primary">{activeExpert.name}</h1>
-              <p className="text-xs text-text-secondary">Navigator Active</p>
+              <h1 className="text-lg font-semibold text-text-primary">
+                {isHaleyDefault ? 'Haley Browser' : activeExpert.name}
+              </h1>
+              <p className="text-xs text-text-secondary">
+                {isHaleyDefault ? 'Tell Haley what you need' : 'Navigator Active'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Inline voice command button in header */}
+            <button
+              onClick={handleVoiceToggle}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                isListening
+                  ? 'bg-red-500/20 text-red-400 animate-pulse'
+                  : 'bg-panel-light text-text-secondary hover:text-text-primary hover:bg-panel-light/80'
+              }`}
+              title={isListening ? 'Stop listening' : 'Voice command'}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              {isListening ? 'Listening...' : 'Voice'}
+            </button>
             <span className="flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
               Active
@@ -1298,25 +1349,67 @@ export default function Navigator({ onBack }: NavigatorProps) {
               }}
             />
           )}
+
+          {/* Persistent mic button floating over browser (bottom-right) */}
+          <div className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-3">
+            {/* Quick text input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const input = (e.target as HTMLFormElement).elements.namedItem('browserCommand') as HTMLInputElement;
+                if (input.value.trim() && !isLoading) {
+                  handleSendMessage(input.value.trim());
+                  input.value = '';
+                }
+              }}
+              className="flex items-center gap-2 bg-panel-dark/90 backdrop-blur-sm border border-border rounded-full px-4 py-2 shadow-lg"
+            >
+              <input
+                name="browserCommand"
+                type="text"
+                placeholder={isHaleyDefault ? 'Tell Haley what to do...' : 'Ask Navigator...'}
+                className="bg-transparent text-sm text-text-primary placeholder:text-text-secondary/50 focus:outline-none w-64"
+                disabled={isLoading}
+              />
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleVoiceToggle}
+                  className={`p-2 rounded-full transition-colors ${
+                    isListening
+                      ? 'bg-red-500 text-white animate-pulse'
+                      : 'bg-primary/20 text-primary hover:bg-primary/30'
+                  }`}
+                  title={isListening ? 'Stop' : 'Speak'}
+                >
+                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+              )}
+            </form>
+          </div>
         </div>
 
-        {/* Floating Navigator Window */}
-        <FloatingWindow
-          expert={activeExpert}
-          currentTask={currentTask}
-          nextStep={nextStep}
-          nextStepTarget={nextStepTarget}
-          onClose={() => { setActiveExpert(null); setMode('setup'); setOverlays([]); }}
-          onVoiceToggle={handleVoiceToggle}
-          isListening={isListening}
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          position={windowPosition}
-          onPositionChange={setWindowPosition}
-          isExpanded={isExpanded}
-          onExpandToggle={() => setIsExpanded(!isExpanded)}
-          browserRef={browserRef}
-        />
+        {/* Floating Navigator Window — only for Domain Experts, not for Haley default */}
+        {!isHaleyDefault && (
+          <FloatingWindow
+            expert={activeExpert}
+            currentTask={currentTask}
+            nextStep={nextStep}
+            nextStepTarget={nextStepTarget}
+            onClose={() => { setActiveExpert(null); setMode('setup'); setOverlays([]); }}
+            onVoiceToggle={handleVoiceToggle}
+            isListening={isListening}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            position={windowPosition}
+            onPositionChange={setWindowPosition}
+            isExpanded={isExpanded}
+            onExpandToggle={() => setIsExpanded(!isExpanded)}
+            browserRef={browserRef}
+          />
+        )}
 
         {/* Proactive Alerts */}
         <AnimatePresence>
