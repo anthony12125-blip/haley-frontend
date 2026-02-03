@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { fetchUsageHistory } from '@/lib/haleyApi';
 import {
-  ArrowLeft, Loader2, Radio, MessageCircle, Hash,
+  Loader2, Radio, MessageCircle, Hash,
   Send as SendIcon, Smartphone, RefreshCw
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 interface ActivityRecord {
   id: string;
@@ -36,7 +35,6 @@ function getChannelFromEndpoint(endpoint?: string): string | null {
 
 export default function OpenClawActivityPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [activity, setActivity] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -97,9 +95,6 @@ export default function OpenClawActivityPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <button onClick={() => router.push('/openclaw')} className="p-2 rounded-lg hover:bg-panel-light transition-colors">
-            <ArrowLeft size={20} />
-          </button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Radio size={28} className="text-primary" /> Channel Activity

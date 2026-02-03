@@ -3,12 +3,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { getDb } from '@/lib/firebaseClient';
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 import { fetchOpenClawHealth, BACKEND_URL } from '@/lib/haleyApi';
 import {
-  Loader2, Check, X, ExternalLink, Plug, Unplug,
+  Loader2, Check, X, Plug, Unplug,
   MessageCircle, Hash, Radio, Send as SendIcon, Smartphone
 } from 'lucide-react';
+
+interface OpenClawProps {
+  onBack: () => void;
+}
 
 interface ChannelConfig {
   id: string;
@@ -77,14 +81,13 @@ const CHANNEL_DEFAULTS: Omit<ChannelConfig, 'connected' | 'webhookUrl' | 'connec
   },
 ];
 
-export default function OpenClawPage() {
+export default function OpenClaw({ onBack }: OpenClawProps) {
   const { user } = useAuth();
   const [channels, setChannels] = useState<ChannelConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [bridgeHealthy, setBridgeHealthy] = useState<boolean | null>(null);
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [showSetup, setShowSetup] = useState<string | null>(null);
-  const [webhookInput, setWebhookInput] = useState('');
 
   const userId = user?.uid || '';
 
@@ -108,7 +111,7 @@ export default function OpenClawPage() {
         }))
       );
     } catch (err) {
-      console.error('[OpenClaw] Load channels error:', err);
+      console.error('[OpenClaw Module] Load channels error:', err);
       setChannels(CHANNEL_DEFAULTS.map((ch) => ({ ...ch, connected: false })));
     }
   }, [userId]);
@@ -142,7 +145,7 @@ export default function OpenClawPage() {
       await loadChannels();
       setShowSetup(null);
     } catch (err) {
-      console.error('[OpenClaw] Connect error:', err);
+      console.error('[OpenClaw Module] Connect error:', err);
     } finally {
       setConnectingId(null);
     }
@@ -156,7 +159,7 @@ export default function OpenClawPage() {
       await deleteDoc(doc(db, `users/${userId}/openclaw_channels`, channelId));
       await loadChannels();
     } catch (err) {
-      console.error('[OpenClaw] Disconnect error:', err);
+      console.error('[OpenClaw Module] Disconnect error:', err);
     } finally {
       setConnectingId(null);
     }
@@ -242,14 +245,12 @@ export default function OpenClawPage() {
                     Disconnect
                   </button>
                 ) : (
-                  <>
-                    <button
-                      onClick={() => setShowSetup(showSetup === ch.id ? null : ch.id)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors text-sm"
-                    >
-                      <Plug size={14} /> Connect
-                    </button>
-                  </>
+                  <button
+                    onClick={() => setShowSetup(showSetup === ch.id ? null : ch.id)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors text-sm"
+                  >
+                    <Plug size={14} /> Connect
+                  </button>
                 )}
               </div>
 

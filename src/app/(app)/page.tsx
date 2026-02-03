@@ -80,6 +80,7 @@ import VisualStoryboarder from '@/components/modules/VisualStoryboarder';
 import CinematicVideoGen from '@/components/modules/CinematicVideoGen';
 import IdentityArchitect from '@/components/modules/IdentityArchitect';
 import AllInOneDesign from '@/components/modules/AllInOneDesign';
+import OpenClaw from '@/components/modules/OpenClaw';
 import ModuleFeedbackWrapper from '@/components/ModuleFeedbackWrapper';
 import type { Message, AIMode, SystemStatus, MagicWindowContent, ConversationHistory, Artifact } from '@/types';
 
@@ -1593,6 +1594,10 @@ export default function ChatPage() {
         ) : activeModule === 'all_in_one_design' ? (
           <ModuleFeedbackWrapper moduleId="all_in_one_design" moduleName="All-in-One Design">
             <AllInOneDesign onBack={goBack} />
+          </ModuleFeedbackWrapper>
+        ) : activeModule === 'openclaw' ? (
+          <ModuleFeedbackWrapper moduleId="openclaw" moduleName="OpenClaw">
+            <OpenClaw onBack={goBack} />
           </ModuleFeedbackWrapper>
         ) : null}
       </div>

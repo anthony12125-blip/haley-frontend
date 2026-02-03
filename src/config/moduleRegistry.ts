@@ -77,6 +77,9 @@ export const MODULE_REGISTRY: Record<string, ModuleConfig> = {
   code_smoke_tester: { name: 'Code Smoke Tester', emoji: '🔥', category: 'developer', status: 'active', description: 'Quick automated code testing' },
   math_logic_solver: { name: 'Math Logic Solver', emoji: '🧮', category: 'education', status: 'active', description: 'Advanced math and logic solving' },
   identity_architect: { name: 'Identity Architect', emoji: '🪪', category: 'creative', status: 'active', description: 'Brand identity asset generation' },
+
+  // Integrations
+  openclaw: { name: 'OpenClaw', emoji: '📡', category: 'business', status: 'active', description: 'Multi-platform messaging gateway — Telegram, Discord, Slack, WhatsApp' },
 };
 
 export interface CategoryConfig {

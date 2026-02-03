@@ -6,8 +6,8 @@ import { getDb } from '@/lib/firebaseClient';
 import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { BACKEND_URL } from '@/lib/haleyApi';
 import {
-  ArrowLeft, Loader2, Settings, Copy, Check, Trash2,
-  ExternalLink, AlertTriangle, Link2
+  Loader2, Settings, Copy, Check, Trash2,
+  AlertTriangle, Link2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -92,9 +92,6 @@ export default function OpenClawSettingsPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <button onClick={() => router.push('/openclaw')} className="p-2 rounded-lg hover:bg-panel-light transition-colors">
-            <ArrowLeft size={20} />
-          </button>
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Settings size={28} className="text-primary" /> Channel Settings
