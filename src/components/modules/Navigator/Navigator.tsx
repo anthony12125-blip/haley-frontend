@@ -1424,20 +1424,29 @@ export default function Navigator({ onBack }: NavigatorProps) {
                 <p className="text-sm text-text-secondary mt-1">This may take up to a minute</p>
               </div>
             </div>
-          ) : vmSession?.stream_url && vmSession.stream_token ? (
-            /* VM session is ready — render WebRTC VMViewer */
-            <VMViewer
-              sessionId={vmSession.session_id}
-              streamUrl={vmSession.stream_url}
-              streamToken={vmSession.stream_token}
-              onDisconnect={() => setVmSession(null)}
-              onError={(err) => {
-                console.error('[Navigator] VM error:', err);
-                setVmError(String(err));
-                setVmSession(null);
-              }}
-              className="w-full h-full"
-            />
+          ) : vmSession?.stream_url ? (
+            /* VM session is ready — render WebRTC VMViewer.
+               Backend embeds token in stream_url as ?token=..., so parse it out. */
+            (() => {
+              const url = new URL(vmSession.stream_url!);
+              const token = url.searchParams.get('token') || vmSession.stream_token || '';
+              url.searchParams.delete('token');
+              const baseStreamUrl = url.toString();
+              return (
+                <VMViewer
+                  sessionId={vmSession.session_id}
+                  streamUrl={baseStreamUrl}
+                  streamToken={token}
+                  onDisconnect={() => setVmSession(null)}
+                  onError={(err) => {
+                    console.error('[Navigator] VM error:', err);
+                    setVmError(String(err));
+                    setVmSession(null);
+                  }}
+                  className="w-full h-full"
+                />
+              );
+            })()
           ) : vmError ? (
             /* VM failed — show error with fallback to iframe */
             <div className="flex flex-col h-full">
