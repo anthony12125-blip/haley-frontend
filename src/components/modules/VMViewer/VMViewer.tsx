@@ -225,6 +225,25 @@ export default function VMViewer({
               }
               break;
 
+            case 'fallback': {
+              // Backend tried Janus WebRTC but it's unavailable — switch to canvas frames
+              const fallbackMode = data.payload?.mode || 'canvas_frames';
+              console.log('[VMViewer] Falling back to:', fallbackMode);
+
+              // Tear down the WebRTC peer connection
+              if (pcRef.current) {
+                pcRef.current.close();
+                pcRef.current = null;
+              }
+              if (dataChannelRef.current) {
+                dataChannelRef.current = null;
+              }
+
+              setStreamMode(fallbackMode);
+              setConnectionState('connected');
+              break;
+            }
+
             case 'error':
               setErrorMessage(data.payload.error);
               setConnectionState('error');
