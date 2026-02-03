@@ -4,6 +4,7 @@ import { ReactNode, useMemo } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 import LoginPage from '@/components/LoginPage';
+import LowBalanceBanner from '@/components/LowBalanceBanner';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
@@ -37,6 +38,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div key={i} className="shooting-star" style={{ top: pos.top, right: pos.right, animationDelay: pos.delay }} />
         ))}
       </div>
+      <LowBalanceBanner />
       {children}
     </div>
   );

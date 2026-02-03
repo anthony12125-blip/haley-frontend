@@ -506,4 +506,68 @@ export async function deleteConversation(userId: string, conversationId: string)
   }
 }
 
+// ============================================================================
+// BILLING API
+// ============================================================================
+
+export async function fetchBalance(userId: string) {
+  const response = await fetch(`${BACKEND_URL}/billing/balance/${userId}`);
+  if (!response.ok) throw new Error('Failed to fetch balance');
+  return response.json();
+}
+
+export async function fetchUsageHistory(
+  userId: string,
+  startDate?: string,
+  endDate?: string,
+  limit: number = 100
+) {
+  const params = new URLSearchParams();
+  if (startDate) params.set('start_date', startDate);
+  if (endDate) params.set('end_date', endDate);
+  params.set('limit', String(limit));
+
+  const response = await fetch(`${BACKEND_URL}/billing/usage/${userId}?${params}`);
+  if (!response.ok) throw new Error('Failed to fetch usage history');
+  return response.json();
+}
+
+export async function createCheckout(userId: string, userEmail: string, packageId: string) {
+  const response = await fetch(`${BACKEND_URL}/billing/checkout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: userId, user_email: userEmail, package_id: packageId }),
+  });
+  if (!response.ok) throw new Error('Checkout failed');
+  return response.json();
+}
+
+export async function fetchPricing() {
+  const response = await fetch(`${BACKEND_URL}/billing/pricing`);
+  if (!response.ok) throw new Error('Failed to fetch pricing');
+  return response.json();
+}
+
+// ============================================================================
+// ADMIN API
+// ============================================================================
+
+export async function fetchAdminUsers() {
+  const response = await fetch(`${BACKEND_URL}/admin/users`);
+  if (!response.ok) throw new Error('Failed to fetch admin users');
+  return response.json();
+}
+
+export async function fetchAdminStats() {
+  const response = await fetch(`${BACKEND_URL}/admin/stats`);
+  if (!response.ok) throw new Error('Failed to fetch admin stats');
+  return response.json();
+}
+
+export async function fetchAdminUserDetail(userId: string) {
+  const response = await fetch(`${BACKEND_URL}/admin/user/${userId}`);
+  if (!response.ok) throw new Error('Failed to fetch user detail');
+  return response.json();
+}
+
 export { BACKEND_URL };
