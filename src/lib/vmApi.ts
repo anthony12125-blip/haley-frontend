@@ -3,7 +3,7 @@
  * Frontend API client for VM infrastructure
  */
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080';
+const NAVIGATOR_URL = process.env.NEXT_PUBLIC_NAVIGATOR_URL || 'https://navigator-service-409495160162.us-central1.run.app';
 
 // ==================== Types ====================
 
@@ -73,7 +73,7 @@ export interface GuidanceState {
  * Create a new VM session
  */
 export async function createVMSession(request: CreateSessionRequest): Promise<VMSession> {
-  const response = await fetch(`${BACKEND_URL}/vm/sessions`, {
+  const response = await fetch(`${NAVIGATOR_URL}/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request)
@@ -91,7 +91,7 @@ export async function createVMSession(request: CreateSessionRequest): Promise<VM
  * Get session status
  */
 export async function getVMSession(sessionId: string): Promise<VMSession> {
-  const response = await fetch(`${BACKEND_URL}/vm/sessions/${sessionId}`);
+  const response = await fetch(`${NAVIGATOR_URL}/sessions/${sessionId}`);
   
   if (!response.ok) {
     const error = await response.json();
@@ -136,7 +136,7 @@ export async function getUserModuleSession(
   moduleId: string
 ): Promise<VMSession | null> {
   const response = await fetch(
-    `${BACKEND_URL}/vm/sessions/user/${userId}/module/${moduleId}`
+    `${NAVIGATOR_URL}/sessions/user/${userId}/module/${moduleId}`
   );
   
   if (!response.ok) {
@@ -151,7 +151,7 @@ export async function getUserModuleSession(
  * List all user sessions
  */
 export async function listUserSessions(userId: string): Promise<VMSession[]> {
-  const response = await fetch(`${BACKEND_URL}/vm/sessions/user/${userId}`);
+  const response = await fetch(`${NAVIGATOR_URL}/sessions/user/${userId}`);
   
   if (!response.ok) {
     return [];
@@ -169,7 +169,7 @@ export async function terminateSession(
   reason: string = 'user_request'
 ): Promise<void> {
   const response = await fetch(
-    `${BACKEND_URL}/vm/sessions/${sessionId}?reason=${reason}`,
+    `${NAVIGATOR_URL}/sessions/${sessionId}?reason=${reason}`,
     { method: 'DELETE' }
   );
   
@@ -183,7 +183,7 @@ export async function terminateSession(
  * Send heartbeat to keep session alive
  */
 export async function sendHeartbeat(sessionId: string): Promise<void> {
-  await fetch(`${BACKEND_URL}/vm/sessions/${sessionId}/activity`, {
+  await fetch(`${NAVIGATOR_URL}/sessions/${sessionId}/activity`, {
     method: 'POST'
   });
 }
@@ -192,7 +192,7 @@ export async function sendHeartbeat(sessionId: string): Promise<void> {
  * List available VM templates
  */
 export async function listTemplates(): Promise<VMTemplate[]> {
-  const response = await fetch(`${BACKEND_URL}/vm/templates`);
+  const response = await fetch(`${NAVIGATOR_URL}/templates`);
   
   if (!response.ok) {
     return [];
@@ -217,7 +217,7 @@ export async function startNavigator(
   if (goal) params.append('goal', goal);
   
   const response = await fetch(
-    `${BACKEND_URL}/vm/sessions/${sessionId}/navigator/start?${params}`,
+    `${NAVIGATOR_URL}/sessions/${sessionId}/navigator/start?${params}`,
     { method: 'POST' }
   );
   
@@ -231,7 +231,7 @@ export async function startNavigator(
  * Stop Navigator guidance
  */
 export async function stopNavigator(sessionId: string): Promise<void> {
-  await fetch(`${BACKEND_URL}/vm/sessions/${sessionId}/navigator/stop`, {
+  await fetch(`${NAVIGATOR_URL}/sessions/${sessionId}/navigator/stop`, {
     method: 'POST'
   });
 }
@@ -244,7 +244,7 @@ export async function setNavigatorGoal(
   goal: string
 ): Promise<GuidanceState> {
   const response = await fetch(
-    `${BACKEND_URL}/vm/sessions/${sessionId}/navigator/goal`,
+    `${NAVIGATOR_URL}/sessions/${sessionId}/navigator/goal`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -265,7 +265,7 @@ export async function setNavigatorGoal(
  */
 export async function getGuidance(sessionId: string): Promise<GuidanceState> {
   const response = await fetch(
-    `${BACKEND_URL}/vm/sessions/${sessionId}/navigator/guidance`
+    `${NAVIGATOR_URL}/sessions/${sessionId}/navigator/guidance`
   );
   
   if (!response.ok) {
@@ -281,7 +281,7 @@ export async function getGuidance(sessionId: string): Promise<GuidanceState> {
  */
 export async function advanceGuidance(sessionId: string): Promise<GuidanceState> {
   const response = await fetch(
-    `${BACKEND_URL}/vm/sessions/${sessionId}/navigator/advance`,
+    `${NAVIGATOR_URL}/sessions/${sessionId}/navigator/advance`,
     { method: 'POST' }
   );
   
@@ -301,7 +301,7 @@ export async function askNavigator(
   question: string
 ): Promise<{ question: string; response: string; analysis: any }> {
   const response = await fetch(
-    `${BACKEND_URL}/vm/sessions/${sessionId}/navigator/ask`,
+    `${NAVIGATOR_URL}/sessions/${sessionId}/navigator/ask`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
