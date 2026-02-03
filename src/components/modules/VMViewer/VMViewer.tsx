@@ -108,10 +108,13 @@ export default function VMViewer({
     img.src = `data:image/jpeg;base64,${payload.data}`;
   }, []);
 
-  // Initialize WebRTC connection
-  const initWebRTC = useCallback(async (iceServers: RTCIceServer[]) => {
+  // Initialize WebRTC peer connection (does NOT create an offer — Janus sends the offer)
+  const initWebRTC = useCallback(() => {
     const pc = new RTCPeerConnection({
-      iceServers,
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ],
       iceCandidatePoolSize: 10
     });
     pcRef.current = pc;
@@ -157,13 +160,7 @@ export default function VMViewer({
       console.log('[VMViewer] Data channel open');
     };
 
-    const offer = await pc.createOffer({
-      offerToReceiveVideo: true,
-      offerToReceiveAudio: true
-    });
-    await pc.setLocalDescription(offer);
-
-    return offer;
+    return pc;
   }, [sessionId, onDisconnect]);
 
   // Connect to signaling server
@@ -191,13 +188,28 @@ export default function VMViewer({
                 // Canvas frame mode — no WebRTC needed, just wait for frames
                 setConnectionState('connected');
               } else {
-                // WebRTC mode
-                const offer = await initWebRTC(data.payload.ice_servers);
+                // WebRTC mode — set up peer connection and wait for Janus offer
+                initWebRTC();
+              }
+              break;
+            }
+
+            case 'offer': {
+              // Janus sends its offer — we create an answer
+              console.log('[VMViewer] Received Janus offer');
+              if (!pcRef.current) {
+                initWebRTC();
+              }
+              const pc = pcRef.current;
+              if (pc && data.payload?.sdp) {
+                await pc.setRemoteDescription(new RTCSessionDescription(data.payload.sdp));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
                 ws.send(JSON.stringify({
-                  type: 'offer',
-                  session_id: sessionId,
-                  payload: { sdp: offer }
+                  type: 'answer',
+                  payload: { sdp: { type: answer.type, sdp: answer.sdp } }
                 }));
+                setStreamMode('webrtc');
               }
               break;
             }
@@ -206,14 +218,6 @@ export default function VMViewer({
               // Canvas frame from backend
               if (data.payload) {
                 drawFrame(data.payload);
-              }
-              break;
-
-            case 'answer':
-              if (pcRef.current) {
-                await pcRef.current.setRemoteDescription(
-                  new RTCSessionDescription(data.payload.sdp)
-                );
               }
               break;
 
