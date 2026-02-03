@@ -23,7 +23,7 @@ import { useAuth } from '@/lib/authContext';
 // API CONFIG
 // ============================================================================
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://logic-engine-core2-409495160162.us-central1.run.app';
 
 // ============================================================================
 // TYPES
@@ -1043,9 +1043,12 @@ export default function Navigator({ onBack }: NavigatorProps) {
 
   // Handle snapshot from browser
   const handleSnapshot = useCallback(async (snapshot: Snapshot) => {
+    // Don't send snapshots if using default Haley browser (no real expert)
+    if (!activeExpert || activeExpert.id === 'haley_default') return;
+
     setCurrentSnapshot(snapshot);
 
-    if (activeExpert && settings.proactiveAlertsEnabled) {
+    if (settings.proactiveAlertsEnabled) {
       const result = await sendSnapshot(activeExpert.id, snapshot);
 
       if (result.success && result.alert) {

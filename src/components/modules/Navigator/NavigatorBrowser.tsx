@@ -79,9 +79,11 @@ const NavigatorBrowser = forwardRef<NavigatorBrowserRef, NavigatorBrowserProps>(
     });
     const [urlInput, setUrlInput] = useState(initialUrl);
     const [error, setError] = useState<string | null>(null);
+    const [siteBlocked, setSiteBlocked] = useState(false);
     const [history, setHistory] = useState<string[]>([]);
     const [historyIndex, setHistoryIndex] = useState(-1);
     const injectedOverlays = useRef<Map<string, HTMLElement>>(new Map());
+    const navigationStartTime = useRef<number>(0);
 
     // Check if URL is same-origin
     const checkSameOrigin = useCallback((url: string): boolean => {
@@ -101,6 +103,8 @@ const NavigatorBrowser = forwardRef<NavigatorBrowserRef, NavigatorBrowserProps>(
       }
 
       setError(null);
+      setSiteBlocked(false);
+      navigationStartTime.current = Date.now();
       setBrowserState(prev => ({ ...prev, isLoading: true, url: normalizedUrl }));
       setUrlInput(normalizedUrl);
 
@@ -279,15 +283,48 @@ const NavigatorBrowser = forwardRef<NavigatorBrowserRef, NavigatorBrowserProps>(
     const handleIframeLoad = useCallback(() => {
       const isSameOrigin = checkSameOrigin(browserState.url);
       let title = browserState.url;
+      let blocked = false;
 
-      if (iframeRef.current && isSameOrigin) {
-        try {
-          title = iframeRef.current.contentDocument?.title || browserState.url;
-        } catch {
-          // Cross-origin, can't access
+      if (iframeRef.current) {
+        if (isSameOrigin) {
+          try {
+            title = iframeRef.current.contentDocument?.title || browserState.url;
+          } catch {
+            // Cross-origin, can't access
+          }
+        } else {
+          // Cross-origin: detect if the site blocked embedding via X-Frame-Options/CSP.
+          // Two heuristics:
+          // 1. If we can read location.href as about:blank, the page was blocked
+          // 2. If the iframe "loaded" in under 150ms for a cross-origin URL,
+          //    the browser rejected it (real pages take longer)
+          const loadTime = Date.now() - navigationStartTime.current;
+          try {
+            const win = iframeRef.current.contentWindow;
+            if (win) {
+              try {
+                const loc = win.location.href;
+                if (loc === 'about:blank') {
+                  blocked = true;
+                }
+              } catch {
+                // SecurityError is expected for cross-origin.
+                // Use timing heuristic as fallback.
+                if (loadTime < 150) {
+                  blocked = true;
+                }
+              }
+            }
+          } catch {
+            // Can't access at all — likely blocked
+            if (loadTime < 150) {
+              blocked = true;
+            }
+          }
         }
       }
 
+      setSiteBlocked(blocked);
       setBrowserState(prev => ({
         ...prev,
         isLoading: false,
@@ -300,20 +337,20 @@ const NavigatorBrowser = forwardRef<NavigatorBrowserRef, NavigatorBrowserProps>(
 
     // Handle iframe error
     const handleIframeError = useCallback(() => {
-      setError('Failed to load page. The site may block embedding.');
+      setSiteBlocked(true);
       setBrowserState(prev => ({ ...prev, isLoading: false }));
     }, []);
 
-    // Snapshot interval
+    // Snapshot interval — only for same-origin content where we can extract useful data
     useEffect(() => {
-      if (snapshotInterval <= 0 || !browserState.url) return;
+      if (snapshotInterval <= 0 || !browserState.url || !browserState.isSameOrigin) return;
 
       const interval = setInterval(() => {
         captureSnapshot();
       }, snapshotInterval);
 
       return () => clearInterval(interval);
-    }, [snapshotInterval, browserState.url, captureSnapshot]);
+    }, [snapshotInterval, browserState.url, browserState.isSameOrigin, captureSnapshot]);
 
     // Notify state changes
     useEffect(() => {
@@ -416,12 +453,12 @@ const NavigatorBrowser = forwardRef<NavigatorBrowserRef, NavigatorBrowserProps>(
           </div>
         </div>
 
-        {/* Cross-origin warning */}
-        {browserState.url && !browserState.isSameOrigin && !browserState.isLoading && (
+        {/* Cross-origin warning — only show if not blocked (blocked gets a full overlay) */}
+        {browserState.url && !browserState.isSameOrigin && !browserState.isLoading && !siteBlocked && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border-b border-amber-500/20">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             <span className="text-xs text-amber-500">
-              Cross-origin content - visual overlays may not work on this site
+              Cross-origin content — visual overlays may not work on this site
             </span>
           </div>
         )}
@@ -448,8 +485,44 @@ const NavigatorBrowser = forwardRef<NavigatorBrowserRef, NavigatorBrowserProps>(
             </div>
           )}
 
+          {/* Blocked site state — when iframe fails due to X-Frame-Options/CSP */}
+          {siteBlocked && browserState.url && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-panel-dark/95 z-20">
+              <Globe className="w-16 h-16 text-amber-400 mb-4" />
+              <h3 className="text-lg font-medium text-text-primary mb-2">
+                This site blocks embedding
+              </h3>
+              <p className="text-sm text-text-secondary max-w-md mb-6">
+                {(() => {
+                  try { return new URL(browserState.url).hostname; } catch { return 'This site'; }
+                })()} prevents being displayed inside other apps for security reasons. This is common for most websites.
+              </p>
+              <div className="flex gap-3">
+                <a
+                  href={browserState.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open in New Tab
+                </a>
+                <button
+                  onClick={() => {
+                    setSiteBlocked(false);
+                    setUrlInput('');
+                    setBrowserState(prev => ({ ...prev, url: '', title: '' }));
+                  }}
+                  className="px-6 py-3 bg-panel-light hover:bg-panel-medium text-text-primary rounded-lg transition-colors"
+                >
+                  Try Different Site
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Error state */}
-          {error && (
+          {error && !siteBlocked && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-panel-dark">
               <AlertTriangle className="w-16 h-16 text-red-400 mb-4" />
               <h3 className="text-lg font-medium text-text-primary mb-2">
