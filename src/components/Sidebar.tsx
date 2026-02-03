@@ -404,7 +404,7 @@ export default function Sidebar({
 
             {/* Primary Action Buttons */}
             <div className="p-3 border-t border-border">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
                 {/* New Chat button */}
                 <button
                   onClick={onNewConversation}
@@ -445,7 +445,7 @@ export default function Sidebar({
               </button>
 
               {!aiModelsCollapsed && (
-                <div className="mt-2 space-y-1 max-h-64 overflow-y-auto">
+                <div className="mt-2 space-y-1 max-h-[calc(100vh-350px)] overflow-y-auto">
                   {/* Multi-LLM Toggle - Always visible */}
                   <div className="px-3 py-2 mb-2 border-b border-border">
                     <MultiLLMToggle
@@ -573,7 +573,7 @@ export default function Sidebar({
             </div>
 
             {/* Conversation History */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-3">
+            <div className={`flex-1 min-h-0 overflow-y-auto p-3 ${!aiModelsCollapsed ? 'hidden' : ''}`}>
               <div className="text-xs text-secondary font-semibold mb-2 px-2">
                 RECENT CHATS
               </div>
