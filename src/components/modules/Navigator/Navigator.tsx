@@ -12,6 +12,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import theme from '@/styles/module-theme';
 import NavigatorBrowser, { NavigatorBrowserRef, Snapshot, BrowserState } from './NavigatorBrowser';
 import NavigatorOverlays, { NavigatorOverlay } from './NavigatorOverlays';
+import VMViewer from '@/components/modules/VMViewer/VMViewer';
+import {
+  createVMSession, waitForSession, terminateSession,
+  getUserModuleSession, type VMSession
+} from '@/lib/vmApi';
+import { useAuth } from '@/lib/authContext';
 
 // ============================================================================
 // API CONFIG
@@ -949,12 +955,18 @@ function ProactiveAlertToast({ alert, onDismiss }: { alert: ProactiveAlert; onDi
 // ============================================================================
 
 export default function Navigator({ onBack }: NavigatorProps) {
+  const { user } = useAuth();
   const [mode, setMode] = useState<NavigatorMode>('setup');
   const [experts, setExperts] = useState<DomainExpert[]>([]);
   const [activeExpert, setActiveExpert] = useState<DomainExpert | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [settings, setSettings] = useState<NavigatorSettings>(loadSettings);
   const [showSettings, setShowSettings] = useState(false);
+
+  // VM session state
+  const [vmSession, setVmSession] = useState<VMSession | null>(null);
+  const [vmLoading, setVmLoading] = useState(false);
+  const [vmError, setVmError] = useState<string | null>(null);
 
   // Browser state
   const browserRef = useRef<NavigatorBrowserRef>(null);
@@ -1009,6 +1021,25 @@ export default function Navigator({ onBack }: NavigatorProps) {
       };
     }
   }, []);
+
+  // Cleanup VM session on unmount or back navigation
+  useEffect(() => {
+    return () => {
+      if (vmSession?.session_id) {
+        terminateSession(vmSession.session_id, 'user_navigated_away').catch(console.error);
+      }
+    };
+  }, [vmSession?.session_id]);
+
+  // Check for existing VM session on mount
+  useEffect(() => {
+    if (!user?.uid) return;
+    getUserModuleSession(user.uid, 'navigator').then(session => {
+      if (session && (session.status === 'ready' || session.status === 'active')) {
+        setVmSession(session);
+      }
+    }).catch(() => {});
+  }, [user?.uid]);
 
   // Handle snapshot from browser
   const handleSnapshot = useCallback(async (snapshot: Snapshot) => {
@@ -1180,6 +1211,50 @@ export default function Navigator({ onBack }: NavigatorProps) {
   const handleLaunchBrowser = async () => {
     setActiveExpert(HALEY_DEFAULT_EXPERT);
     setMode('active');
+    setVmError(null);
+
+    // Create VM session for real browser control
+    if (user?.uid) {
+      setVmLoading(true);
+      try {
+        // Check for existing session first
+        const existing = await getUserModuleSession(user.uid, 'navigator');
+        if (existing && (existing.status === 'ready' || existing.status === 'active')) {
+          setVmSession(existing);
+          setVmLoading(false);
+          return;
+        }
+
+        const session = await createVMSession({
+          user_id: user.uid,
+          module_id: 'navigator',
+          template_name: 'standard',
+          applications: ['chromium'],
+          idle_timeout_minutes: 30,
+        });
+
+        const readySession = await waitForSession(session.session_id, 120000);
+        setVmSession(readySession);
+      } catch (err: any) {
+        console.error('[Navigator] VM session creation failed:', err);
+        setVmError(err.message || 'Failed to create browser session');
+        // Falls back to iframe-based NavigatorBrowser
+      } finally {
+        setVmLoading(false);
+      }
+    }
+  };
+
+  // Handle back from active mode — terminate VM session
+  const handleBackFromActive = () => {
+    if (vmSession?.session_id) {
+      terminateSession(vmSession.session_id, 'user_request').catch(console.error);
+    }
+    setVmSession(null);
+    setVmError(null);
+    setActiveExpert(null);
+    setMode('setup');
+    setOverlays([]);
   };
 
   // Expert selection / management view
@@ -1291,7 +1366,7 @@ export default function Navigator({ onBack }: NavigatorProps) {
         <div className="flex items-center justify-between px-6 py-3 border-b border-border">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => { setActiveExpert(null); setMode('setup'); setOverlays([]); }}
+              onClick={handleBackFromActive}
               className="p-2 hover:bg-panel-light rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-text-secondary" />
@@ -1301,7 +1376,9 @@ export default function Navigator({ onBack }: NavigatorProps) {
                 {isHaleyDefault ? 'Haley Browser' : activeExpert.name}
               </h1>
               <p className="text-xs text-text-secondary">
-                {isHaleyDefault ? 'Tell Haley what you need' : 'Navigator Active'}
+                {isHaleyDefault
+                  ? vmSession ? 'VM Browser Active' : vmLoading ? 'Starting browser...' : 'Tell Haley what you need'
+                  : 'Navigator Active'}
               </p>
             </div>
           </div>
@@ -1319,9 +1396,13 @@ export default function Navigator({ onBack }: NavigatorProps) {
               {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               {isListening ? 'Listening...' : 'Voice'}
             </button>
-            <span className="flex items-center gap-2 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              Active
+            <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+              vmSession ? 'bg-green-500/20 text-green-400' : vmLoading ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'
+            }`}>
+              <span className={`w-2 h-2 rounded-full animate-pulse ${
+                vmSession ? 'bg-green-400' : vmLoading ? 'bg-yellow-400' : 'bg-blue-400'
+              }`} />
+              {vmSession ? 'VM Connected' : vmLoading ? 'Connecting...' : 'Active'}
             </span>
             <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-panel-light rounded-lg">
               <Settings className="w-5 h-5 text-text-secondary" />
@@ -1331,15 +1412,59 @@ export default function Navigator({ onBack }: NavigatorProps) {
 
         {/* Browser content area with overlays */}
         <div className="flex-1 relative overflow-hidden">
-          <NavigatorBrowser
-            ref={browserRef}
-            snapshotInterval={settings.snapshotInterval}
-            onSnapshot={handleSnapshot}
-            onStateChange={setBrowserState}
-          />
+          {vmLoading ? (
+            /* VM session is being created — show loading state */
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+              <div className="text-center">
+                <p className="text-text-primary font-medium">Starting browser session...</p>
+                <p className="text-sm text-text-secondary mt-1">This may take up to a minute</p>
+              </div>
+            </div>
+          ) : vmSession?.stream_url && vmSession.stream_token ? (
+            /* VM session is ready — render WebRTC VMViewer */
+            <VMViewer
+              sessionId={vmSession.session_id}
+              streamUrl={vmSession.stream_url}
+              streamToken={vmSession.stream_token}
+              onDisconnect={() => setVmSession(null)}
+              onError={(err) => {
+                console.error('[Navigator] VM error:', err);
+                setVmError(String(err));
+                setVmSession(null);
+              }}
+              className="w-full h-full"
+            />
+          ) : vmError ? (
+            /* VM failed — show error with fallback to iframe */
+            <div className="flex flex-col h-full">
+              <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/30 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                <p className="text-xs text-amber-500">
+                  VM browser unavailable ({vmError}). Using embedded browser — some sites may not load.
+                </p>
+              </div>
+              <div className="flex-1 relative">
+                <NavigatorBrowser
+                  ref={browserRef}
+                  snapshotInterval={settings.snapshotInterval}
+                  onSnapshot={handleSnapshot}
+                  onStateChange={setBrowserState}
+                />
+              </div>
+            </div>
+          ) : (
+            /* No VM session — fallback to iframe NavigatorBrowser */
+            <NavigatorBrowser
+              ref={browserRef}
+              snapshotInterval={settings.snapshotInterval}
+              onSnapshot={handleSnapshot}
+              onStateChange={setBrowserState}
+            />
+          )}
 
-          {/* Overlays layer */}
-          {settings.overlaysEnabled && overlays.length > 0 && (
+          {/* Overlays layer — only when using iframe browser */}
+          {!vmSession && settings.overlaysEnabled && overlays.length > 0 && (
             <NavigatorOverlays
               overlays={overlays}
               getElementPosition={browserRef.current?.getElementPosition}
@@ -1398,7 +1523,7 @@ export default function Navigator({ onBack }: NavigatorProps) {
             currentTask={currentTask}
             nextStep={nextStep}
             nextStepTarget={nextStepTarget}
-            onClose={() => { setActiveExpert(null); setMode('setup'); setOverlays([]); }}
+            onClose={handleBackFromActive}
             onVoiceToggle={handleVoiceToggle}
             isListening={isListening}
             onSendMessage={handleSendMessage}
