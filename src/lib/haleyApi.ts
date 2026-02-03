@@ -570,4 +570,42 @@ export async function fetchAdminUserDetail(userId: string) {
   return response.json();
 }
 
+// ============================================================================
+// OPENCLAW API
+// ============================================================================
+
+export async function fetchOpenClawHealth() {
+  const response = await fetch(`${BACKEND_URL}/baby/openclaw/health`);
+  if (!response.ok) throw new Error('OpenClaw health check failed');
+  return response.json();
+}
+
+export async function fetchOpenClawSpecialties() {
+  const response = await fetch(`${BACKEND_URL}/baby/specialties`);
+  if (!response.ok) throw new Error('Failed to fetch specialties');
+  return response.json();
+}
+
+export async function sendOpenClawChat(
+  message: string,
+  channel: string,
+  sessionId: string,
+  userId?: string,
+  providerHint?: string
+) {
+  const response = await fetch(`${BACKEND_URL}/baby/openclaw/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message,
+      channel,
+      session_id: sessionId,
+      user_id: userId,
+      provider_hint: providerHint,
+    }),
+  });
+  if (!response.ok) throw new Error('OpenClaw chat failed');
+  return response.json();
+}
+
 export { BACKEND_URL };

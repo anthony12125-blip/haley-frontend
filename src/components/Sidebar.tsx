@@ -20,6 +20,8 @@ import {
   Send,
   MoreVertical,
   LayoutGrid,
+  Radio,
+  Activity,
 } from 'lucide-react';
 import type { ConversationHistory } from '@/types';
 import { HaleyCoreGlyph } from './HaleyCoreGlyph';
@@ -614,6 +616,34 @@ export default function Sidebar({
                     </div>
                   ))
                 )}
+              </div>
+            </div>
+
+            {/* OpenClaw Channels */}
+            <div className="px-3 py-2 border-t border-border">
+              <div className="text-xs text-secondary font-semibold mb-2 px-2">OPENCLAW</div>
+              <div className="space-y-0.5">
+                <button
+                  onClick={() => router.push('/openclaw')}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                >
+                  <Radio size={16} className="text-primary" />
+                  <span className="text-sm">Channels</span>
+                </button>
+                <button
+                  onClick={() => router.push('/openclaw/activity')}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                >
+                  <Activity size={16} className="text-secondary" />
+                  <span className="text-sm">Activity</span>
+                </button>
+                <button
+                  onClick={() => router.push('/openclaw/settings')}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-panel-light transition-colors text-left"
+                >
+                  <Settings size={16} className="text-secondary" />
+                  <span className="text-sm">Settings</span>
+                </button>
               </div>
             </div>
 
