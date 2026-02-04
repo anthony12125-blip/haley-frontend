@@ -1,4 +1,4 @@
-export const BUILD_VERSION = 117;
+export const BUILD_VERSION = 118;
 // Build 117: Fix animation on old messages - only show streaming animation for new messages with metadata.streaming=true, not bulk-loaded history
 // Build 116: Load conversation provider - when selecting a saved conversation, set activeModel from conversation's provider field
 // Build 115: Chat persistence fix - pass real userId and conversationId to backend instead of hardcoded 'user'/'default'
