@@ -45,4 +45,4 @@ Current Build: **#18**
 
 ## License
 
-Proprietary - All rights reserved
+Proprietary - All rights reserved.
