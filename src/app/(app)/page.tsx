@@ -235,20 +235,33 @@ export default function ChatPage() {
   const [hasActiveNewChat, setHasActiveNewChat] = useState(false);
 
   const availableModels = [
-    { id: 'haley', name: 'Haley', provider: 'OpenClaw' },
+    { id: 'gemini', name: 'Gemini', provider: 'Google' },
+    { id: 'gpt', name: 'GPT-4', provider: 'OpenAI' },
+    { id: 'claude', name: 'Claude', provider: 'Anthropic' },
+    { id: 'llama', name: 'Llama', provider: 'Meta' },
+    { id: 'perplexity', name: 'Perplexity', provider: 'Perplexity AI' },
+    { id: 'mistral', name: 'Mistral', provider: 'Mistral AI' },
+    { id: 'grok', name: 'Grok', provider: 'xAI' },
   ];
 
   const availableAgents: Array<{ id: string; name: string; description: string }> = [];
 
-  // Always use Haley (OpenClaw)
+  // Initialize activeModel from localStorage or default to Haley (null)
   useEffect(() => {
-    setActiveModel(null); // null = Haley
+    if (typeof window !== 'undefined') {
+      const lastUsedModel = localStorage.getItem('haley_lastUsedModel') || 'haley';
+      // Haley uses null as activeModel, other LLMs use their string ID
+      setActiveModel(lastUsedModel === 'haley' ? null : lastUsedModel);
+    }
   }, []);
 
-  // Always use Haley - no switching
+  // Save activeModel to localStorage whenever it changes
   useEffect(() => {
-    setActiveModel(null);
-  }, []);
+    if (typeof window !== 'undefined') {
+      // Save 'haley' when activeModel is null, otherwise save the model ID
+      localStorage.setItem('haley_lastUsedModel', activeModel || 'haley');
+    }
+  }, [activeModel]);
 
   useEffect(() => {
     if (user) {
