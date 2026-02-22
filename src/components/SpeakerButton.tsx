@@ -33,14 +33,11 @@ export function SpeakerButton({ messageId, content, audioUrl, onAudioReady, onEr
           }
         };
 
-        const TTS_API_URL = process.env.NEXT_PUBLIC_TTS_API_URL || 'https://module-matrix-409495160162.us-central1.run.app/matrix/execute_module';
-        
-        console.log('[SPEAKER] 🎤 Requesting synthesis from TTS API...');
+        console.log('[SPEAKER] 🎤 Requesting synthesis from Module Matrix...');
         console.log('[SPEAKER] 📤 Request payload:', JSON.stringify(requestPayload, null, 2));
         console.log('[SPEAKER] 🔊 Using Voice ID:', VOICE_ID);
-        console.log('[SPEAKER] 🌐 API URL:', TTS_API_URL);
 
-        const res = await fetch(TTS_API_URL, {
+        const res = await fetch('https://module-matrix-409495160162.us-central1.run.app/matrix/execute_module', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestPayload)
